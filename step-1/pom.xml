@@ -27,7 +27,7 @@
 
   <properties>
     <vertx.version>3.3.3</vertx.version>
-    <main.verticle>io.vertx.guides.samplewiki.MainVerticle</main.verticle>
+    <main.verticle>io.vertx.guides.wiki.MainVerticle</main.verticle>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 

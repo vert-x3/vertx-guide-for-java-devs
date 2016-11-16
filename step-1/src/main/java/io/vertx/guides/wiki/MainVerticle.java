@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.vertx.guides.samplewiki;
+package io.vertx.guides.wiki;
 
 import com.github.rjeschke.txtmark.Processor;
 import io.vertx.core.AbstractVerticle;
