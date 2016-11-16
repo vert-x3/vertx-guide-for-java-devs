@@ -1,0 +1,10 @@
+hs_err_pid*
+target/
+.mvn/
+.idea/
+db/
+*.iws
+*.ipr
+*.iml
+
+

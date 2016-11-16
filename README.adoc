@@ -1,0 +1,10 @@
+= Vert.x guide: a wiki web application
+Julien Ponge <julien.ponge@insa-lyon.fr>
+
+== Step 1
+
+Starter implementation with Vert.x web, Freemarker templates and Vert.x JDBC, 1 verticle, simple code.
+
+== Step 2
+
+Evolve into 2 verticles, pass them configuration data (port, jdbc settings, sql queries, etc), and deploy from a main verticle.
