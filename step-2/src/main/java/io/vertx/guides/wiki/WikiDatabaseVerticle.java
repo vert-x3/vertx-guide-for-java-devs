@@ -59,7 +59,10 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   private enum SqlQuery {
     CREATE_PAGES_TABLE,
     ALL_PAGES,
-    GET_PAGE
+    GET_PAGE,
+    CREATE_PAGE,
+    SAVE_PAGE,
+    DELETE_PAGE
   }
 
   private final HashMap<SqlQuery, String> sqlQueries = new HashMap<>();
@@ -107,6 +110,15 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
         break;
       case "get-page":
         fetchPage(message);
+        break;
+      case "create-page":
+        createPage(message);
+        break;
+      case "save-page":
+        savePage(message);
+        break;
+      case "delete-page":
+        deletePage(message);
         break;
       default:
         message.fail(ErrorCodes.BAD_ACTION.ordinal(), "Bad action: " + action);
@@ -170,6 +182,75 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
 
   }
 
+  private void createPage(Message<JsonObject> message) {
+    JsonObject request = message.body();
+
+    dbClient.getConnection(car -> {
+
+      if (car.succeeded()) {
+        SQLConnection connection = car.result();
+        JsonArray data = new JsonArray()
+          .add(request.getString("title"))
+          .add(request.getString("markdown"));
+
+        connection.updateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), data, res -> {
+          connection.close();
+          if (res.succeeded()) {
+            message.reply("ok");
+          } else {
+            reportQueryError(message, res.cause());
+          }
+        });
+      } else {
+        reportQueryError(message, car.cause());
+      }
+    });
+  }
+
+  private void savePage(Message<JsonObject> message) {
+    JsonObject request = message.body();
+
+    dbClient.getConnection(car -> {
+
+      if (car.succeeded()) {
+        SQLConnection connection = car.result();
+        JsonArray data = new JsonArray()
+          .add(request.getString("markdown"))
+          .add(request.getString("id"));
+
+        connection.updateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), data, res -> {
+          connection.close();
+          if (res.succeeded()) {
+            message.reply("ok");
+          } else {
+            reportQueryError(message, res.cause());
+          }
+        });
+      } else {
+        reportQueryError(message, car.cause());
+      }
+    });
+  }
+
+  private void deletePage(Message<JsonObject> message) {
+    dbClient.getConnection(car -> {
+      if (car.succeeded()) {
+        SQLConnection connection = car.result();
+        JsonArray data = new JsonArray().add(message.body().getString("id"));
+        connection.updateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data, res -> {
+          connection.close();
+          if (res.succeeded()) {
+            message.reply("ok");
+          } else {
+            reportQueryError(message, res.cause());
+          }
+        });
+      } else {
+        reportQueryError(message, car.cause());
+      }
+    });
+  }
+
   private void reportQueryError(Message<JsonObject> message, Throwable cause) {
     LOGGER.error("Database query error", cause);
     message.fail(ErrorCodes.DB_ERROR.ordinal(), cause.getMessage());
@@ -195,5 +276,8 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
     sqlQueries.put(SqlQuery.CREATE_PAGES_TABLE, queriesProps.getProperty("create-pages-table"));
     sqlQueries.put(SqlQuery.ALL_PAGES, queriesProps.getProperty("all-pages"));
     sqlQueries.put(SqlQuery.GET_PAGE, queriesProps.getProperty("get-page"));
+    sqlQueries.put(SqlQuery.CREATE_PAGE, queriesProps.getProperty("create-page"));
+    sqlQueries.put(SqlQuery.SAVE_PAGE, queriesProps.getProperty("save-page"));
+    sqlQueries.put(SqlQuery.DELETE_PAGE, queriesProps.getProperty("delete-page"));
   }
 }

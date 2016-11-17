@@ -62,10 +62,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
     router.get("/").handler(this::indexHandler);
     router.get("/wiki/:page").handler(this::pageRenderingHandler);
-//    router.post().handler(BodyHandler.create());
-//    router.post("/save").handler(this::pageUpdateHandler);
-//    router.post("/create").handler(this::pageCreateHandler);
-//    router.post("/delete").handler(this::pageDeletionHandler);
+    router.post().handler(BodyHandler.create());
+    router.post("/save").handler(this::pageUpdateHandler);
+    router.post("/create").handler(this::pageCreateHandler);
+    router.post("/delete").handler(this::pageDeletionHandler);
 
     int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);
     server
@@ -120,7 +120,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         String rawContent = body.getString("rawContent", EMPTY_PAGE_MARKDOWN);
         context.put("title", requestedPage);
         context.put("id", body.getInteger("id", -1));
-        context.put("newPage", found ? "yes" : "no");
+        context.put("newPage", found ? "no" : "yes");
         context.put("rawContent", rawContent);
         context.put("content", Processor.process(rawContent));
         context.put("timestamp", new Date().toString());
@@ -134,6 +134,58 @@ public class HttpServerVerticle extends AbstractVerticle {
           }
         });
 
+      } else {
+        context.fail(reply.cause());
+      }
+    });
+  }
+
+  private void pageUpdateHandler(RoutingContext context) {
+
+    String title = context.request().getParam("title");
+    JsonObject request = new JsonObject()
+      .put("id", context.request().getParam("id"))
+      .put("title", title)
+      .put("markdown", context.request().getParam("markdown"));
+
+    DeliveryOptions options = new DeliveryOptions();
+    if ("yes".equals(context.request().getParam("newPage"))) {
+      options.addHeader("action", "create-page");
+    } else {
+      options.addHeader("action", "save-page");
+    }
+
+    vertx.eventBus().send(wikiDbQueue, request, options, reply -> {
+      if (reply.succeeded()) {
+        context.response().setStatusCode(303);
+        context.response().putHeader("Location", "/wiki/" + title);
+        context.response().end();
+      } else {
+        context.fail(reply.cause());
+      }
+    });
+  }
+
+  private void pageCreateHandler(RoutingContext context) {
+    String pageName = context.request().getParam("name");
+    String location = "/wiki/" + pageName;
+    if (pageName == null || pageName.isEmpty()) {
+      location = "/";
+    }
+    context.response().setStatusCode(303);
+    context.response().putHeader("Location", location);
+    context.response().end();
+  }
+
+  private void pageDeletionHandler(RoutingContext context) {
+    String id = context.request().getParam("id");
+    JsonObject request = new JsonObject().put("id", id);
+    DeliveryOptions options = new DeliveryOptions().addHeader("action", "delete-page");
+    vertx.eventBus().send(wikiDbQueue, request, options, reply -> {
+      if (reply.succeeded()) {
+        context.response().setStatusCode(303);
+        context.response().putHeader("Location", "/");
+        context.response().end();
       } else {
         context.fail(reply.cause());
       }
