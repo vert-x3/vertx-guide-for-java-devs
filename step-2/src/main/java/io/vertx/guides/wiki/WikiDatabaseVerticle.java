@@ -17,7 +17,6 @@
 package io.vertx.guides.wiki;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
@@ -25,7 +24,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 
 import java.io.FileInputStream;
@@ -45,11 +43,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   public static final String CONFIG_WIKIDB_JDBC_DRIVER_CLASS = "wikidb.jdbc.driver_class";
   public static final String CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE = "wikidb.jdbc.max_pool_size";
   public static final String CONFIG_WIKIDB_SQL_QUERIES_RESOURCE_FILE = "wikidb.sqlqueries.resource.file";
-
-  public static final String WIKIDB_QUEUE = "wikidb.queue";
-  public static final String HEADER_ACTION = "action";
-
-  public static final String ACTION_ALL_PAGES = "all-pages";
+  public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WikiDatabaseVerticle.class);
 
@@ -90,7 +84,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
             LOGGER.error("Database preparation error", create.cause());
             startFuture.fail(create.cause());
           } else {
-            vertx.eventBus().consumer(WIKIDB_QUEUE, this::onMessage);
+            vertx.eventBus().consumer(config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue"), this::onMessage);
             startFuture.complete();
           }
         });
@@ -100,13 +94,13 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
 
   public void onMessage(Message<JsonObject> message) {
 
-    if (!message.headers().contains(HEADER_ACTION)) {
+    if (!message.headers().contains("action")) {
       message.fail(ErrorCodes.NO_ACTION_SPECIFIED.ordinal(), "No action header specified");
     }
-    String action = message.headers().get(HEADER_ACTION);
+    String action = message.headers().get("action");
 
     switch (action) {
-      case ACTION_ALL_PAGES:
+      case "all-pages":
         fetchAllPages(message);
         break;
       default:

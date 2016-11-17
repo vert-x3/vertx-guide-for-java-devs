@@ -34,13 +34,19 @@ import io.vertx.ext.web.templ.FreeMarkerTemplateEngine;
 public class HttpServerVerticle extends AbstractVerticle {
 
   public static final String CONFIG_HTTP_SERVER_PORT = "http.server.port";
+  public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
 
   private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
 
+  private String wikiDbQueue = "wikidb.queue";
+
   @Override
   public void start(Future<Void> startFuture) throws Exception {
+
+    wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
+
     HttpServer server = vertx.createHttpServer();
 
     Router router = Router.router(vertx);
@@ -67,8 +73,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
 
   private void indexHandler(RoutingContext context) {
-    vertx.eventBus().send(WikiDatabaseVerticle.WIKIDB_QUEUE, new JsonObject(),
-      new DeliveryOptions().addHeader(WikiDatabaseVerticle.HEADER_ACTION, WikiDatabaseVerticle.ACTION_ALL_PAGES),
+    vertx.eventBus().send(wikiDbQueue, new JsonObject(),
+      new DeliveryOptions().addHeader("action", "all-pages"),
       reply -> {
         if (reply.succeeded()) {
           JsonObject body = (JsonObject) reply.result().body();
