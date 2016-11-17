@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
 public class MainVerticle extends AbstractVerticle {
@@ -54,7 +53,7 @@ public class MainVerticle extends AbstractVerticle {
       "\n" +
       "Feel-free to write in Markdown!\n";
 
-  private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
 
   private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
 
@@ -70,14 +69,14 @@ public class MainVerticle extends AbstractVerticle {
 
     dbClient.getConnection(ar -> {
       if (ar.failed()) {
-        logger.error("Could not open a database connection", ar.cause());
+        LOGGER.error("Could not open a database connection", ar.cause());
         future.fail(ar.cause());
       } else {
         SQLConnection connection = ar.result();
         connection.execute(SQL_CREATE_PAGES_TABLE, create -> {
           connection.close();
           if (create.failed()) {
-            logger.error("Database preparation error", create.cause());
+            LOGGER.error("Database preparation error", create.cause());
             future.fail(create.cause());
           } else {
             future.complete();
@@ -94,21 +93,21 @@ public class MainVerticle extends AbstractVerticle {
     HttpServer server = vertx.createHttpServer();
 
     Router router = Router.router(vertx);
-    router.get("/").handler(indexHandler());
-    router.get("/wiki/:page").handler(pageRenderingHandler());
+    router.get("/").handler(this::indexHandler);
+    router.get("/wiki/:page").handler(this::pageRenderingHandler);
     router.post().handler(BodyHandler.create());
-    router.post("/save").handler(pageUpdateHandler());
-    router.post("/create").handler(pageCreateHandler());
-    router.post("/delete").handler(pageDeletionHandler());
+    router.post("/save").handler(this::pageUpdateHandler);
+    router.post("/create").handler(this::pageCreateHandler);
+    router.post("/delete").handler(this::pageDeletionHandler);
 
     server
       .requestHandler(router::accept)
       .listen(8080, ar -> {
         if (ar.succeeded()) {
-          logger.info("HTTP server running on port 8080");
+          LOGGER.info("HTTP server running on port 8080");
           future.complete();
         } else {
-          logger.error("Could not start a HTTP server", ar.cause());
+          LOGGER.error("Could not start a HTTP server", ar.cause());
           future.fail(ar.cause());
         }
       });
@@ -116,157 +115,147 @@ public class MainVerticle extends AbstractVerticle {
     return future;
   }
 
-  private Handler<RoutingContext> pageDeletionHandler() {
-    return context -> {
-      String id = context.request().getParam("id");
-      dbClient.getConnection(car -> {
-        if (car.succeeded()) {
-          SQLConnection connection = car.result();
-          connection.updateWithParams(SQL_DELETE_PAGE, new JsonArray().add(id), res -> {
-            connection.close();
-            if (res.succeeded()) {
-              context.response().setStatusCode(303);
-              context.response().putHeader("Location", "/");
-              context.response().end();
-            } else {
-              context.fail(res.cause());
-            }
-          });
-        } else {
-          context.fail(car.cause());
-        }
-      });
-    };
-  }
-
-  private Handler<RoutingContext> pageCreateHandler() {
-    return context -> {
-      String pageName = context.request().getParam("name");
-      String location = "/wiki/" + pageName;
-      if (pageName == null || pageName.isEmpty()) {
-        location = "/";
-      }
-      context.response().setStatusCode(303);
-      context.response().putHeader("Location", location);
-      context.response().end();
-    };
-  }
-
-  private Handler<RoutingContext> indexHandler() {
-    return context -> {
-      dbClient.getConnection(car -> {
-        if (car.succeeded()) {
-          SQLConnection connection = car.result();
-          connection.query(SQL_ALL_PAGES, res -> {
-            connection.close();
-
-            if (res.succeeded()) {
-              List<String> pages = res.result()
-                .getResults()
-                .stream()
-                .map(json -> json.getString(0))
-                .sorted()
-                .collect(Collectors.toList());
-
-              context.put("title", "Wiki home");
-              context.put("pages", pages);
-              templateEngine.render(context, "templates/index.ftl", ar -> {
-                if (ar.succeeded()) {
-                  context.response().putHeader("Content-Type", "text/html");
-                  context.response().end(ar.result());
-                } else {
-                  context.fail(ar.cause());
-                }
-              });
-
-            } else {
-              context.fail(res.cause());
-            }
-          });
-        } else {
-          context.fail(car.cause());
-        }
-      });
-    };
-  }
-
-  private Handler<RoutingContext> pageUpdateHandler() {
-    return context -> {
-      String id = context.request().getParam("id");
-      String title = context.request().getParam("title");
-      String markdown = context.request().getParam("markdown");
-      boolean newPage = "yes".equals(context.request().getParam("newPage"));
-
-      dbClient.getConnection(car -> {
-        if (car.succeeded()) {
-          SQLConnection connection = car.result();
-          String sql = newPage ? SQL_CREATE_PAGE : SQL_SAVE_PAGE;
-          JsonArray params = new JsonArray();
-          if (newPage) {
-            params.add(title).add(markdown);
+  private void pageDeletionHandler(RoutingContext context) {
+    String id = context.request().getParam("id");
+    dbClient.getConnection(car -> {
+      if (car.succeeded()) {
+        SQLConnection connection = car.result();
+        connection.updateWithParams(SQL_DELETE_PAGE, new JsonArray().add(id), res -> {
+          connection.close();
+          if (res.succeeded()) {
+            context.response().setStatusCode(303);
+            context.response().putHeader("Location", "/");
+            context.response().end();
           } else {
-            params.add(markdown).add(id);
+            context.fail(res.cause());
           }
-          connection.updateWithParams(sql, params, res -> {
-            connection.close();
-            if (res.succeeded()) {
-              context.response().setStatusCode(303);
-              context.response().putHeader("Location", "/wiki/" + title);
-              context.response().end();
-            } else {
-              context.fail(res.cause());
-            }
-          });
-        } else {
-          context.fail(car.cause());
-        }
-      });
-    };
+        });
+      } else {
+        context.fail(car.cause());
+      }
+    });
   }
 
-  private Handler<RoutingContext> pageRenderingHandler() {
-    return context -> {
-      String page = context.request().getParam("page");
+  private void pageCreateHandler(RoutingContext context) {
+    String pageName = context.request().getParam("name");
+    String location = "/wiki/" + pageName;
+    if (pageName == null || pageName.isEmpty()) {
+      location = "/";
+    }
+    context.response().setStatusCode(303);
+    context.response().putHeader("Location", location);
+    context.response().end();
+  }
 
-      dbClient.getConnection(car -> {
-        if (car.succeeded()) {
+  private void indexHandler(RoutingContext context) {
+    dbClient.getConnection(car -> {
+      if (car.succeeded()) {
+        SQLConnection connection = car.result();
+        connection.query(SQL_ALL_PAGES, res -> {
+          connection.close();
 
-          SQLConnection connection = car.result();
-          connection.queryWithParams(SQL_GET_PAGE, new JsonArray().add(page), fetch -> {
-            connection.close();
-            if (fetch.succeeded()) {
-              JsonArray row = fetch.result().getResults()
-                .stream()
-                .findFirst()
-                .orElseGet(() -> new JsonArray().add(-1).add(EMPTY_PAGE_MARKDOWN));
-              Integer id = row.getInteger(0);
-              String rawContent = row.getString(1);
+          if (res.succeeded()) {
+            List<String> pages = res.result()
+              .getResults()
+              .stream()
+              .map(json -> json.getString(0))
+              .sorted()
+              .collect(Collectors.toList());
 
-              context.put("title", page);
-              context.put("id", id);
-              context.put("newPage", fetch.result().getResults().size() == 0 ? "yes" : "no");
-              context.put("rawContent", rawContent);
-              context.put("content", Processor.process(rawContent));
-              context.put("timestamp", new Date().toString());
+            context.put("title", "Wiki home");
+            context.put("pages", pages);
+            templateEngine.render(context, "templates/index.ftl", ar -> {
+              if (ar.succeeded()) {
+                context.response().putHeader("Content-Type", "text/html");
+                context.response().end(ar.result());
+              } else {
+                context.fail(ar.cause());
+              }
+            });
 
-              templateEngine.render(context, "templates/page.ftl", ar -> {
-                if (ar.succeeded()) {
-                  context.response().putHeader("Content-Type", "text/html");
-                  context.response().end(ar.result());
-                } else {
-                  context.fail(ar.cause());
-                }
-              });
-            } else {
-              context.fail(fetch.cause());
-            }
-          });
+          } else {
+            context.fail(res.cause());
+          }
+        });
+      } else {
+        context.fail(car.cause());
+      }
+    });
+  }
 
+  private void pageUpdateHandler(RoutingContext context) {
+    String id = context.request().getParam("id");
+    String title = context.request().getParam("title");
+    String markdown = context.request().getParam("markdown");
+    boolean newPage = "yes".equals(context.request().getParam("newPage"));
+
+    dbClient.getConnection(car -> {
+      if (car.succeeded()) {
+        SQLConnection connection = car.result();
+        String sql = newPage ? SQL_CREATE_PAGE : SQL_SAVE_PAGE;
+        JsonArray params = new JsonArray();
+        if (newPage) {
+          params.add(title).add(markdown);
         } else {
-          context.fail(car.cause());
+          params.add(markdown).add(id);
         }
-      });
-    };
+        connection.updateWithParams(sql, params, res -> {
+          connection.close();
+          if (res.succeeded()) {
+            context.response().setStatusCode(303);
+            context.response().putHeader("Location", "/wiki/" + title);
+            context.response().end();
+          } else {
+            context.fail(res.cause());
+          }
+        });
+      } else {
+        context.fail(car.cause());
+      }
+    });
+  }
+
+  private void pageRenderingHandler(RoutingContext context) {
+    String page = context.request().getParam("page");
+
+    dbClient.getConnection(car -> {
+      if (car.succeeded()) {
+
+        SQLConnection connection = car.result();
+        connection.queryWithParams(SQL_GET_PAGE, new JsonArray().add(page), fetch -> {
+          connection.close();
+          if (fetch.succeeded()) {
+            JsonArray row = fetch.result().getResults()
+              .stream()
+              .findFirst()
+              .orElseGet(() -> new JsonArray().add(-1).add(EMPTY_PAGE_MARKDOWN));
+            Integer id = row.getInteger(0);
+            String rawContent = row.getString(1);
+
+            context.put("title", page);
+            context.put("id", id);
+            context.put("newPage", fetch.result().getResults().size() == 0 ? "yes" : "no");
+            context.put("rawContent", rawContent);
+            context.put("content", Processor.process(rawContent));
+            context.put("timestamp", new Date().toString());
+
+            templateEngine.render(context, "templates/page.ftl", ar -> {
+              if (ar.succeeded()) {
+                context.response().putHeader("Content-Type", "text/html");
+                context.response().end(ar.result());
+              } else {
+                context.fail(ar.cause());
+              }
+            });
+          } else {
+            context.fail(fetch.cause());
+          }
+        });
+
+      } else {
+        context.fail(car.cause());
+      }
+    });
   }
 
   @Override
