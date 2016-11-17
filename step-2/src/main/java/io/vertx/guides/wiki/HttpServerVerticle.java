@@ -16,17 +16,22 @@
 
 package io.vertx.guides.wiki;
 
+import com.github.rjeschke.txtmark.Processor;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.templ.FreeMarkerTemplateEngine;
+
+import java.util.Date;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
@@ -42,6 +47,11 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private String wikiDbQueue = "wikidb.queue";
 
+  private static final String EMPTY_PAGE_MARKDOWN =
+    "# A new page\n" +
+      "\n" +
+      "Feel-free to write in Markdown!\n";
+
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
@@ -51,7 +61,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     Router router = Router.router(vertx);
     router.get("/").handler(this::indexHandler);
-//    router.get("/wiki/:page").handler(this::pageRenderingHandler);
+    router.get("/wiki/:page").handler(this::pageRenderingHandler);
 //    router.post().handler(BodyHandler.create());
 //    router.post("/save").handler(this::pageUpdateHandler);
 //    router.post("/create").handler(this::pageCreateHandler);
@@ -73,25 +83,60 @@ public class HttpServerVerticle extends AbstractVerticle {
 
 
   private void indexHandler(RoutingContext context) {
-    vertx.eventBus().send(wikiDbQueue, new JsonObject(),
-      new DeliveryOptions().addHeader("action", "all-pages"),
-      reply -> {
-        if (reply.succeeded()) {
-          JsonObject body = (JsonObject) reply.result().body();
-          context.put("title", "Wiki home");
-          context.put("pages", body.getJsonArray("pages").getList());
-          templateEngine.render(context, "templates/index.ftl", ar -> {
-            if (ar.succeeded()) {
-              context.response().putHeader("Content-Type", "text/html");
-              context.response().end(ar.result());
-            } else {
-              context.fail(ar.cause());
-            }
-          });
-        } else {
-          context.fail(reply.cause());
-        }
-      });
+
+    DeliveryOptions options = new DeliveryOptions().addHeader("action", "all-pages");
+
+    vertx.eventBus().send(wikiDbQueue, new JsonObject(), options, reply -> {
+      if (reply.succeeded()) {
+        JsonObject body = (JsonObject) reply.result().body();
+        context.put("title", "Wiki home");
+        context.put("pages", body.getJsonArray("pages").getList());
+        templateEngine.render(context, "templates/index.ftl", ar -> {
+          if (ar.succeeded()) {
+            context.response().putHeader("Content-Type", "text/html");
+            context.response().end(ar.result());
+          } else {
+            context.fail(ar.cause());
+          }
+        });
+      } else {
+        context.fail(reply.cause());
+      }
+    });
   }
 
+  private void pageRenderingHandler(RoutingContext context) {
+
+    String requestedPage = context.request().getParam("page");
+    JsonObject request = new JsonObject().put("page", requestedPage);
+
+    DeliveryOptions options = new DeliveryOptions().addHeader("action", "get-page");
+    vertx.eventBus().send(wikiDbQueue, request, options, reply -> {
+
+      if (reply.succeeded()) {
+        JsonObject body = (JsonObject) reply.result().body();
+
+        boolean found = body.getBoolean("found");
+        String rawContent = body.getString("rawContent", EMPTY_PAGE_MARKDOWN);
+        context.put("title", requestedPage);
+        context.put("id", body.getInteger("id", -1));
+        context.put("newPage", found ? "yes" : "no");
+        context.put("rawContent", rawContent);
+        context.put("content", Processor.process(rawContent));
+        context.put("timestamp", new Date().toString());
+
+        templateEngine.render(context, "templates/page.ftl", ar -> {
+          if (ar.succeeded()) {
+            context.response().putHeader("Content-Type", "text/html");
+            context.response().end(ar.result());
+          } else {
+            context.fail(ar.cause());
+          }
+        });
+
+      } else {
+        context.fail(reply.cause());
+      }
+    });
+  }
 }

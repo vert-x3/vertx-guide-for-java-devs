@@ -24,6 +24,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 
 import java.io.FileInputStream;
@@ -57,7 +58,8 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
 
   private enum SqlQuery {
     CREATE_PAGES_TABLE,
-    ALL_PAGES
+    ALL_PAGES,
+    GET_PAGE
   }
 
   private final HashMap<SqlQuery, String> sqlQueries = new HashMap<>();
@@ -103,6 +105,9 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
       case "all-pages":
         fetchAllPages(message);
         break;
+      case "get-page":
+        fetchPage(message);
+        break;
       default:
         message.fail(ErrorCodes.BAD_ACTION.ordinal(), "Bad action: " + action);
     }
@@ -111,29 +116,61 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   private void fetchAllPages(Message<JsonObject> message) {
 
     dbClient.getConnection(car -> {
-        if (car.succeeded()) {
-          SQLConnection connection = car.result();
-          connection.query(sqlQueries.get(SqlQuery.ALL_PAGES), res -> {
-            connection.close();
-            if (res.succeeded()) {
-              List<String> pages = res.result()
-                .getResults()
-                .stream()
-                .map(json -> json.getString(0))
-                .sorted()
-                .collect(Collectors.toList());
-              message.reply(new JsonObject().put("pages", new JsonArray(pages)));
-            } else {
-              reportQueryError(message, res.cause());
-            }
-          });
-        } else {
-          reportQueryError(message, car.cause());
-        }
-      });
+      if (car.succeeded()) {
+        SQLConnection connection = car.result();
+        connection.query(sqlQueries.get(SqlQuery.ALL_PAGES), res -> {
+          connection.close();
+          if (res.succeeded()) {
+            List<String> pages = res.result()
+              .getResults()
+              .stream()
+              .map(json -> json.getString(0))
+              .sorted()
+              .collect(Collectors.toList());
+            message.reply(new JsonObject().put("pages", new JsonArray(pages)));
+          } else {
+            reportQueryError(message, res.cause());
+          }
+        });
+      } else {
+        reportQueryError(message, car.cause());
+      }
+    });
   }
 
-  private void reportQueryError(Message<JsonObject> message,Throwable cause) {
+  private void fetchPage(Message<JsonObject> message) {
+
+    String requestedPage = message.body().getString("page");
+
+    dbClient.getConnection(car -> {
+      if (car.succeeded()) {
+        SQLConnection connection = car.result();
+        connection.queryWithParams(sqlQueries.get(SqlQuery.GET_PAGE), new JsonArray().add(requestedPage), fetch -> {
+          connection.close();
+          if (fetch.succeeded()) {
+            JsonObject response = new JsonObject();
+            ResultSet resultSet = fetch.result();
+            if (resultSet.getNumRows() == 0) {
+              response.put("found", false);
+            } else {
+              response.put("found", true);
+              JsonArray row = resultSet.getResults().get(0);
+              response.put("id", row.getInteger(0));
+              response.put("rawContent", row.getString(1));
+            }
+            message.reply(response);
+          } else {
+            reportQueryError(message, fetch.cause());
+          }
+        });
+      } else {
+        reportQueryError(message, car.cause());
+      }
+    });
+
+  }
+
+  private void reportQueryError(Message<JsonObject> message, Throwable cause) {
     LOGGER.error("Database query error", cause);
     message.fail(ErrorCodes.DB_ERROR.ordinal(), cause.getMessage());
   }
@@ -157,5 +194,6 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
 
     sqlQueries.put(SqlQuery.CREATE_PAGES_TABLE, queriesProps.getProperty("create-pages-table"));
     sqlQueries.put(SqlQuery.ALL_PAGES, queriesProps.getProperty("all-pages"));
+    sqlQueries.put(SqlQuery.GET_PAGE, queriesProps.getProperty("get-page"));
   }
 }
