@@ -12,4 +12,4 @@ Communication through the event bus.
 
 == Step 3
 
-Introduce io.vertx:vertx-service-proxy to refactor the event bus code into services.
+Introduce io.vertx:vertx-service-proxy (+vertx-codegen and pom config) to refactor the event bus code into services.

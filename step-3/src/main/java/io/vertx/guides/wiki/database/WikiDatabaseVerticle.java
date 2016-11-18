@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package io.vertx.guides.wiki;
+package io.vertx.guides.wiki.database;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -50,21 +50,6 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(WikiDatabaseVerticle.class);
 
   private JDBCClient dbClient;
-
-  public enum ErrorCodes {
-    NO_ACTION_SPECIFIED,
-    BAD_ACTION,
-    DB_ERROR
-  }
-
-  private enum SqlQuery {
-    CREATE_PAGES_TABLE,
-    ALL_PAGES,
-    GET_PAGE,
-    CREATE_PAGE,
-    SAVE_PAGE,
-    DELETE_PAGE
-  }
 
   private final HashMap<SqlQuery, String> sqlQueries = new HashMap<>();
 

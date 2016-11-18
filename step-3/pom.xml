@@ -52,6 +52,10 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
+      <artifactId>vertx-service-proxy</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
     </dependency>
     <dependency>
@@ -74,6 +78,12 @@
     </dependency>
 
     <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-codegen</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
@@ -89,14 +99,38 @@
   <build>
     <pluginManagement>
       <plugins>
+
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.5.1</version>
           <configuration>
             <source>1.8</source>
             <target>1.8</target>
+
+            <!-- Codegen -->
+            <annotationProcessors>
+              <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
+            </annotationProcessors>
+            <generatedSourcesDirectory>${project.basedir}/src/main/generated</generatedSourcesDirectory>
+            <compilerArgs>
+              <arg>-AoutputDirectory=${project.basedir}/src/main</arg>
+            </compilerArgs>
+
           </configuration>
         </plugin>
+
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.0.0</version>
+          <configuration>
+            <filesets>
+              <fileset>
+                <directory>${project.basedir}/src/main/generated</directory>
+              </fileset>
+            </filesets>
+          </configuration>
+        </plugin>
+
       </plugins>
     </pluginManagement>
 

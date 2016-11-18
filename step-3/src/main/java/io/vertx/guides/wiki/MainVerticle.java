@@ -19,8 +19,9 @@ package io.vertx.guides.wiki;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
+import io.vertx.guides.wiki.http.HttpServerVerticle;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
