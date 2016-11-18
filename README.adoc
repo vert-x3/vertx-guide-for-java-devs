@@ -8,3 +8,8 @@ Starter implementation with Vert.x web, Freemarker templates and Vert.x JDBC, 1 
 == Step 2
 
 Evolve into 2 verticles, pass them configuration data (port, jdbc settings, sql queries, etc), and deploy from a main verticle.
+Communication through the event bus.
+
+== Step 3
+
+Introduce io.vertx:vertx-service-proxy to refactor the event bus code into services.
