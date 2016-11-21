@@ -1,6 +1,6 @@
 hs_err_pid*
 target/
-src/main/generated/
+**/src/main/generated/
 .mvn/
 .idea/
 db/
