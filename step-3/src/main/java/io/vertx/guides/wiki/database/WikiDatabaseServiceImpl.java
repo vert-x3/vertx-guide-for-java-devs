@@ -26,7 +26,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   private final HashMap<SqlQuery, String> sqlQueries;
   private final JDBCClient dbClient;
 
-  public WikiDatabaseServiceImpl(JDBCClient dbClient, HashMap<SqlQuery, String> sqlQueries, Handler<AsyncResult<Void>> readyHandler) {
+  WikiDatabaseServiceImpl(JDBCClient dbClient, HashMap<SqlQuery, String> sqlQueries, Handler<AsyncResult<WikiDatabaseService>> readyHandler) {
     this.dbClient = dbClient;
     this.sqlQueries = sqlQueries;
 
@@ -42,7 +42,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
             LOGGER.error("Database preparation error", create.cause());
             readyHandler.handle(Future.failedFuture(create.cause()));
           } else {
-            readyHandler.handle(Future.succeededFuture());
+            readyHandler.handle(Future.succeededFuture(this));
           }
         });
       }

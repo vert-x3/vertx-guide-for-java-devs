@@ -50,10 +50,14 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
       .put("driver_class", config().getString(CONFIG_WIKIDB_JDBC_DRIVER_CLASS, "org.hsqldb.jdbcDriver"))
       .put("max_pool_size", config().getInteger(CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, 30)));
 
-    WikiDatabaseService dbService = WikiDatabaseService.create(dbClient, sqlQueries, ready -> {
-
+    WikiDatabaseService.create(dbClient, sqlQueries, ready -> {
+      if (ready.succeeded()) {
+        ProxyHelper.registerService(WikiDatabaseService.class, vertx, ready.result(), CONFIG_WIKIDB_QUEUE);
+        startFuture.succeeded();
+      } else {
+        startFuture.fail(ready.cause());
+      }
     });
-    ProxyHelper.registerService(WikiDatabaseService.class, vertx, dbService, CONFIG_WIKIDB_QUEUE);
   }
 
   /*

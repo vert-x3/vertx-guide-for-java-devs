@@ -34,7 +34,7 @@ import java.util.HashMap;
 @ProxyGen
 public interface WikiDatabaseService {
 
-  static WikiDatabaseService create(JDBCClient dbClient, HashMap<SqlQuery, String> sqlQueries, Handler<AsyncResult<Void>> readyHandler) {
+  static WikiDatabaseService create(JDBCClient dbClient, HashMap<SqlQuery, String> sqlQueries, Handler<AsyncResult<WikiDatabaseService>> readyHandler) {
     return new WikiDatabaseServiceImpl(dbClient, sqlQueries, readyHandler);
   }
 
