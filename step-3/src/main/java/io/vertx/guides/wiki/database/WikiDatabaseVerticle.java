@@ -53,7 +53,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
     WikiDatabaseService.create(dbClient, sqlQueries, ready -> {
       if (ready.succeeded()) {
         ProxyHelper.registerService(WikiDatabaseService.class, vertx, ready.result(), CONFIG_WIKIDB_QUEUE);
-        startFuture.succeeded();
+        startFuture.complete();
       } else {
         startFuture.fail(ready.cause());
       }
