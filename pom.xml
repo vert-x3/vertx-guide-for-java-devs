@@ -31,6 +31,7 @@
     <module>step-1</module>
     <module>step-2</module>
     <module>step-3</module>
+    <module>step-4</module>
   </modules>
 
 </project>
