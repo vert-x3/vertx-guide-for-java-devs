@@ -134,7 +134,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   }
 
   @Override
-  public WikiDatabaseService savePage(String id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
+  public WikiDatabaseService savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     dbClient.getConnection(car -> {
 
       if (car.succeeded()) {
@@ -158,7 +158,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   }
 
   @Override
-  public WikiDatabaseService deletePage(String id, Handler<AsyncResult<Void>> resultHandler) {
+  public WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler) {
     dbClient.getConnection(car -> {
       if (car.succeeded()) {
         SQLConnection connection = car.result();

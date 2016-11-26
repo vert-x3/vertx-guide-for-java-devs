@@ -153,7 +153,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     if ("yes".equals(context.request().getParam("newPage"))) {
       dbService.createPage(title, markdown, handler);
     } else {
-      dbService.savePage(context.request().getParam("id"), markdown, handler);
+      dbService.savePage(Integer.valueOf(context.request().getParam("id")), markdown, handler);
     }
   }
 
@@ -169,7 +169,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   }
 
   private void pageDeletionHandler(RoutingContext context) {
-    dbService.deletePage(context.request().getParam("id"), reply -> {
+    dbService.deletePage(Integer.valueOf(context.request().getParam("id")), reply -> {
       if (reply.succeeded()) {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/");

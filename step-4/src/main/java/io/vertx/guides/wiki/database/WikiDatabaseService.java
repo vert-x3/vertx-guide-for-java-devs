@@ -52,8 +52,8 @@ public interface WikiDatabaseService {
   WikiDatabaseService createPage(String title, String markdown, Handler<AsyncResult<Void>> resultHandler);
 
   @Fluent
-  WikiDatabaseService savePage(String id, String markdown, Handler<AsyncResult<Void>> resultHandler);
+  WikiDatabaseService savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler);
 
   @Fluent
-  WikiDatabaseService deletePage(String id, Handler<AsyncResult<Void>> resultHandler);
+  WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler);
 }
