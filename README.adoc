@@ -17,3 +17,7 @@ Introduce io.vertx:vertx-service-proxy (+vertx-codegen and pom config) to refact
 == Step 4
 
 Testing
+
+== Step 5
+
+HttpClient / integrate with a 3rd-party service.
