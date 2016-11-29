@@ -27,6 +27,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
@@ -56,4 +57,7 @@ public interface WikiDatabaseService {
 
   @Fluent
   WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler);
+
+  @Fluent
+  WikiDatabaseService fetchAllPagesData(Handler<AsyncResult<List<JsonObject>>> resultHandler);
 }

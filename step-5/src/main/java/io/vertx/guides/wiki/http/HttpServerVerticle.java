@@ -18,13 +18,12 @@
 package io.vertx.guides.wiki.http;
 
 import com.github.rjeschke.txtmark.Processor;
-import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.Message;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -51,6 +50,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private WikiDatabaseService dbService;
 
+  private HttpClient httpClient;
+
   private static final String EMPTY_PAGE_MARKDOWN =
     "# A new page\n" +
       "\n" +
@@ -62,10 +63,13 @@ public class HttpServerVerticle extends AbstractVerticle {
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
 
+    httpClient = vertx.createHttpClient(new HttpClientOptions().setSsl(true));
+
     HttpServer server = vertx.createHttpServer();
 
     Router router = Router.router(vertx);
     router.get("/").handler(this::indexHandler);
+    router.get("/backup").handler(this::backupHandler);
     router.get("/wiki/:page").handler(this::pageRenderingHandler);
     router.post().handler(BodyHandler.create());
     router.post("/save").handler(this::pageUpdateHandler);
@@ -85,7 +89,6 @@ public class HttpServerVerticle extends AbstractVerticle {
         }
       });
   }
-
 
   private void indexHandler(RoutingContext context) {
     dbService.fetchAllPages(reply -> {
@@ -174,6 +177,48 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/");
         context.response().end();
+      } else {
+        context.fail(reply.cause());
+      }
+    });
+  }
+
+  private void backupHandler(RoutingContext context) {
+    dbService.fetchAllPagesData(reply -> {
+      if (reply.succeeded()) {
+
+        JsonObject filesObject = new JsonObject();
+        JsonObject gistPayload = new JsonObject()
+          .put("files", filesObject)
+          .put("description", "A wiki backup")
+          .put("public", true);
+
+        reply
+          .result()
+          .forEach(page -> {
+            JsonObject fileObject = new JsonObject();
+            filesObject.put(page.getString("NAME"), fileObject);
+            fileObject.put("content", page.getString("CONTENT"));
+          });
+
+        httpClient.post(443, "api.github.com", "/gists", response -> {
+          if (response.statusCode() == 201) {
+            response.bodyHandler(buffer -> {
+              context.put("backup_gist_url", buffer.toJsonObject().getString("html_url"));
+              indexHandler(context);
+            });
+          } else {
+            context.fail(502);
+          }
+        })
+          .exceptionHandler(err -> {
+            LOGGER.error("HTTP Client error", err);
+            context.fail(err);
+          })
+          .putHeader("User-Agent", "vert-x3")
+          .putHeader("Accept", "application/vnd.github.v3+json")
+          .putHeader("Content-Type", "application/json")
+          .end(gistPayload.encode());
       } else {
         context.fail(reply.cause());
       }
