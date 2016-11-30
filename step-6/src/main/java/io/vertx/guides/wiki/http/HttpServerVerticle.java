@@ -80,7 +80,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     Router apiRouter = Router.router(vertx);
     apiRouter.get("/pages").handler(this::apiRoot);
-    apiRouter.get("/page/:id").handler(this::apiGetPage);
+    apiRouter.get("/pages/:id").handler(this::apiGetPage);
     router.mountSubRouter("/api", apiRouter);
 
     int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);
