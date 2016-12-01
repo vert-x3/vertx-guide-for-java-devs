@@ -25,3 +25,15 @@ HttpClient / integrate with a 3rd-party service.
 == Step 6
 
 REST API
+
+== Step 7
+
+Access control
+
+== Step 8
+
+Refactor to RxJava
+
+== Step 9
+
+Client-side web app
