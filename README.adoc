@@ -28,7 +28,12 @@ REST API
 
 == Step 7
 
-Access control
+Access control and security
+
+* server-side pages using Shiro auth
+// (put warnings on not abusing internal APIs to put state / threadlocal issues + some parts are blocking so can be a perf problem)
+* API using JWT tokens
+* HTTPS all the things
 
 == Step 8
 
