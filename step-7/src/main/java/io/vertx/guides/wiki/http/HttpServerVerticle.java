@@ -25,9 +25,11 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -76,7 +78,11 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     httpClient = vertx.createHttpClient(new HttpClientOptions().setSsl(true));
 
-    HttpServer server = vertx.createHttpServer();
+    HttpServer server = vertx.createHttpServer(new HttpServerOptions()
+      .setSsl(true)
+      .setKeyStoreOptions(new JksOptions()
+        .setPath("server-keystore.jks")
+        .setPassword("secret")));
 
     AuthProvider auth = ShiroAuth.create(vertx, new ShiroAuthOptions()
       .setType(ShiroAuthRealmType.PROPERTIES)
