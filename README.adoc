@@ -20,7 +20,7 @@ Testing
 
 == Step 5
 
-HttpClient / integrate with a 3rd-party service.
+WebClient / integrate with a 3rd-party service.
 
 == Step 6
 

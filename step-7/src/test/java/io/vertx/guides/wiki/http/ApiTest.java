@@ -20,15 +20,16 @@ package io.vertx.guides.wiki.http;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +42,7 @@ import org.junit.runner.RunWith;
 public class ApiTest {
 
   private Vertx vertx;
-  private HttpClient httpClient;
+  private WebClient webClient;
 
   @Before
   public void prepare(TestContext context) {
@@ -55,9 +56,9 @@ public class ApiTest {
 
     vertx.deployVerticle(new HttpServerVerticle(), context.asyncAssertSuccess());
 
-    httpClient = vertx.createHttpClient(new HttpClientOptions()
+    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions()
       .setDefaultHost("localhost")
-      .setDefaultPort(8080));
+      .setDefaultPort(8080)));
   }
 
   @After
@@ -74,19 +75,25 @@ public class ApiTest {
       .put("markdown", "# A page");
 
     Future<JsonObject> postRequest = Future.future();
-    httpClient.post("/api/pages", postResponse -> {
-      postResponse.bodyHandler(buffer -> postRequest.complete(buffer.toJsonObject()));
-    })
-      .exceptionHandler(context::fail)
-      .end(page.encode());
+    webClient.post("/api/pages").as(BodyCodec.jsonObject()).sendJsonObject(page, ar -> {
+      if (ar.succeeded()) {
+        HttpResponse<JsonObject> postResponse =  ar.result();
+        postRequest.complete(postResponse.body());
+      } else {
+        context.fail(ar.cause());
+      }
+    });
 
     Future<JsonObject> getRequest = Future.future();
     postRequest.compose(h -> {
-      httpClient.get("/api/pages", getResponse -> {
-        getResponse.bodyHandler(buffer -> getRequest.complete(buffer.toJsonObject()));
-      })
-        .exceptionHandler(context::fail)
-        .end();
+      webClient.get("/api/pages").as(BodyCodec.jsonObject()).send(ar -> {
+        if (ar.succeeded()) {
+          HttpResponse<JsonObject> getResponse = ar.result();
+          getRequest.complete(getResponse.body());
+        } else {
+          context.fail(ar.cause());
+        }
+      });
     }, getRequest);
 
     Future<JsonObject> putRequest = Future.future();
@@ -94,23 +101,29 @@ public class ApiTest {
       JsonArray array = response.getJsonArray("pages");
       context.assertEquals(1, array.size());
       context.assertEquals(0, array.getJsonObject(0).getInteger("id"));
-      httpClient.put("/api/pages/0", putResponse -> {
-        putResponse.bodyHandler(buffer -> putRequest.complete(buffer.toJsonObject()));
-      })
-        .exceptionHandler(context::fail)
-        .end(new JsonObject()
-          .put("id", 0)
-          .put("markdown", "Oh Yeah!").encode());
+      webClient.put("/api/pages/0").as(BodyCodec.jsonObject()).sendJsonObject(new JsonObject()
+        .put("id", 0)
+        .put("markdown", "Oh Yeah!"), ar -> {
+        if (ar.succeeded()) {
+          HttpResponse<JsonObject> putResponse = ar.result();
+          putRequest.complete(putResponse.body());
+        } else {
+          context.fail(ar.cause());
+        }
+      });
     }, putRequest);
 
     Future<JsonObject> deleteRequest = Future.future();
     putRequest.compose(response -> {
       context.assertTrue(response.getBoolean("success"));
-      httpClient.delete("/api/pages/0", delResponse -> {
-        delResponse.bodyHandler(buffer -> deleteRequest.complete(buffer.toJsonObject()));
-      })
-        .exceptionHandler(context::fail)
-        .end();
+      webClient.delete("/api/pages/0").as(BodyCodec.jsonObject()).send(ar -> {
+        if (ar.succeeded()) {
+          HttpResponse<JsonObject> delResponse = ar.result();
+          deleteRequest.complete(delResponse.body());
+        } else {
+          context.fail(ar.cause());
+        }
+      });
     }, deleteRequest);
 
     deleteRequest.compose(response -> {
