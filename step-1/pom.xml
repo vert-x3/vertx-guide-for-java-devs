@@ -45,11 +45,12 @@
   </dependencyManagement>
 
   <dependencies>
-
+    
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
     </dependency>
+    <!-- tag::web-deps[] -->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
@@ -63,6 +64,8 @@
       <artifactId>txtmark</artifactId>
       <version>0.13</version>
     </dependency>
+    <!-- end::web-deps[] -->
+    <!-- tag::db-deps[] -->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-jdbc-client</artifactId>
@@ -72,6 +75,7 @@
       <artifactId>hsqldb</artifactId>
       <version>2.3.4</version>
     </dependency>
+    <!-- end::db-deps[] -->
 
     <dependency>
       <groupId>junit</groupId>

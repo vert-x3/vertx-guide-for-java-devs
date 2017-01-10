@@ -1,0 +1,72 @@
+= A minimally viable wiki written with Vert.x
+
+We are going to start with a first iteration with the simplest code possible to have a wiki written with Vert.x.
+While the next iterations will introduce more elegance into the code base as well as proper testing, we will see that quick prototyping with Vert.x is both a simple and a realistic target.
+
+At this stage the wiki will use server-side rendering of HTML pages and data persistence through a JDBC connection.
+To do so, we will use the following libraries.
+
+1. http://vertx.io/docs/vertx-web/java/[Vert.x web] since while the Vert.x core library _does_ support the creation of HTTP servers, it does not provide elegant APIs to deal with routing, handling of request payloads, etc.
+2. http://vertx.io/docs/vertx-jdbc-client/java/[Vert.x JDBC client] to provide an asynchronous API over JDBC.
+3. http://freemarker.org/[Apache FreeMarker] to render server-side pages as it is an uncomplicated templating engine.
+4. https://github.com/rjeschke/txtmark[Txtmark] to render Markdown text to HTML, allowing the edition of wiki pages in Markdown.
+
+== Bootstrapping a Maven project
+
+This guide makes the choice of using https://maven.apache.org[Apache Maven] as the build tool, primarily because it is very well integrated with the major integrated development environments.
+You can equally use another build tool such as https://gradle.org/[Gradle].
+
+The Vert.x community offers a template project structure from https://github.com/vert-x3/vertx-maven-starter that can be cloned.
+Since you will likely want to use (Git) version control as well, the fastest route is to clone the repository, delete its `.git/` folder and then create a new Git repository:
+
+    git clone https://github.com/vert-x3/vertx-maven-starter.git vertx-wiki
+    cd vertx-wiki
+    rm -rf .git
+    git init
+
+The project offers a sample verticle as well as a unit test.
+You can safely delete all `.java` files beneath `src/` to hack on the wiki, but before doing so you may test that the project builds and runs successfully:
+
+    mvn package exec:java
+
+You will notice that the Maven project `pom.xml` does 2 interesting things:
+
+1. it uses the https://maven.apache.org/plugins/maven-shade-plugin/[Maven Shade Plugin] to create a single Jar archive with all required dependencies, suffixed by `-fat.jar`, also called _"a fat Jar"_, and
+2. it uses the http://www.mojohaus.org/exec-maven-plugin/[Exec Maven Plugin] to provide the `exec:java` goal that in turns starts the application through the Vert.x `io.vertx.core.Launcher` class. This is actually equivalent to running using the `vertx` command-line tool that ships in the Vert.x distribution.
+
+Finally, you will notice the presence of the `redeploy.sh` and `redeploy.bat` scripts that you can alternatively use for automatic compilation and redeployment upon code changes.
+Note that doing requires ensuring that the `VERTICLE` variable in these scripts matches the main verticle to be used.
+
+== Adding the required dependencies
+
+The first batch of dependencies to add to the Maven `pom.xml` file are those for the web processing and rendering:
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=web-deps]
+----
+
+TIP: As the `vertx-web-templ-freemarker` name suggests, Vert.x web provides pluggable support for popular templating engines: Handlebars, Jade, MVEL, Pebble, Thymeleaf and of course Freemarker.
+
+The second set of dependencies are those required for JDBC database access:
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=db-deps]
+----
+
+The Vert.x JDBC client library provides access to any JDBC-compliant database, but of course our project needs to have a JDBC driver on the _classpath_.
+
+http://hsqldb.org/[HSQLDB] is well-known relationnal database that is written in Java.
+It is quite popular when used as an embedded database to avoid the requirement of having a third-party database server running separately.
+It is also popular for unit and integration testing as it offers a (volatile) in-memory storage.
+
+HSQLDB as an embedded database is a good fit to get us started.
+It stores data in local files, and since the HSQLDB library Jar provides a JDBC driver the Vert.x JDBC configuration will be straightforward.
+
+[NOTE]
+====
+Vert.x also offers a dedicated http://vertx.io/docs/vertx-mysql-postgresql-client/java/[MySQL and PostgreSQL client] library.
+
+Of course you can use the general-purpose Vert.x JDBC client to connect to MySQL or PostgreSQL databases, but this library offers better performance and asynchronous support by working with these 2 database server network protocols rather than going through the blocking JDBC APIs.
+====
