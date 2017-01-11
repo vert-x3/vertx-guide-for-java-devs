@@ -70,3 +70,5 @@ Vert.x also offers a dedicated http://vertx.io/docs/vertx-mysql-postgresql-clien
 
 Of course you can use the general-purpose Vert.x JDBC client to connect to MySQL or PostgreSQL databases, but this library offers better performance and asynchronous support by working with these 2 database server network protocols rather than going through the blocking JDBC APIs.
 ====
+
+NOTE: Vert.x also provides libraries to deal with the popular non-relational databases http://vertx.io/docs/vertx-mongo-client/java/[MongoDB] and http://vertx.io/docs/vertx-redis-client/java/[Redis].
