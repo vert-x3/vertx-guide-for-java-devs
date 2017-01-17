@@ -72,3 +72,32 @@ Of course you can use the general-purpose Vert.x JDBC client to connect to MySQL
 ====
 
 NOTE: Vert.x also provides libraries to deal with the popular non-relational databases http://vertx.io/docs/vertx-mongo-client/java/[MongoDB] and http://vertx.io/docs/vertx-redis-client/java/[Redis].
+
+== Anatomy of a verticle
+
+The verticle for our wiki consists of a single `io.vertx.guides.wiki.MainVerticle` Java class.
+This class extends `io.vertx.core.AbstractVerticle`, the base class for verticles that mainly provides:
+
+1. life-cycle `start` and `stop` methods to eventually override, and
+2. a _protected_ field called `vertx` that references the Vert.x environment where the verticle is being deployed, and
+3. an accessor to some configuration object that allows passing external configuration to a verticle.
+
+To get started our verticle can just override the `start` method as follows:
+
+[source,java]
+----
+public class MainVerticle extends AbstractVerticle {
+
+  @Override
+  public void start(Future<Void> startFuture) throws Exception {
+    startFuture.complete();
+  }
+}
+----
+
+There are 2 forms of `start` (and `stop`) methods: 1 with no argument and 1 with a _future_ object reference.
+The no-argument variants imply that the verticle initialization or house-keeping phases always succeed unless an exception is being thrown.
+The variants with a _future_ object provide a more fine-grained approach to _eventually_ signal that operations succeeded or not.
+Indeed, some initialization or cleanup code may require asynchronous operations, so reporting via a _future_ object naturally fits with asynchronous idioms.
+
+
