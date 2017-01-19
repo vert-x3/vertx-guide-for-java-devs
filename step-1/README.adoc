@@ -144,3 +144,42 @@ This is equivalent to:
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=another-start]
 ----
+
+=== Database initialization
+
+The wiki database schema consists of a single table `Pages` with the following columns:
+
+[options="header"]
+|===
+|Column |Type |Description
+
+|`Id`
+|Integer
+|Primary key
+
+|`Name`
+|Characters
+|Name of a wiki page, must be unique
+
+|`Content`
+|Text
+|Markdown text of a wiki page
+|===
+
+The database operations will be typical _create, read, update, delete_ operations.
+To get us started, we simply store the corresponding SQL queries as static fields of the `MainVerticle` class.
+Note that they are written in a dialect that HSQLDB understands, but that other relational databases may not necessarily support:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=sql-fields]
+----
+<1> The `?` in the queries are placeholders to pass data when executing queries, and the Vert.x JDBC client prevents from SQL injections.
+
+The application verticle needs to keep a reference to a `JDBCClient` object (from the `io.vertx.ext.jdbc` package) that serves as the connection to the database.
+We do so using a field in `MainVerticle`, and we also create a general-purpose logger from the `io.vertx.core.logging` package:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=db-and-logger]
+----

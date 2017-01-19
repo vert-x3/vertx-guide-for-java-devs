@@ -41,24 +41,29 @@ import java.util.stream.Collectors;
  */
 public class MainVerticle extends AbstractVerticle {
 
+  // tag::sql-fields[]
   private static final String SQL_CREATE_PAGES_TABLE = "create table if not exists Pages (Id integer identity primary key, Name varchar(255) unique, Content clob)";
-  private static final String SQL_GET_PAGE = "select Id, Content from Pages where Name = ?";
+  private static final String SQL_GET_PAGE = "select Id, Content from Pages where Name = ?"; // <1>
   private static final String SQL_CREATE_PAGE = "insert into Pages values (NULL, ?, ?)";
   private static final String SQL_SAVE_PAGE = "update Pages set Content = ? where Id = ?";
   private static final String SQL_ALL_PAGES = "select Name from Pages";
-  private static final String SQL_DELETE_PAGE = "delete from Pages where Id = ?";
+  private static final String SQL_DELETE_PAGE = "delete from Pages where Id = ?";  
+  // end::sql-fields[]
+
+  // tag::db-and-logger[]
+  private JDBCClient dbClient;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
+  // end::db-and-logger[]
 
   private static final String EMPTY_PAGE_MARKDOWN =
     "# A new page\n" +
       "\n" +
       "Feel-free to write in Markdown!\n";
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
+  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();  
 
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
-
-  private JDBCClient dbClient;
-
+  // tag::prepareDatabase[]
   private Future<Void> prepareDatabase() {
     Future<Void> future = Future.future();
 
@@ -87,6 +92,7 @@ public class MainVerticle extends AbstractVerticle {
 
     return future;
   }
+  // end::prepareDatabase[]
 
   private Future<Void> startHttpServer() {
     Future<Void> future = Future.future();
