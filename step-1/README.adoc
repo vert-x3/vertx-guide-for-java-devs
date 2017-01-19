@@ -115,18 +115,16 @@ To make our code _cleaner_ we will define 1 method per phase, and adopt a patter
 ----
 private Future<Void> prepareDatabase() {
   Future<Void> future = Future.future();
-  // (...) // <1>
+  // (...)
   return future;
 }
 
 private Future<Void> startHttpServer() {
   Future<Void> future = Future.future();
-  // (...) // <2>
+  // (...)
   return future;
 }
 ----
-<1> Code to prepare the database connection
-<2> Code to prepare the HTTP server
 
 By having each method returning a _future_ object, the implementation of the `start` method becomes a composition:
 
