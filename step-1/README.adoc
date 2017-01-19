@@ -134,3 +134,15 @@ By having each method returning a _future_ object, the implementation of the `st
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=start]
 ----
+
+When the _future_ of `prepareDatabase` completes successfully, then `startHttpServer` is called and the `steps` future completes depending of the outcome of the future returned by `startHttpServer`.
+`startHttpServer` is never called if `prepareDatabase` encounters an error, in which case the `steps` _future_ is in a _failed_ state and has been completed with the exception describing the error.
+
+Eventually `steps` completes: `setHandler` defines a handler to be called upon completion.
+In our case we simply want to complete `startFuture` with `steps` and use the `completer` method to obtain a handler.
+This is equivalent to:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=another-start]
+----
