@@ -3,6 +3,7 @@ Julien Ponge <julien.ponge@insa-lyon.fr>
 :source-highlighter: highlight.js
 :icons: font
 :data-uri:
+:toc:
 
 :leveloffset: +1
 

@@ -258,10 +258,12 @@ public class MainVerticle extends AbstractVerticle {
     });
   }
 
+  // tag::start[]
   @Override
   public void start(Future<Void> startFuture) throws Exception {
     prepareDatabase()
       .compose(v -> startHttpServer())
       .compose(v -> startFuture.complete(), startFuture);
   }
+  // end::start[]
 }

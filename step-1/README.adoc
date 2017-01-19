@@ -100,4 +100,37 @@ The no-argument variants imply that the verticle initialization or house-keeping
 The variants with a _future_ object provide a more fine-grained approach to _eventually_ signal that operations succeeded or not.
 Indeed, some initialization or cleanup code may require asynchronous operations, so reporting via a _future_ object naturally fits with asynchronous idioms.
 
+== Wiki verticle initialization phases
 
+To get our wiki running, we need to perform a 2-phases initialization:
+
+1. we need to establish a JDBC database connection, and also make sure that the database schema is in place, and
+2. we need to start a HTTP server for the web application.
+
+Each phase can fail (e.g., the HTTP server TCP port is already being used), and they should not run in parallel as the web application code first needs the database access to work.
+
+To make our code _cleaner_ we will define 1 method per phase, and adopt a pattern of returning a _future_ object to notify when each phases completes, and whether it did so successfully or not:
+
+[source,java]
+----
+private Future<Void> prepareDatabase() {
+  Future<Void> future = Future.future();
+  // (...) // <1>
+  return future;
+}
+
+private Future<Void> startHttpServer() {
+  Future<Void> future = Future.future();
+  // (...) // <2>
+  return future;
+}
+----
+<1> Code to prepare the database connection
+<2> Code to prepare the HTTP server
+
+By having each method returning a _future_ object, the implementation of the `start` method becomes a composition:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=start]
+----
