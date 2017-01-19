@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2016 Red Hat, Inc. and/or its affiliates.
- *  Copyright (c) 2016 INSA Lyon, CITI Laboratory.
+ *  Copyright (c) 2017 Red Hat, Inc. and/or its affiliates.
+ *  Copyright (c) 2017 INSA Lyon, CITI Laboratory.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class MainVerticle extends AbstractVerticle {
   private static final String SQL_CREATE_PAGE = "insert into Pages values (NULL, ?, ?)";
   private static final String SQL_SAVE_PAGE = "update Pages set Content = ? where Id = ?";
   private static final String SQL_ALL_PAGES = "select Name from Pages";
-  private static final String SQL_DELETE_PAGE = "delete from Pages where Id = ?";  
+  private static final String SQL_DELETE_PAGE = "delete from Pages where Id = ?";
   // end::sql-fields[]
 
   // tag::db-and-logger[]
@@ -61,7 +61,7 @@ public class MainVerticle extends AbstractVerticle {
       "\n" +
       "Feel-free to write in Markdown!\n";
 
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();  
+  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
 
   // tag::prepareDatabase[]
   private Future<Void> prepareDatabase() {
