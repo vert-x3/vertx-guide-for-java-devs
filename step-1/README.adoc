@@ -183,3 +183,20 @@ We do so using a field in `MainVerticle`, and we also create a general-purpose l
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=db-and-logger]
 ----
+
+Last but not least, here is the complete implementation of the `prepareDatabase` method.
+It attempts to obtain a JDBC client connection, then performs a SQL query to create the `Pages` table unless it already exists:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=prepareDatabase]
+----
+<1> `createShared` creates a shared connection to be shared among verticles known to the `vertx` instance, which in general is a good thing.
+<2> The JDBC client connection is made by passing a Vert.x JSON object. Here `url` is the JDBC URL.
+<3> Just like `url`, `driver_class` is specific to the JDBC driver being used and points to the driver class.
+<4> `max_pool_size` is the number of concurrent connections. We chose 30 here, but it is just an arbitrary number.
+<5> Getting a connection is an asynchronous operation that gives us an `AsyncResult<SQLConnection>`. It must then be tested to see if the connection could be established or not (`AsyncResult` is actually a super-interface of `Future`).
+<6> If the SQL connection could not be obtained, then the method _future_ is completed to fail with the `AsyncResult`-provided exception via the `cause` method.
+<7> The `SQLConnection` is the result of the successful `AsyncResult`. We can use it to perform a SQL query.
+<8> Before checking whether the SQL query succeeded or not, we must release it by calling `close`, otherwise the JDBC client connection pool can eventually drain.
+<9> We complete the method _future_ object with a success.

@@ -67,24 +67,24 @@ public class MainVerticle extends AbstractVerticle {
   private Future<Void> prepareDatabase() {
     Future<Void> future = Future.future();
 
-    dbClient = JDBCClient.createShared(vertx, new JsonObject()
-      .put("url", "jdbc:hsqldb:file:db/wiki")
-      .put("driver_class", "org.hsqldb.jdbcDriver")
-      .put("max_pool_size", 30));
+    dbClient = JDBCClient.createShared(vertx, new JsonObject()  // <1>
+      .put("url", "jdbc:hsqldb:file:db/wiki")   // <2>
+      .put("driver_class", "org.hsqldb.jdbcDriver")   // <3>
+      .put("max_pool_size", 30));   // <4>
 
-    dbClient.getConnection(ar -> {
+    dbClient.getConnection(ar -> {    // <5>
       if (ar.failed()) {
         LOGGER.error("Could not open a database connection", ar.cause());
-        future.fail(ar.cause());
+        future.fail(ar.cause());    // <6>
       } else {
-        SQLConnection connection = ar.result();
+        SQLConnection connection = ar.result();   // <7>
         connection.execute(SQL_CREATE_PAGES_TABLE, create -> {
-          connection.close();
+          connection.close();   // <8>
           if (create.failed()) {
             LOGGER.error("Database preparation error", create.cause());
             future.fail(create.cause());
           } else {
-            future.complete();
+            future.complete();  // <9>
           }
         });
       }
