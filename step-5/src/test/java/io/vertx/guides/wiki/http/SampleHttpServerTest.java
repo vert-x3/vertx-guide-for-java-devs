@@ -19,10 +19,12 @@ package io.vertx.guides.wiki.http;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,20 +57,20 @@ public class SampleHttpServerTest {
       req.response().putHeader("Content-Type", "text/plain").end("Ok"))
       .listen(8080, context.asyncAssertSuccess(server -> {
 
-        HttpClient httpClient = vertx.createHttpClient();
+        WebClient webClient = WebClient.wrap(vertx.createHttpClient());
 
-        httpClient.get(8080, "localhost", "/", response -> {
-          response.exceptionHandler(throwable -> async.resolve(Future.failedFuture(throwable)));
-          response.bodyHandler(body -> {
+        webClient.get(8080, "localhost", "/").send(ar -> {
+          if (ar.succeeded()) {
+            HttpResponse<Buffer> response = ar.result();
             context.assertTrue(response.headers().contains("Content-Type"));
             context.assertEquals("text/plain", response.getHeader("Content-Type"));
-            context.assertEquals("Ok", body.toString());
-            httpClient.close();
+            context.assertEquals("Ok", response.body().toString());
+            webClient.close();
             async.complete();
-          });
-        }).exceptionHandler(throwable -> async.resolve(Future.failedFuture(throwable)))
-          .end();
-
+          } else {
+            async.resolve(Future.failedFuture(ar.cause()));
+          }
+        });
       }));
   }
 }

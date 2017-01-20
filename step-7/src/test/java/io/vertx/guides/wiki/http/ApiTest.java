@@ -20,7 +20,6 @@ package io.vertx.guides.wiki.http;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -28,6 +27,9 @@ import io.vertx.core.net.JksOptions;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +43,7 @@ import org.junit.runner.RunWith;
 public class ApiTest {
 
   private Vertx vertx;
-  private HttpClient httpClient;
+  private WebClient webClient;
   private String jwtTokenHeaderValue;
 
   @Before
@@ -56,11 +58,11 @@ public class ApiTest {
 
     vertx.deployVerticle(new HttpServerVerticle(), context.asyncAssertSuccess());
 
-    httpClient = vertx.createHttpClient(new HttpClientOptions()
+    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions()
       .setDefaultHost("localhost")
       .setDefaultPort(8080)
       .setSsl(true)
-      .setTrustOptions(new JksOptions().setPath("server-keystore.jks").setPassword("secret")));
+      .setTrustOptions(new JksOptions().setPath("server-keystore.jks").setPassword("secret"))));
   }
 
   @After
@@ -73,14 +75,17 @@ public class ApiTest {
     Async async = context.async();
 
     Future<String> tokenRequest = Future.future();
-    httpClient.get("/api/token", getResponse -> {
-      context.assertEquals(200, getResponse.statusCode());
-      getResponse.bodyHandler(buffer -> tokenRequest.complete(buffer.toString("UTF-8")));
-    })
-      .exceptionHandler(context::fail)
+    webClient.get("/api/token")
       .putHeader("login", "foo")
       .putHeader("password", "bar")
-      .end();
+      .as(BodyCodec.string())
+      .send(ar -> {
+        if (ar.succeeded()) {
+          tokenRequest.complete(ar.result().body());
+        } else {
+          context.fail(ar.cause());
+        }
+      });
 
     JsonObject page = new JsonObject()
       .put("name", "Sample")
@@ -89,22 +94,32 @@ public class ApiTest {
     Future<JsonObject> postRequest = Future.future();
     tokenRequest.compose(token -> {
       jwtTokenHeaderValue = "Bearer " + token;
-      httpClient.post("/api/pages", postResponse -> {
-        postResponse.bodyHandler(buffer -> postRequest.complete(buffer.toJsonObject()));
-      })
-        .exceptionHandler(context::fail)
+      webClient.post("/api/pages")
         .putHeader("Authorization", jwtTokenHeaderValue)
-        .end(page.encode());
+        .as(BodyCodec.jsonObject())
+        .sendJsonObject(page, ar -> {
+          if (ar.succeeded()) {
+            HttpResponse<JsonObject> postResponse = ar.result();
+            postRequest.complete(postResponse.body());
+          } else {
+            context.fail(ar.cause());
+          }
+        });
     }, postRequest);
 
     Future<JsonObject> getRequest = Future.future();
     postRequest.compose(h -> {
-      httpClient.get("/api/pages", getResponse -> {
-        getResponse.bodyHandler(buffer -> getRequest.complete(buffer.toJsonObject()));
-      })
-        .exceptionHandler(context::fail)
+      webClient.get("/api/pages")
         .putHeader("Authorization", jwtTokenHeaderValue)
-        .end();
+        .as(BodyCodec.jsonObject())
+        .send(ar -> {
+          if (ar.succeeded()) {
+            HttpResponse<JsonObject> getResponse = ar.result();
+            getRequest.complete(getResponse.body());
+          } else {
+            context.fail(ar.cause());
+          }
+        });
     }, getRequest);
 
     Future<JsonObject> putRequest = Future.future();
@@ -112,25 +127,35 @@ public class ApiTest {
       JsonArray array = response.getJsonArray("pages");
       context.assertEquals(1, array.size());
       context.assertEquals(0, array.getJsonObject(0).getInteger("id"));
-      httpClient.put("/api/pages/0", putResponse -> {
-        putResponse.bodyHandler(buffer -> putRequest.complete(buffer.toJsonObject()));
-      })
-        .exceptionHandler(context::fail)
+      webClient.put("/api/pages/0")
         .putHeader("Authorization", jwtTokenHeaderValue)
-        .end(new JsonObject()
+        .as(BodyCodec.jsonObject())
+        .sendJsonObject(new JsonObject()
           .put("id", 0)
-          .put("markdown", "Oh Yeah!").encode());
+          .put("markdown", "Oh Yeah!"), ar -> {
+          if (ar.succeeded()) {
+            HttpResponse<JsonObject> putResponse = ar.result();
+            putRequest.complete(putResponse.body());
+          } else {
+            context.fail(ar.cause());
+          }
+        });
     }, putRequest);
 
     Future<JsonObject> deleteRequest = Future.future();
     putRequest.compose(response -> {
       context.assertTrue(response.getBoolean("success"));
-      httpClient.delete("/api/pages/0", delResponse -> {
-        delResponse.bodyHandler(buffer -> deleteRequest.complete(buffer.toJsonObject()));
-      })
-        .exceptionHandler(context::fail)
+      webClient.delete("/api/pages/0")
         .putHeader("Authorization", jwtTokenHeaderValue)
-        .end();
+        .as(BodyCodec.jsonObject())
+        .send(ar -> {
+          if (ar.succeeded()) {
+            HttpResponse<JsonObject> delResponse = ar.result();
+            deleteRequest.complete(delResponse.body());
+          } else {
+            context.fail(ar.cause());
+          }
+        });
     }, deleteRequest);
 
     deleteRequest.compose(response -> {

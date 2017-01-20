@@ -22,7 +22,6 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
@@ -30,9 +29,12 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.templ.FreeMarkerTemplateEngine;
 import io.vertx.guides.wiki.database.WikiDatabaseService;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -53,7 +55,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private WikiDatabaseService dbService;
 
-  private HttpClient httpClient;
+  private WebClient webClient;
 
   private static final String EMPTY_PAGE_MARKDOWN =
     "# A new page\n" +
@@ -66,7 +68,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
 
-    httpClient = vertx.createHttpClient(new HttpClientOptions().setSsl(true));
+    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions().setSsl(true)));
 
     HttpServer server = vertx.createHttpServer();
 
@@ -339,24 +341,26 @@ public class HttpServerVerticle extends AbstractVerticle {
             fileObject.put("content", page.getString("CONTENT"));
           });
 
-        httpClient.post(443, "api.github.com", "/gists", response -> {
-          if (response.statusCode() == 201) {
-            response.bodyHandler(buffer -> {
-              context.put("backup_gist_url", buffer.toJsonObject().getString("html_url"));
-              indexHandler(context);
-            });
-          } else {
-            context.fail(502);
-          }
-        })
-          .exceptionHandler(err -> {
-            LOGGER.error("HTTP Client error", err);
-            context.fail(err);
-          })
+        webClient.post(443, "api.github.com", "/gists")
           .putHeader("User-Agent", "vert-x3")
           .putHeader("Accept", "application/vnd.github.v3+json")
           .putHeader("Content-Type", "application/json")
-          .end(gistPayload.encode());
+          .as(BodyCodec.jsonObject())
+          .sendJsonObject(gistPayload, ar -> {
+          if (ar.succeeded()) {
+            HttpResponse<JsonObject> response = ar.result();
+            if (response.statusCode() == 201) {
+              context.put("backup_gist_url", response.body().getString("html_url"));
+              indexHandler(context);
+            } else {
+              context.fail(502);
+            }
+          } else {
+            Throwable err = ar.cause();
+            LOGGER.error("HTTP Client error", err);
+            context.fail(err);
+          }
+        });
       } else {
         context.fail(reply.cause());
       }
