@@ -4,6 +4,8 @@ Julien Ponge <julien.ponge@insa-lyon.fr>
 :icons: font
 :data-uri:
 :toc:
+:toclevels: 4
+:sectnums:
 
 :leveloffset: +1
 

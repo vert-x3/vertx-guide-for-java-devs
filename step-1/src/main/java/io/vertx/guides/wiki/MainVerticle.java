@@ -94,21 +94,22 @@ public class MainVerticle extends AbstractVerticle {
   }
   // end::prepareDatabase[]
 
+  // tag::startHttpServer[]
   private Future<Void> startHttpServer() {
     Future<Void> future = Future.future();
-    HttpServer server = vertx.createHttpServer();
+    HttpServer server = vertx.createHttpServer();   // <1>
 
-    Router router = Router.router(vertx);
+    Router router = Router.router(vertx);   // <2>
     router.get("/").handler(this::indexHandler);
-    router.get("/wiki/:page").handler(this::pageRenderingHandler);
-    router.post().handler(BodyHandler.create());
+    router.get("/wiki/:page").handler(this::pageRenderingHandler); // <3>
+    router.post().handler(BodyHandler.create());  // <4>
     router.post("/save").handler(this::pageUpdateHandler);
     router.post("/create").handler(this::pageCreateHandler);
     router.post("/delete").handler(this::pageDeletionHandler);
 
     server
-      .requestHandler(router::accept)
-      .listen(8080, ar -> {
+      .requestHandler(router::accept)   // <5>
+      .listen(8080, ar -> {   // <6>
         if (ar.succeeded()) {
           LOGGER.info("HTTP server running on port 8080");
           future.complete();
@@ -120,6 +121,7 @@ public class MainVerticle extends AbstractVerticle {
 
     return future;
   }
+  // end::startHttpServer[]
 
   private void pageDeletionHandler(RoutingContext context) {
     String id = context.request().getParam("id");

@@ -200,3 +200,21 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=prepareDataba
 <7> The `SQLConnection` is the result of the successful `AsyncResult`. We can use it to perform a SQL query.
 <8> Before checking whether the SQL query succeeded or not, we must release it by calling `close`, otherwise the JDBC client connection pool can eventually drain.
 <9> We complete the method _future_ object with a success.
+
+=== HTTP server initialization
+
+The HTTP server makes use of the `vertx-web` project to easily define _dispatching routes_ for incoming HTTP requests.
+Indeed, the Vert.x core API allows to start HTTP servers and listen for incoming connections, but it does not provide any facility to, say, have different handlers depending on the requested URL or processing request bodies.
+
+The initialization consists in setting up a _request router_, then starting the HTTP server:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=startHttpServer]
+----
+<1> The `vertx` context object provides methods to create HTTP servers, clients, TCP/UDP servers and clients, etc.
+<2> The `Router` class comes from `vertx-web`: `io.vertx.ext.web.Router`.
+<3> Routes have their own handlers, and they can be defined by URL and/or by HTTP method. For short handlers a Java lambda is an option, but for more elaborated handlers it is a good idea to reference private methods instead. Note that URLs can be parameterized: `/wiki/:page` will match a request like `/wiki/Hello`, in which case a `page` parameter will be available with value `Hello`.
+<4> This makes all HTTP POST requests got through a first handler, here `io.vertx.ext.web.handler.BodyHandler`. This handler automatically decodes the body from the HTTP requests (e.g., form submissions), which can then be manipulated as Vert.x buffer objects.
+<5> The router object can be used as a HTTP server handler, which then dispatches to other handlers as defined above.
+<6> Starting a HTTP server is an asynchronous operation, so an `AsyncResult<HttpServer>` needs to be checked for success. By the way the `8080` parameter specifies the TCP port to be used by the server.
