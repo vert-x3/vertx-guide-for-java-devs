@@ -270,3 +270,32 @@ include::src/main/resources/templates/header.ftl[]
 include::src/main/resources/templates/footer.ftl[]
 ----
 
+=== Wiki page rendering handler
+
+This handler deals with HTTP GET requests to have wiki pages being rendered, as in:
+
+image::page.png[Wiki page]
+
+The page also provides a button to edit the content in Markdown.
+Instead of having a separate handler and template, we simply rely on JavaScript and CSS to toggle the editor on and off when the button is being clicked:
+
+image::edit.png[Wiki editor]
+
+The `pageRenderingHandler` method code is the following:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageRenderingHandler]
+----
+<1> URL parameters (`/wiki/:name` here) can be accessed through the context request object.
+<2> Passing argument values to SQL queries is done using a `JsonArray`, with the elements in order of the `?` symbols in the SQL query.
+<3> The `Processor` class comes from the _txtmark_ Markdown rendering library that we use.
+
+The `page.ftl` FreeMarker template code is as follows:
+
+[source,html]
+----
+include::src/main/resources/templates/page.ftl[]
+----
+
+

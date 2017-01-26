@@ -56,11 +56,6 @@ public class MainVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
   // end::db-and-logger[]
 
-  private static final String EMPTY_PAGE_MARKDOWN =
-    "# A new page\n" +
-      "\n" +
-      "Feel-free to write in Markdown!\n";
-
   // tag::prepareDatabase[]
   private Future<Void> prepareDatabase() {
     Future<Void> future = Future.future();
@@ -225,16 +220,23 @@ public class MainVerticle extends AbstractVerticle {
     });
   }
 
+  // tag::pageRenderingHandler[]
+  private static final String EMPTY_PAGE_MARKDOWN =
+    "# A new page\n" +
+      "\n" +
+      "Feel-free to write in Markdown!\n";
+
   private void pageRenderingHandler(RoutingContext context) {
-    String page = context.request().getParam("page");
+    String page = context.request().getParam("page");   // <1>
 
     dbClient.getConnection(car -> {
       if (car.succeeded()) {
 
         SQLConnection connection = car.result();
-        connection.queryWithParams(SQL_GET_PAGE, new JsonArray().add(page), fetch -> {
+        connection.queryWithParams(SQL_GET_PAGE, new JsonArray().add(page), fetch -> {  // <2>
           connection.close();
           if (fetch.succeeded()) {
+
             JsonArray row = fetch.result().getResults()
               .stream()
               .findFirst()
@@ -246,7 +248,7 @@ public class MainVerticle extends AbstractVerticle {
             context.put("id", id);
             context.put("newPage", fetch.result().getResults().size() == 0 ? "yes" : "no");
             context.put("rawContent", rawContent);
-            context.put("content", Processor.process(rawContent));
+            context.put("content", Processor.process(rawContent));  // <3>
             context.put("timestamp", new Date().toString());
 
             templateEngine.render(context, "templates/page.ftl", ar -> {
@@ -267,6 +269,7 @@ public class MainVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::pageRenderingHandler[]
 
   // tag::start[]
   @Override
