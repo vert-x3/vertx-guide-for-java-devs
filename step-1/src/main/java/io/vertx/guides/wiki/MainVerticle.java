@@ -61,8 +61,6 @@ public class MainVerticle extends AbstractVerticle {
       "\n" +
       "Feel-free to write in Markdown!\n";
 
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
-
   // tag::prepareDatabase[]
   private Future<Void> prepareDatabase() {
     Future<Void> future = Future.future();
@@ -155,6 +153,9 @@ public class MainVerticle extends AbstractVerticle {
     context.response().end();
   }
 
+  // tag::indexHandler[]
+  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
+
   private void indexHandler(RoutingContext context) {
     dbClient.getConnection(car -> {
       if (car.succeeded()) {
@@ -163,26 +164,26 @@ public class MainVerticle extends AbstractVerticle {
           connection.close();
 
           if (res.succeeded()) {
-            List<String> pages = res.result()
+            List<String> pages = res.result() // <1>
               .getResults()
               .stream()
               .map(json -> json.getString(0))
               .sorted()
               .collect(Collectors.toList());
 
-            context.put("title", "Wiki home");
+            context.put("title", "Wiki home");  // <2>
             context.put("pages", pages);
-            templateEngine.render(context, "templates/index.ftl", ar -> {
+            templateEngine.render(context, "templates/index.ftl", ar -> {   // <3>
               if (ar.succeeded()) {
                 context.response().putHeader("Content-Type", "text/html");
-                context.response().end(ar.result());
+                context.response().end(ar.result());  // <4>
               } else {
                 context.fail(ar.cause());
               }
             });
 
           } else {
-            context.fail(res.cause());
+            context.fail(res.cause());  // <5>
           }
         });
       } else {
@@ -190,6 +191,7 @@ public class MainVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::indexHandler[]
 
   private void pageUpdateHandler(RoutingContext context) {
     String id = context.request().getParam("id");

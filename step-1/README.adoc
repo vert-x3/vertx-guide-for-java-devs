@@ -1,3 +1,5 @@
+:imagesdir: step-1/images
+
 = A minimally viable wiki written with Vert.x
 
 We are going to start with a first iteration with the simplest code possible to have a wiki written with Vert.x.
@@ -218,3 +220,53 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=startHttpServ
 <4> This makes all HTTP POST requests got through a first handler, here `io.vertx.ext.web.handler.BodyHandler`. This handler automatically decodes the body from the HTTP requests (e.g., form submissions), which can then be manipulated as Vert.x buffer objects.
 <5> The router object can be used as a HTTP server handler, which then dispatches to other handlers as defined above.
 <6> Starting a HTTP server is an asynchronous operation, so an `AsyncResult<HttpServer>` needs to be checked for success. By the way the `8080` parameter specifies the TCP port to be used by the server.
+
+== HTTP router handlers
+
+The HTTP router instance of the `startHttpServer` method points to different handlers based on URL patterns and HTTP methods.
+Each handlers deals with a HTTP request, performs a database query, and renders HTML from a FreeMarker template.
+
+=== Index page handler
+
+The index page provides a list of pointers to all wiki entries and a field to create a new one:
+
+image::index.png[Wiki index]
+
+The implementation is a straightforward `select *` SQL query where data is then passed to the FreeMarker engine to render the HTML response.
+
+The `indexHandler` method code is as follows:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=indexHandler]
+----
+<1> SQL query results are being returned as instances of `JsonArray` and `JsonObject` instances.
+<2> The `RoutingContext` instance can be used to put arbitrary key / value data that is then available from templates, or chained router handlers.
+<3> Rendering a template is an asynchronous operation that leads us to the usual `AsyncResult` handling pattern.
+<4> The `AsyncResult` contains the template rendering as a `String` in case of success, and we can end the HTTP response stream with the value.
+<5> In case of failure the `fail` method from `RoutingContext` provides a sensible way to return a HTTP 500 error to the HTTP client.
+
+FreeMarker templates shall be placed in the `src/main/resources/templates` folder.
+The `index.ftl` template code is as follows:
+
+[source,html]
+----
+include::src/main/resources/templates/index.ftl[]
+----
+
+Key / value data stored in the `RoutingContext` object is made available through the `context` FreeMarker variable.
+
+Since lots of templates have common header and footers, we extracted the following code in `header.ftl` and `footer.ftl`:
+
+.`header.ftl`
+[source,html]
+----
+include::src/main/resources/templates/header.ftl[]
+----
+
+.`footer.ftl`
+[source,html]
+----
+include::src/main/resources/templates/footer.ftl[]
+----
+
