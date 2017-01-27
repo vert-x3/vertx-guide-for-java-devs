@@ -311,3 +311,18 @@ The handler is the `pageCreateHandler` method, and its implementation is a redir
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageCreateHandler]
 ----
 
+=== Page saving handler
+
+The `pageUpdateHandler` method deals with HTTP POST requests when saving a wiki page.
+This happens both when updating an existing page (issuing a SQL `update` query) or saving a new page (issuing a SQL `insert` query):
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageUpdateHandler]
+----
+<1> Form parameters sent through a HTTP POST request are avilable from the `RoutingContext` object. Note that without a `BodyHandler` within the `Router` configuration chain these values would not be available, and the form submission payload would need to be manually decoded from the HTTP POST request payload.
+<2> We rely on a form hidden field rendered in the `page.ftl` FreeMarker template to know if we are updating an existing page or saving a new page.
+<3> Again, preparing the SQL query with parameters uses a `JsonArray` to pass values.
+<4> The `updateWithParams` method is used for `insert` / `update` / `delete` SQL queries.
+<5> Upon success, we simply redirect to the page that has been edited.
+

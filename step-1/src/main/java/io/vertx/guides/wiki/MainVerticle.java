@@ -190,26 +190,27 @@ public class MainVerticle extends AbstractVerticle {
   }
   // end::indexHandler[]
 
+  // tag::pageUpdateHandler[]
   private void pageUpdateHandler(RoutingContext context) {
-    String id = context.request().getParam("id");
+    String id = context.request().getParam("id");   // <1>
     String title = context.request().getParam("title");
     String markdown = context.request().getParam("markdown");
-    boolean newPage = "yes".equals(context.request().getParam("newPage"));
+    boolean newPage = "yes".equals(context.request().getParam("newPage"));  // <2>
 
     dbClient.getConnection(car -> {
       if (car.succeeded()) {
         SQLConnection connection = car.result();
         String sql = newPage ? SQL_CREATE_PAGE : SQL_SAVE_PAGE;
-        JsonArray params = new JsonArray();
+        JsonArray params = new JsonArray();   // <3>
         if (newPage) {
           params.add(title).add(markdown);
         } else {
           params.add(markdown).add(id);
         }
-        connection.updateWithParams(sql, params, res -> {
+        connection.updateWithParams(sql, params, res -> {   // <4>
           connection.close();
           if (res.succeeded()) {
-            context.response().setStatusCode(303);
+            context.response().setStatusCode(303);    // <5>
             context.response().putHeader("Location", "/wiki/" + title);
             context.response().end();
           } else {
@@ -221,6 +222,7 @@ public class MainVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::pageUpdateHandler[]
 
   // tag::pageRenderingHandler[]
   private static final String EMPTY_PAGE_MARKDOWN =
