@@ -298,4 +298,16 @@ The `page.ftl` FreeMarker template code is as follows:
 include::src/main/resources/templates/page.ftl[]
 ----
 
+=== Page creation handler
+
+The index page offers a field to create a new page, and its surrounding HTML form points to a URL that is being managed by this handler.
+The strategy isn't actually to create a new entry in the database, but simply to redirect to a wiki page URL with the name to create.
+Since the wiki page doesn't exist, the `pageRenderingHandler` method will use a default text for new pages, and a user can eventually create that page by editing then saving it.
+
+The handler is the `pageCreateHandler` method, and its implementation is a redirection through a HTTP 303 status code:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageCreateHandler]
+----
 

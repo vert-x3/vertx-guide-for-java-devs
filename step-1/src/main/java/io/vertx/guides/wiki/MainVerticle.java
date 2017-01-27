@@ -137,6 +137,7 @@ public class MainVerticle extends AbstractVerticle {
     });
   }
 
+  // tag::pageCreateHandler[]
   private void pageCreateHandler(RoutingContext context) {
     String pageName = context.request().getParam("name");
     String location = "/wiki/" + pageName;
@@ -147,6 +148,7 @@ public class MainVerticle extends AbstractVerticle {
     context.response().putHeader("Location", location);
     context.response().end();
   }
+  // end::pageCreateHandler[]
 
   // tag::indexHandler[]
   private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
