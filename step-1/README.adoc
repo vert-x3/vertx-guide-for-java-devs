@@ -335,3 +335,16 @@ The implementation of the `pageDeletionHandler` method is straightforward: given
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageDeletionHandler]
 ----
 
+== Running the application
+
+At this stage we have a working, self-contained wiki application.
+
+To run it we first need to build it with Maven:
+
+    $ mvn clean package
+
+Since the build produces a Jar will all required dependencies embedded (including Vert.x and a JDBC database), running the wiki is as simple as:
+
+    $ java -jar target/wiki-step-1-1.0-SNAPSHOT-fat.jar
+
+You can then point your favorite web browser to http://localhost:8080/ and enjoy using the wiki.
