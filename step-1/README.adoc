@@ -326,3 +326,12 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageUpdateHan
 <4> The `updateWithParams` method is used for `insert` / `update` / `delete` SQL queries.
 <5> Upon success, we simply redirect to the page that has been edited.
 
+=== Page deletion handler
+
+The implementation of the `pageDeletionHandler` method is straightforward: given a wiki entry identifier, it issues a `delete` SQL query then redirects to the wiki index page:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageDeletionHandler]
+----
+

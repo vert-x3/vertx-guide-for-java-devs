@@ -116,6 +116,7 @@ public class MainVerticle extends AbstractVerticle {
   }
   // end::startHttpServer[]
 
+  // tag::pageDeletionHandler[]
   private void pageDeletionHandler(RoutingContext context) {
     String id = context.request().getParam("id");
     dbClient.getConnection(car -> {
@@ -136,6 +137,7 @@ public class MainVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::pageDeletionHandler[]
 
   // tag::pageCreateHandler[]
   private void pageCreateHandler(RoutingContext context) {
