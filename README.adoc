@@ -11,4 +11,6 @@ Julien Ponge <julien.ponge@insa-lyon.fr>
 
 include::step-1/README.adoc[]
 
+include::step-2/README.adoc[]
+
 :leveloffset: -1

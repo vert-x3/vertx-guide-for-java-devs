@@ -1,0 +1,28 @@
+:imagesdir: step-2/images
+
+= Refactoring into independent and reusable verticles
+
+TIP: The corresponding source code is in the `step-2` folder of the guide repository.
+
+The first iteration got us a working wiki application.
+Still, its implementation suffers from the following issues:
+
+1. HTTP requests processing and database access code are interleaved within the same methods, and
+2. lots of configuration data (e.g., port numbers, JDBC driver, etc) are hard-coded strings in the code.
+
+== Architecture and technical choices
+
+This second iteration is about refactoring the code into independent and reusable verticles:
+
+image::verticles-refactoring.svg[Verticles refactoring]
+
+We will deploy 2 verticles to deal with HTTP requests, and 1 verticle for encapsulating persistence through the database.
+The 2 resulting verticles will not have direct references to each other as they will only agree on destination names in the event bus as well as message formats.
+This provides a simple yet effective decoupling.
+
+The messages sent on the event bus will be encoded in JSON.
+While Vert.x supports flexible serialization schemes on the event bus for demanding or highly-specific contexts, it is generally a wise choice to go with JSON data.
+Another advantage of using JSON is that it is a language-agnostic text format.
+As Vert.x is _polyglot_, JSON is ideal shall verticles written in different languages need to communicate via message passing.
+
+

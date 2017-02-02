@@ -15,6 +15,8 @@ To do so, we will use the following libraries.
 
 == Bootstrapping a Maven project
 
+TIP: The corresponding source code is in the `step-1` folder of the guide repository.
+
 This guide makes the choice of using https://maven.apache.org[Apache Maven] as the build tool, primarily because it is very well integrated with the major integrated development environments.
 You can equally use another build tool such as https://gradle.org/[Gradle].
 
