@@ -39,24 +39,22 @@ import java.util.stream.Collectors;
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
+// tag::preamble[]
 public class WikiDatabaseVerticle extends AbstractVerticle {
 
   public static final String CONFIG_WIKIDB_JDBC_URL = "wikidb.jdbc.url";
   public static final String CONFIG_WIKIDB_JDBC_DRIVER_CLASS = "wikidb.jdbc.driver_class";
   public static final String CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE = "wikidb.jdbc.max_pool_size";
   public static final String CONFIG_WIKIDB_SQL_QUERIES_RESOURCE_FILE = "wikidb.sqlqueries.resource.file";
+  
   public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WikiDatabaseVerticle.class);
 
-  private JDBCClient dbClient;
+  // (...)
+  // end::preamble[]
 
-  public enum ErrorCodes {
-    NO_ACTION_SPECIFIED,
-    BAD_ACTION,
-    DB_ERROR
-  }
-
+  // tag::loadSqlQueries[] 
   private enum SqlQuery {
     CREATE_PAGES_TABLE,
     ALL_PAGES,
@@ -67,11 +65,40 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   }
 
   private final HashMap<SqlQuery, String> sqlQueries = new HashMap<>();
+  
+  private void loadSqlQueries() throws IOException {
+
+    String queriesFile = config().getString(CONFIG_WIKIDB_SQL_QUERIES_RESOURCE_FILE);
+    InputStream queriesInputStream;
+    if (queriesFile != null) {
+      queriesInputStream = new FileInputStream(queriesFile);
+    } else {
+      queriesInputStream = getClass().getResourceAsStream("/db-queries.properties");
+    }
+
+    Properties queriesProps = new Properties();
+    queriesProps.load(queriesInputStream);
+    queriesInputStream.close();
+
+    sqlQueries.put(SqlQuery.CREATE_PAGES_TABLE, queriesProps.getProperty("create-pages-table"));
+    sqlQueries.put(SqlQuery.ALL_PAGES, queriesProps.getProperty("all-pages"));
+    sqlQueries.put(SqlQuery.GET_PAGE, queriesProps.getProperty("get-page"));
+    sqlQueries.put(SqlQuery.CREATE_PAGE, queriesProps.getProperty("create-page"));
+    sqlQueries.put(SqlQuery.SAVE_PAGE, queriesProps.getProperty("save-page"));
+    sqlQueries.put(SqlQuery.DELETE_PAGE, queriesProps.getProperty("delete-page"));
+  }
+  // end::loadSqlQueries[]    
+
+  // tag::start[]
+  private JDBCClient dbClient;
 
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
-    loadSqlQueries();
+    /*
+     * Note: this uses blocking APIs, but data is small...
+     */
+    loadSqlQueries();  // <1>
 
     dbClient = JDBCClient.createShared(vertx, new JsonObject()
       .put("url", config().getString(CONFIG_WIKIDB_JDBC_URL, "jdbc:hsqldb:file:db/wiki"))
@@ -84,18 +111,26 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
         startFuture.fail(ar.cause());
       } else {
         SQLConnection connection = ar.result();
-        connection.execute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE), create -> {
+        connection.execute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE), create -> {   // <2>
           connection.close();
           if (create.failed()) {
             LOGGER.error("Database preparation error", create.cause());
             startFuture.fail(create.cause());
           } else {
-            vertx.eventBus().consumer(config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue"), this::onMessage);
+            vertx.eventBus().consumer(config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue"), this::onMessage);  // <3>
             startFuture.complete();
           }
         });
       }
     });
+  }
+  // end::start[]
+
+  // tag::onMessage[]
+  public enum ErrorCodes {
+    NO_ACTION_SPECIFIED,
+    BAD_ACTION,
+    DB_ERROR
   }
 
   public void onMessage(Message<JsonObject> message) {
@@ -125,7 +160,9 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
         message.fail(ErrorCodes.BAD_ACTION.ordinal(), "Bad action: " + action);
     }
   }
+  // end::onMessage[]
 
+  // tag::rest[]
   private void fetchAllPages(Message<JsonObject> message) {
 
     dbClient.getConnection(car -> {
@@ -256,29 +293,5 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
     LOGGER.error("Database query error", cause);
     message.fail(ErrorCodes.DB_ERROR.ordinal(), cause.getMessage());
   }
-
-  /*
-   * Note: this uses blocking APIs, but data is small...
-   */
-  private void loadSqlQueries() throws IOException {
-
-    String queriesFile = config().getString(CONFIG_WIKIDB_SQL_QUERIES_RESOURCE_FILE);
-    InputStream queriesInputStream;
-    if (queriesFile != null) {
-      queriesInputStream = new FileInputStream(queriesFile);
-    } else {
-      queriesInputStream = getClass().getResourceAsStream("/db-queries.properties");
-    }
-
-    Properties queriesProps = new Properties();
-    queriesProps.load(queriesInputStream);
-    queriesInputStream.close();
-
-    sqlQueries.put(SqlQuery.CREATE_PAGES_TABLE, queriesProps.getProperty("create-pages-table"));
-    sqlQueries.put(SqlQuery.ALL_PAGES, queriesProps.getProperty("all-pages"));
-    sqlQueries.put(SqlQuery.GET_PAGE, queriesProps.getProperty("get-page"));
-    sqlQueries.put(SqlQuery.CREATE_PAGE, queriesProps.getProperty("create-page"));
-    sqlQueries.put(SqlQuery.SAVE_PAGE, queriesProps.getProperty("save-page"));
-    sqlQueries.put(SqlQuery.DELETE_PAGE, queriesProps.getProperty("delete-page"));
-  }
+  // end::rest[]
 }

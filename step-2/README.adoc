@@ -60,3 +60,58 @@ The rest of the verticle code consists in the router handlers that also use the 
 include::src/main/java/io/vertx/guides/wiki/HttpServerVerticle.java[tags=rest]
 ----
  
+== The database verticle
+
+Connecting to a database using JDBC requires of course a driver and configuration, which we had hard-coded in the first iteration.
+While this verticle will turn them to configuration parameters, we will also go a step further by loading the SQL queries from a properties file.
+The queries will be loaded from a file passed as a configuration parameter or from a default resource if none is being provided.
+The advantage of this approach is that the verticle can adapt both to different JDBC drivers _and_ SQL dialects.
+
+The verticle class preamble consists mainly of configuration key definitions:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=preamble]
+----
+
+SQL queries are being stored in a properties file, with the default ones for HSQLDB being located in `src/main/resources/db-queries.properties`:
+
+----
+include::src/main/resources/db-queries.properties[tags=queries]
+----
+
+The following code from the `WikiDatabaseVerticle` class load the SQL queries from a file, and make them available from a map:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=loadSqlQueries]
+----
+
+We use the `SqlQuery` enumeration type to avoid string constants later in the code.
+The code of the verticle `start` method is the following:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=start]
+----
+<1> Interestingly we break an important principle in Vert.x which is to avoid blocking APIs, but since there are no asynchronous APIs for accessing resources on the classpath our options are limited. We could use the Vert.x `executeBlocking` method to offload the blocking I/O operations from the event loop to a worker thread, but since the data is very small there is no obvious benefit in doing so.
+<2> Here is an example of using SQL queries.
+<3> The `consumer` method registers an event bus destination handler.
+
+The event bus message handler is the `onMessage` method:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=onMessage]
+----
+
+We defined a `ErrorCodes` enumeration for errors, which we use to report back to the message sender.
+To do so, the `fail` method of the `Message` class provides a convenient shortcut to reply with an error, and the original message sender gets a failed `AsyncResult`.
+
+The rest of the class consists of private methods called when `onMessage` dispatches incoming messages:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=rest]
+----
+
