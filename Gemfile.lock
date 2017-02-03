@@ -2,15 +2,12 @@ GEM
   remote: https://rubygems.org/
   specs:
     asciidoctor (1.5.5)
-    asciidoctor-diagram (1.5.3)
-      asciidoctor (~> 1.5.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   asciidoctor
-  asciidoctor-diagram
 
 BUNDLED WITH
    1.13.7
