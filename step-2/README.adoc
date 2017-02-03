@@ -25,4 +25,38 @@ While Vert.x supports flexible serialization schemes on the event bus for demand
 Another advantage of using JSON is that it is a language-agnostic text format.
 As Vert.x is _polyglot_, JSON is ideal shall verticles written in different languages need to communicate via message passing.
 
+== The HTTP server verticle
 
+The verticle class preambule and `start` method look as follows:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/HttpServerVerticle.java[tags=start]
+----
+<1> We expose public constants for the verticle configuration parameters: the HTTP port number and the name of the event bus destination to post messages to the database verticle.
+<2> The `AbstractVerticle#config()` method allows accessing the verticle configuration that has been provided. The second parameter is a default value in case no specific value was given.
+<3> Configuration values can not just be `String` objects but also integers, boolean values, complex JSON data, etc.
+
+The rest of the class is mostly an extract of the HTTP-only code, with what was previously database code being replaced with event bus messages.
+Here is the `indexHandler` method code:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/HttpServerVerticle.java[tags=indexHandler]
+----
+<1> The `vertx` object gives access to the event bus, and we send a message to queue for the database vertice.
+<2> Delivery options allow us to specify headers, payload codecs and timeouts.
+<3> Upon success a reply contains a payload.
+
+As we can see, an event bus message consists of a body, options, and it can optionally expect a reply.
+In the event that no response is expected there is a variant of the `send` method does not have a handler.
+
+We encode payloads as JSON objects, and we specify which action the database verticle should do through a message header called `action`.
+
+The rest of the verticle code consists in the router handlers that also use the event-bus to fetch and store data:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/HttpServerVerticle.java[tags=rest]
+----
+ 

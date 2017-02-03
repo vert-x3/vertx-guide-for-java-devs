@@ -35,26 +35,20 @@ import java.util.Date;
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
+// tag::start[]
 public class HttpServerVerticle extends AbstractVerticle {
 
-  public static final String CONFIG_HTTP_SERVER_PORT = "http.server.port";
-  public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);  
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
-
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
+  public static final String CONFIG_HTTP_SERVER_PORT = "http.server.port";  // <1>
+  public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";  
 
   private String wikiDbQueue = "wikidb.queue";
-
-  private static final String EMPTY_PAGE_MARKDOWN =
-    "# A new page\n" +
-      "\n" +
-      "Feel-free to write in Markdown!\n";
 
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
-    wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
+    wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");  // <2>
 
     HttpServer server = vertx.createHttpServer();
 
@@ -66,7 +60,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/create").handler(this::pageCreateHandler);
     router.post("/delete").handler(this::pageDeletionHandler);
 
-    int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);
+    int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);  // <3>
     server
       .requestHandler(router::accept)
       .listen(portNumber, ar -> {
@@ -80,14 +74,19 @@ public class HttpServerVerticle extends AbstractVerticle {
       });
   }
 
+  // (...)
+  // end::start[]
+
+  // tag::indexHandler[]
+  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();  
 
   private void indexHandler(RoutingContext context) {
 
-    DeliveryOptions options = new DeliveryOptions().addHeader("action", "all-pages");
+    DeliveryOptions options = new DeliveryOptions().addHeader("action", "all-pages"); // <2>
 
-    vertx.eventBus().send(wikiDbQueue, new JsonObject(), options, reply -> {
+    vertx.eventBus().send(wikiDbQueue, new JsonObject(), options, reply -> {  // <1>
       if (reply.succeeded()) {
-        JsonObject body = (JsonObject) reply.result().body();
+        JsonObject body = (JsonObject) reply.result().body();   // <3>
         context.put("title", "Wiki home");
         context.put("pages", body.getJsonArray("pages").getList());
         templateEngine.render(context, "templates/index.ftl", ar -> {
@@ -103,6 +102,13 @@ public class HttpServerVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::indexHandler[]
+
+  // tag::rest[]
+  private static final String EMPTY_PAGE_MARKDOWN =
+  "# A new page\n" +
+    "\n" +
+    "Feel-free to write in Markdown!\n";
 
   private void pageRenderingHandler(RoutingContext context) {
 
@@ -190,4 +196,5 @@ public class HttpServerVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::rest[]
 }
