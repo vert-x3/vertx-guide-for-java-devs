@@ -115,3 +115,25 @@ The rest of the class consists of private methods called when `onMessage` dispat
 include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=rest]
 ----
 
+== Deploying the verticles from a main verticle
+
+We still have a `MainVerticle` class, but instead of containing all the business logic like in the initial iteration, its sole purpose is to bootstrap the application and deploy other verticles.
+
+The code consists in deploying 1 instance of `WikiDatabaseVerticle` and 2 instances of `HttpServerVerticle` :
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=main]
+----
+<1> Deploying a verticle is an asynchronous operation, so we need a `Future` for that. The `String` parametric type is because a verticle gets an identifier when successfully deployed.
+<2> One option is to create a verticle instance with `new`, and pass the object reference to the `deploy` method. The `completer` return value is a handler that simply completes its future.
+<3> A class name as a string is also an option to specify a verticle to deploy. For other JVM languages string-based conventions allow a module / script to be specified.
+<4> The `DeploymentOption` class allows to specify a number of parameters and especially the number of instances to deploy.
+<5> A `CompositeFuture` is a future on top of other futures. Here the resulting future completes when both `httpVerticleDeployment` and `dbVerticleDeployment` complete, or fails when either of them fails.
+<6> We define a handler that eventually completes the `MainVerticle` start future.
+
+The astute reader will probably wonder how we can deploy the code for a HTTP server on the same TCP port twice and not expect any error for either of the instances, since the TCP port will already be in use.
+With many web framework we would need to choose different TCP ports, and have a frontal HTTP proxy to perform load balancing between the ports.
+
+There is no need to do that with Vert.x as multiple verticles can share the same TCP ports.
+Incoming connections are simply distributed in a round-robin fashion.

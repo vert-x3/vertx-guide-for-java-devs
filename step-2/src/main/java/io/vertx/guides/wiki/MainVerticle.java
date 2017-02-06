@@ -25,26 +25,30 @@ import io.vertx.core.Future;
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
+// tag::main[]
 public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
+    Future<String> dbVerticleDeployment = Future.future();  // <1>
+    vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment.completer());  // <2>
+
     Future<String> httpVerticleDeployment = Future.future();
     vertx.deployVerticle(
-      "io.vertx.guides.wiki.HttpServerVerticle",
-      new DeploymentOptions().setInstances(2),
-      httpVerticleDeployment.completer());
+      "io.vertx.guides.wiki.HttpServerVerticle",  // <3>
+      new DeploymentOptions().setInstances(2),    // <4>
+      httpVerticleDeployment.completer());    
 
-    Future<String> dbVerticleDeployment = Future.future();
-    vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment.completer());
-
-    CompositeFuture.all(httpVerticleDeployment, dbVerticleDeployment).setHandler(ar -> {
-      if (ar.succeeded()) {
-        startFuture.succeeded();
-      } else {
-        startFuture.fail(ar.cause());
-      }
-    });
+    CompositeFuture
+      .all(httpVerticleDeployment, dbVerticleDeployment)  // <5>
+      .setHandler(ar -> {   // <6>
+        if (ar.succeeded()) {
+          startFuture.succeeded();
+        } else {
+          startFuture.fail(ar.cause());
+        }
+      });
   }
 }
+// end::main[]
