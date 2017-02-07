@@ -6,3 +6,9 @@ TIP: The corresponding source code is in the `step-3` folder of the guide reposi
 
 The previous refactoring was a big step forward compared to our initial implementation, as we extracted independent and configurable verticles connected using asynchronous messages on the event bus.
 We also saw that we could deploy several instances of a given verticle to better cope with load and to better leverage CPU cores.
+
+In this section we see how to design and use Vert.x services.
+The main advantage of a service is that it defines an interface for doing certain operations that a verticle expose.
+We also leverage code generation for all the event bus messaging plumbing, instead of crafting it ourselves like we did in the previous section.
+
+
