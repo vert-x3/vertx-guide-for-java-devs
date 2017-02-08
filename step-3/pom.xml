@@ -136,7 +136,7 @@
             </filesets>
           </configuration>
         </plugin>
-        <!-- tag::clean[] -->
+        <!-- end::clean[] -->
 
       </plugins>
     </pluginManagement>

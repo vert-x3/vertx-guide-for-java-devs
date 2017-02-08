@@ -11,4 +11,93 @@ In this section we see how to design and use Vert.x services.
 The main advantage of a service is that it defines an interface for doing certain operations that a verticle expose.
 We also leverage code generation for all the event bus messaging plumbing, instead of crafting it ourselves like we did in the previous section.
 
+We are also going to refactor the code into different Java packages:
+
+----
+step-3/src/main/java/
+└── io
+    └── vertx
+        └── guides
+            └── wiki
+                ├── MainVerticle.java
+                ├── database
+                │   ├── ErrorCodes.java
+                │   ├── SqlQuery.java
+                │   ├── WikiDatabaseService.java
+                │   ├── WikiDatabaseServiceImpl.java
+                │   ├── WikiDatabaseVerticle.java
+                │   └── package-info.java
+                └── http
+                    └── HttpServerVerticle.java
+----
+
+`io.vertx.guides.wiki` will now contain the main verticle, `io.vertx.guides.wiki.database` the database verticle and service, and `io.vertx.guides.wiki.http` the HTTP server verticle.
+
+== Maven configuration changes
+
+First, we need to add the following 2 dependencies to our project.
+Obviously we need the `vertx-service-proxy` APIs:
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=service-proxy-dep]
+----
+
+Ee need the Vert.x code generation module as a compilation time only dependency (hence the `provided` scope):
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=codegen-dep]
+----
+
+Next we have to tweak the `maven-compiler-plugin` configuration to use code generation, which is done via a `javac` annotation processor:
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=codegen]
+----
+
+Note that the generated code is put in `src/main/generated`, which some integrated development environments like IntelliJ IDEA will automatically pick up on the classpath.
+
+It is also a good idea to update the `maven-clean-plugin` to remove those generated files:
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=clean]
+----
+
+TIP: The full documentation on Vert.x services is available at http://vertx.io/docs/vertx-service-proxy/java/
+
+== Database service interface
+
+Defining a service interface is as simple as defining a Java interface, except that there are certain rules to respect for code generation to work and also to ensure interoperability with other code in Vert.x.
+
+The beginning of the interface definition is:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[tags=interface]
+----
+
+1. The `ProxyGen` annotation is used to trigger the code generation of a proxy for clients of that service.
+2. The `Fluent` annotation is optional, but allows _fluent_ interfaces where operations can be chained by returning the service instance. This is mostly useful for the code generator if other JVM languages intend on consuming the interface.
+3. Parameter types need to be strings, Java primitive types, JSON objects or arrays, any enumeration type or a `java.util` collection (`List` / `Set` / `Map`) of the previous types. The only way to support arbitrary Java classes is to have them as Vert.x data objects, annotated with `@DataObject`.
+4. Since services provide asynchronous results, the last argument of a service method needs to be a `Handler<AsyncResult<T>>` where `T` is any of the types suitable for code generation as described above.
+
+It is a good practice that service interfaces provide static methods to create instances of both the actual service implementation and proxy for client code over the event bus.
+
+We define `create` as simply delegating to the implementation class and its constructor:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[tags=create]
+----
+
+The Vert.x code generator creates the proxy class and names it by suffixing with `VertxEBProxy`.
+Constructors of these proxy classes need a reference to the Vert.x context as well as a destination address on the event bus:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[tags=proxy]
+----
 

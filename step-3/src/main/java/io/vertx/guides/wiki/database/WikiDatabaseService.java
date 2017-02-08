@@ -31,16 +31,9 @@ import java.util.HashMap;
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
+// tag::interface[]
 @ProxyGen
 public interface WikiDatabaseService {
-
-  static WikiDatabaseService create(JDBCClient dbClient, HashMap<SqlQuery, String> sqlQueries, Handler<AsyncResult<WikiDatabaseService>> readyHandler) {
-    return new WikiDatabaseServiceImpl(dbClient, sqlQueries, readyHandler);
-  }
-
-  static WikiDatabaseService createProxy(Vertx vertx, String address) {
-    return new WikiDatabaseServiceVertxEBProxy(vertx, address);
-  }
 
   @Fluent
   WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler);
@@ -56,4 +49,19 @@ public interface WikiDatabaseService {
 
   @Fluent
   WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler);
+
+  // (...)
+  // end::interface[]
+
+  // tag::create[]
+  static WikiDatabaseService create(JDBCClient dbClient, HashMap<SqlQuery, String> sqlQueries, Handler<AsyncResult<WikiDatabaseService>> readyHandler) {
+    return new WikiDatabaseServiceImpl(dbClient, sqlQueries, readyHandler);
+  }
+  // end::create[]
+
+  // tag::proxy[]
+  static WikiDatabaseService createProxy(Vertx vertx, String address) {
+    return new WikiDatabaseServiceVertxEBProxy(vertx, address);
+  }
+  // end::proxy[]
 }
