@@ -1,0 +1,5 @@
+:imagesdir: step-3/images
+
+= Testing Vert.x code
+
+TIP: The corresponding source code is in the `step-4` folder of the guide repository.
