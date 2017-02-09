@@ -44,14 +44,15 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
 
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
-
-  private WikiDatabaseService dbService;
+  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();  
 
   private static final String EMPTY_PAGE_MARKDOWN =
     "# A new page\n" +
       "\n" +
       "Feel-free to write in Markdown!\n";
+
+  // tag::db-consume[]
+  private WikiDatabaseService dbService;
 
   @Override
   public void start(Future<Void> startFuture) throws Exception {
@@ -60,6 +61,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
 
     HttpServer server = vertx.createHttpServer();
+    // (...)
+  // end::db-consume[]
 
     Router router = Router.router(vertx);
     router.get("/").handler(this::indexHandler);

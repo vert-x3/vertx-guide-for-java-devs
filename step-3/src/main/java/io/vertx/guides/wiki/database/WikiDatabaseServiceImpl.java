@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
+// tag::implementation[]
 class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WikiDatabaseServiceImpl.class);
@@ -195,3 +196,4 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     return this;
   }
 }
+// end::implementation[]

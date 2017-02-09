@@ -81,7 +81,7 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[ta
 
 1. The `ProxyGen` annotation is used to trigger the code generation of a proxy for clients of that service.
 2. The `Fluent` annotation is optional, but allows _fluent_ interfaces where operations can be chained by returning the service instance. This is mostly useful for the code generator if other JVM languages intend on consuming the interface.
-3. Parameter types need to be strings, Java primitive types, JSON objects or arrays, any enumeration type or a `java.util` collection (`List` / `Set` / `Map`) of the previous types. The only way to support arbitrary Java classes is to have them as Vert.x data objects, annotated with `@DataObject`.
+3. Parameter types need to be strings, Java primitive types, JSON objects or arrays, any enumeration type or a `java.util` collection (`List` / `Set` / `Map`) of the previous types. The only way to support arbitrary Java classes is to have them as Vert.x data objects, annotated with `@DataObject`. The last opportunity to pass other types is service reference types.
 4. Since services provide asynchronous results, the last argument of a service method needs to be a `Handler<AsyncResult<T>>` where `T` is any of the types suitable for code generation as described above.
 
 It is a good practice that service interfaces provide static methods to create instances of both the actual service implementation and proxy for client code over the event bus.
@@ -101,3 +101,55 @@ Constructors of these proxy classes need a reference to the Vert.x context as we
 include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[tags=proxy]
 ----
 
+NOTE: The `SqlQuery` and `ErrorCodes` enumeration types that were inner classes in the previous iteration have been extracted to package-protected types, see `SqlQuery.java` and `ErrorCodes.java`.
+
+== Database service implementation
+
+The service implementation is a straightforward port of the previous `WikiDatabaseVerticle` class code.
+The essential difference is the support of the asynchronous result handler in the constructor (to report the initialization outcome) and in the service methods (to report the operation success).
+
+The class code is the following:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=implementation]
+----
+
+There is one last step required before the proxy code generation works: the service package needs to have a `package-info.java` annotated to define a Vert.x module:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/package-info.java[tags=module]
+----
+
+== Exposing the database service from the database verticle
+
+As most of the database handling code has been moved to `WikiDatabaseServiceImpl`, the `WikiDatabaseVerticle` class now consists of 2 methods: the `start` method to register the service and a utility method to load SQL queries:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseVerticle.java[tags=dbverticle]
+----
+<1> We register the service here.
+
+Registering a service requires an interface class, a Vert.x context, an implementation and an event bus destination.
+
+The `WikiDatabaseServiceVertxEBProxy` generated class handles receiving messages on the event bus and then dispatching them to the `WikiDatabaseServiceImpl`.
+What it does is actually very close to what we did in the previous section: messages are being sent with a `action` header to specify which method to invokes, and parameters are being encoded to a JSON document.
+
+== Obtaining a database service proxy
+
+The final step to refactoring to Vert.x services is to adapt the HTTP server verticle to obtain a proxy to the database service.
+
+All we need to do for that is creating the proxy when the verticle starts:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=db-consume]
+----
+
+We just need to make sure to use the same event bus destination as the service that was published by  `WikiDatabaseVerticle`.
+
+The `WikiDatabaseServiceVertxProxyHandler` generated class deals with forwarding calls as event bus messages.
+
+TIP: It is perfectly possible to consume a Vert.x service directly via event bus messages since this is what the generated proxys do.
