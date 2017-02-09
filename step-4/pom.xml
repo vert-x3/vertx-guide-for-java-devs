@@ -88,6 +88,7 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- tag::test-deps[] -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -99,6 +100,7 @@
       <artifactId>vertx-unit</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- end::test-deps[] -->
   </dependencies>
 
   <build>
