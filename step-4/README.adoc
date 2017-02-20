@@ -1,4 +1,4 @@
-:imagesdir: step-3/images
+:imagesdir: step-4/images
 
 = Testing Vert.x code
 

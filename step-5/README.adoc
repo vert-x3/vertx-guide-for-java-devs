@@ -1,0 +1,58 @@
+:imagesdir: step-5/images
+
+= Integrating with a 3rd-party web service
+
+TIP: The corresponding source code is in the `step-5` folder of the guide repository.
+
+Modern applications rarely live on a separated island as they need to integrate with other (distributed) application and services.
+Integration is very often achieved using APIs exposed over the versatile HTTP protocol.
+
+This section shows how to integrate with a 3rd-party web service using the HTTP client APIs of Vert.x.
+
+== Backing up to GitHub Gist
+
+The https://gist.github.com/[GitHub Gist service] is popular for sharing code snippets to the world.
+Other services can use it, an example being the https://medium.com[Medium publishing platform] where links to Gists allow code snippets to be embedded inside publications.
+
+GitHub exposes a https://developer.github.com/v3/[detailed API] for fetching, creating, updating and deleting Gists.
+The API uses HTTPS endpoints starting at https://api.github.com/ and JSON payloads.
+
+While many operations require authorization from the client using OAuth authentication, https://developer.github.com/v3/gists/#create-a-gist[creating a Gist is possible while being anonymous].
+We are going to leverage this feature to backup our wiki pages as Gists.
+
+A new button is going to be added on the wiki index page:
+
+image::backup-button.png[]
+
+Cliking the _backup_ button will trigger the creating of a Gist:
+
+image::gist-created.png[]
+
+A backup Gist consists of 1 file per wiki page, with the content being the raw Markdown text:
+
+image::gist.png[]
+
+== The web client API
+
+The Vert.x core library offers a `createHttpClient` method from the `vertx` context object.
+Instances of `io.vertx.core.http.HttpClient` provides low-level methods for doing all kinds of HTTP requests with a fine-grained control over the protocol and the stream events.
+
+The web client API provides a simpler facade, especially for simplifying the payload data (un)marshalling.
+This API comes in the form of a new dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.vertx</groupId>
+  <artifactId>vertx-web-client</artifactId>
+  <version>${vertx.version}</version>
+</dependency>
+----
+
+The following is a sample usage from a unit test.
+What the test does is starting a HTTP server, then doing a HTTP GET request with the web client API to check that the request to the server suceeded:
+
+[source,java,indent=0]
+----
+include::src/test/java/io/vertx/guides/wiki/http/SampleHttpServerTest.java[tags=client]
+----

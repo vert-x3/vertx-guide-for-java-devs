@@ -48,14 +48,14 @@ public class SampleHttpServerTest {
     vertx.close(context.asyncAssertSuccess());
   }
 
+  // tag::client[]
   @Test
   public void start_http_server(TestContext context) {
     Async async = context.async();
 
-    vertx
-      .createHttpServer().requestHandler(req ->
+    vertx.createHttpServer().requestHandler(req ->
       req.response().putHeader("Content-Type", "text/plain").end("Ok"))
-      .listen(8080, context.asyncAssertSuccess(server -> {
+    .listen(8080, context.asyncAssertSuccess(server -> {
 
         WebClient webClient = WebClient.wrap(vertx.createHttpClient());
 
@@ -73,4 +73,5 @@ public class SampleHttpServerTest {
         });
       }));
   }
+  // end::client[]
 }
