@@ -1,0 +1,111 @@
+:imagesdir: step-6/images
+
+= Exposing a web API
+
+TIP: The corresponding source code is in the `step-5` folder of the guide repository.
+
+Exposing a web HTTP/JSON API is very straightforward using what we have already covered from the `vertx-web` module.
+We are going to expose a web API with the following URL scheme:
+
+* `GET /api/pages` gives a document will all wiki page names and identifiers,
+* `POST /api/pages` creates a new wiki page from a document,
+* `PUT /api/pages/:id` updates a wiki page from a document,
+* `DELETE /api/pages/:id` deletes a wiki page.
+
+Here is a screenshot of interacting with the API using the https://httpie.org/[HTTPie command-line tool]:
+
+image::webapi-httpie.png[]
+
+== Web sub-routers
+
+We are going to add new route handlers to the `HttpServerVerticle`.
+While we could just add handlers to the existing router, we can also take advantage of _sub-routers_.
+They allow a router to be mounted as a sub-router of another one, which can be useful for organizing and/or re-using handlers.
+
+Here is the code for the API router:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=apiRouter]
+----
+<1> This is where we mount our router, so requests starting with the `/api` path will be directed to `apiRouter`.
+
+== Handlers
+
+Here is the code for the different API router handlers.
+
+=== Root resource
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=apiRoot]
+----
+<1> We just remap database results in page information entry objects.
+<2> The resulting JSON array becomes the value for the `pages` key in the response payload.
+<3> `JsonObject#encode()` gives a compact `String` representation of the JSON data.
+
+=== Getting a page
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=apiGetPage]
+----
+
+=== Creating a page
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=apiCreatePage]
+----
+
+This handler and other handlers need to deal with incoming JSON documents.
+The following `validateJsonPageDocument` method is a helper for doing validation and early error reporting, so that the remainder of the processings assume the presence of certain JSON entries:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=validateJsonPageDocument]
+----
+
+=== Updating a page
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=apiUpdatePage]
+----
+
+The `handleSimpleDbReply` method is a helper for finishing the request processing:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=handleSimpleDbReply]
+----
+
+=== Deleting a page
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=apiDeletePage]
+----
+
+== Unit testing the API
+
+We write a basic test case in the `io.vertx.guides.wiki.http.ApiTest` class.
+
+The preamble consists in preparing the test environment.
+The HTTP server vertile needs the database verticle to be running, so we need to deploy both in our test Vert.x context:
+
+[source,java,indent=0]
+----
+include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=preamble]
+----
+<1> We use a different JDBC URL to use an in-memory database for the tests.
+
+The proper test case is a simple scenario where all types of requests are being made.
+It creates a page, fetches it, updates it then deletes it:
+
+[source,java,indent=0]
+----
+include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=play-with-api]
+----
+
+TIP: The test uses `Future` objects composition rather than nested callbacks.

@@ -19,4 +19,6 @@ include::step-4/README.adoc[]
 
 include::step-5/README.adoc[]
 
+include::step-6/README.adoc[]
+
 :leveloffset: -1

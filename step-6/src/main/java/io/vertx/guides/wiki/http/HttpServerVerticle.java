@@ -81,6 +81,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/create").handler(this::pageCreateHandler);
     router.post("/delete").handler(this::pageDeletionHandler);
 
+    // tag::apiRouter[]
     Router apiRouter = Router.router(vertx);
     apiRouter.get("/pages").handler(this::apiRoot);
     apiRouter.get("/pages/:id").handler(this::apiGetPage);
@@ -89,7 +90,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     apiRouter.put().handler(BodyHandler.create());
     apiRouter.put("/pages/:id").handler(this::apiUpdatePage);
     apiRouter.delete("/pages/:id").handler(this::apiDeletePage);
-    router.mountSubRouter("/api", apiRouter);
+    router.mountSubRouter("/api", apiRouter); // <1>
+    // end::apiRouter[]
 
     int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);
     server
@@ -105,13 +107,16 @@ public class HttpServerVerticle extends AbstractVerticle {
       });
   }
 
+  // tag::apiDeletePage[]
   private void apiDeletePage(RoutingContext context) {
     int id = Integer.valueOf(context.request().getParam("id"));
     dbService.deletePage(id, reply -> {
       handleSimpleDbReply(context, reply);
     });
   }
+  // end::apiDeletePage[]
 
+  // tag::handleSimpleDbReply[]
   private void handleSimpleDbReply(RoutingContext context, AsyncResult<Void> reply) {
     if (reply.succeeded()) {
       context.response().setStatusCode(200);
@@ -125,7 +130,9 @@ public class HttpServerVerticle extends AbstractVerticle {
         .put("error", reply.cause().getMessage()).encode());
     }
   }
+  // end::handleSimpleDbReply[]
 
+  // tag::apiUpdatePage[]
   private void apiUpdatePage(RoutingContext context) {
     int id = Integer.valueOf(context.request().getParam("id"));
     JsonObject page = context.getBodyAsJson();
@@ -136,20 +143,9 @@ public class HttpServerVerticle extends AbstractVerticle {
       handleSimpleDbReply(context, reply);
     });
   }
+  // end::apiUpdatePage[]
 
-  private boolean validateJsonPageDocument(RoutingContext context, JsonObject page, String... expectedKeys) {
-    if (!Arrays.stream(expectedKeys).allMatch(page::containsKey)) {
-      LOGGER.error("Bad page creation JSON payload: " + page.encodePrettily() + " from " + context.request().remoteAddress());
-      context.response().setStatusCode(400);
-      context.response().putHeader("Content-Type", "application/json");
-      context.response().end(new JsonObject()
-        .put("success", false)
-        .put("error", "Bad request payload").encode());
-      return false;
-    }
-    return true;
-  }
-
+  // tag::apiCreatePage[]
   private void apiCreatePage(RoutingContext context) {
     JsonObject page = context.getBodyAsJson();
     if (!validateJsonPageDocument(context, page, "name", "markdown")) {
@@ -169,7 +165,24 @@ public class HttpServerVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::apiCreatePage[]
 
+  // tag::validateJsonPageDocument[]
+  private boolean validateJsonPageDocument(RoutingContext context, JsonObject page, String... expectedKeys) {
+    if (!Arrays.stream(expectedKeys).allMatch(page::containsKey)) {
+      LOGGER.error("Bad page creation JSON payload: " + page.encodePrettily() + " from " + context.request().remoteAddress());
+      context.response().setStatusCode(400);
+      context.response().putHeader("Content-Type", "application/json");
+      context.response().end(new JsonObject()
+        .put("success", false)
+        .put("error", "Bad request payload").encode());
+      return false;
+    }
+    return true;
+  }
+  // end::validateJsonPageDocument[]
+
+  // tag::apiGetPage[]
   private void apiGetPage(RoutingContext context) {
     int id = Integer.valueOf(context.request().getParam("id"));
     dbService.fetchPageById(id, reply -> {
@@ -202,7 +215,9 @@ public class HttpServerVerticle extends AbstractVerticle {
       context.response().end(response.encode());
     });
   }
+  // end::apiGetPage[]
 
+  // tag::apiRoot[]
   private void apiRoot(RoutingContext context) {
     dbService.fetchAllPagesData(reply -> {
       JsonObject response = new JsonObject();
@@ -210,15 +225,15 @@ public class HttpServerVerticle extends AbstractVerticle {
         List<JsonObject> pages = reply.result()
           .stream()
           .map(obj -> new JsonObject()
-            .put("id", obj.getInteger("ID"))
+            .put("id", obj.getInteger("ID"))  // <1>
             .put("name", obj.getString("NAME")))
           .collect(Collectors.toList());
         response
           .put("success", true)
-          .put("pages", pages);
+          .put("pages", pages); // <2>
         context.response().setStatusCode(200);
         context.response().putHeader("Content-Type", "application/json");
-        context.response().end(response.encode());
+        context.response().end(response.encode()); // <3>
       } else {
         response
           .put("success", false)
@@ -229,6 +244,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::apiRoot[]
 
   private void indexHandler(RoutingContext context) {
     dbService.fetchAllPages(reply -> {

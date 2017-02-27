@@ -38,6 +38,7 @@ import org.junit.runner.RunWith;
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
+// tag::preamble[]
 @RunWith(VertxUnitRunner.class)
 public class ApiTest {
 
@@ -49,8 +50,9 @@ public class ApiTest {
     vertx = Vertx.vertx();
 
     JsonObject dbConf = new JsonObject()
-      .put(WikiDatabaseVerticle.CONFIG_WIKIDB_JDBC_URL, "jdbc:hsqldb:mem:testdb;shutdown=true")
+      .put(WikiDatabaseVerticle.CONFIG_WIKIDB_JDBC_URL, "jdbc:hsqldb:mem:testdb;shutdown=true") // <1>
       .put(WikiDatabaseVerticle.CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, 4);
+    
     vertx.deployVerticle(new WikiDatabaseVerticle(),
       new DeploymentOptions().setConfig(dbConf), context.asyncAssertSuccess());
 
@@ -66,6 +68,11 @@ public class ApiTest {
     vertx.close(context.asyncAssertSuccess());
   }
 
+  // (...)
+
+  // end::preamble[]
+
+  // tag::play-with-api[]
   @Test
   public void play_with_api(TestContext context) {
     Async async = context.async();
@@ -139,4 +146,5 @@ public class ApiTest {
       async.complete();
     }, Future.failedFuture("Oh?"));
   }
+  // end::play-with-api[]
 }
