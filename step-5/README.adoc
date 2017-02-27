@@ -9,7 +9,7 @@ Integration is very often achieved using APIs exposed over the versatile HTTP pr
 
 This section shows how to integrate with a 3rd-party web service using the HTTP client APIs of Vert.x.
 
-== Backing up to GitHub Gist
+== Scenario: backing up to GitHub Gist 
 
 The https://gist.github.com/[GitHub Gist service] is popular for sharing code snippets to the world.
 Other services can use it, an example being the https://medium.com[Medium publishing platform] where links to Gists allow code snippets to be embedded inside publications.
@@ -50,9 +50,42 @@ This API comes in the form of a new dependency:
 ----
 
 The following is a sample usage from a unit test.
-What the test does is starting a HTTP server, then doing a HTTP GET request with the web client API to check that the request to the server suceeded:
+The test starts a HTTP server and then it does a HTTP GET request with the web client API to check that the request to the server suceeded:
 
 [source,java,indent=0]
 ----
 include::src/test/java/io/vertx/guides/wiki/http/SampleHttpServerTest.java[tags=client]
 ----
+
+== Creating anonymous Gists
+
+We first need a web client object to issue HTTP requests to the Gist API:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=webClient]
+----
+
+TIP: Since requests are made using HTTPS, we need to configure the HTTP client with SSL support.
+
+We then modify the web router configuration in the `HttpServerVerticle` class to add a new route for triggering backups:
+
+[source,java]
+----
+router.get("/backup").handler(this::backupHandler);
+----
+
+The code for this handler is the following:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=backupHandler]
+----
+<1> The Gist creation request payload is a JSON document as outlined in the https://developer.github.com/v3/gists/#create-a-gist[GitHub API documentation].
+<2> Each file is an entry under the `files` object of the payload, where the title is the key and the value is the text.
+<3> The web client needs to issue a `POST` request on port 443 (HTTPS), and the path must be `/gists`.
+<4> Specifying a user agent header is mandatory, and the documentation suggests a GitHub account or organization identifier. You may opt to use your own instead of `vert-x3`.
+<5> It is mandatory to have a `Accept` header in the request with the `application/vnd.github.v3+json` MIME type, otherwise the request fails. It is also important to specify that the payload is a JSON object at the next line.
+<6> The `BodyCodec` class provides a helper to specify that the response will be directly converted to a Vert.x `JsonObject` instance. It is also possible to use `BodyCodec#json(Class<T>)` and the JSON data will be mapped to a Java object of type `T` (this uses Jackson data mapping under the hood).
+<7> `sendJsonObject` is a helper for triggering the HTTP request with a JSON payload.
+<8> Upon success we can traverse the JSON data (`html_url` key) to get the user-friendly URL of the newly created Gist.

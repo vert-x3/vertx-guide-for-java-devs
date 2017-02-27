@@ -65,7 +65,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
 
-    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions().setSsl(true)));
+    // tag::webClient[]
+    webClient = WebClient.wrap(
+      vertx.createHttpClient(new HttpClientOptions().setSsl(true)));
+    // end::webClient[]
 
     HttpServer server = vertx.createHttpServer();
 
@@ -185,12 +188,13 @@ public class HttpServerVerticle extends AbstractVerticle {
     });
   }
 
+  // tag::backupHandler[]
   private void backupHandler(RoutingContext context) {
     dbService.fetchAllPagesData(reply -> {
       if (reply.succeeded()) {
 
         JsonObject filesObject = new JsonObject();
-        JsonObject gistPayload = new JsonObject()
+        JsonObject gistPayload = new JsonObject() // <1>
           .put("files", filesObject)
           .put("description", "A wiki backup")
           .put("public", true);
@@ -198,21 +202,21 @@ public class HttpServerVerticle extends AbstractVerticle {
         reply
           .result()
           .forEach(page -> {
-            JsonObject fileObject = new JsonObject();
+            JsonObject fileObject = new JsonObject(); // <2>
             filesObject.put(page.getString("NAME"), fileObject);
             fileObject.put("content", page.getString("CONTENT"));
           });
 
-        webClient.post(443, "api.github.com", "/gists")
-          .putHeader("User-Agent", "vert-x3")
-          .putHeader("Accept", "application/vnd.github.v3+json")
+        webClient.post(443, "api.github.com", "/gists") // <3>
+          .putHeader("User-Agent", "vert-x3") // <4>
+          .putHeader("Accept", "application/vnd.github.v3+json") // <5>
           .putHeader("Content-Type", "application/json")
-          .as(BodyCodec.jsonObject())
-          .sendJsonObject(gistPayload, ar -> {
+          .as(BodyCodec.jsonObject()) // <6>
+          .sendJsonObject(gistPayload, ar -> {  // <7>
           if (ar.succeeded()) {
             HttpResponse<JsonObject> response = ar.result();
             if (response.statusCode() == 201) {
-              context.put("backup_gist_url", response.body().getString("html_url"));
+              context.put("backup_gist_url", response.body().getString("html_url"));  // <8>
               indexHandler(context);
             } else {
               Throwable err = ar.cause();
@@ -221,9 +225,11 @@ public class HttpServerVerticle extends AbstractVerticle {
             }
           }
         });
+
       } else {
         context.fail(reply.cause());
       }
     });
   }
+  // end::backupHandler[]
 }
