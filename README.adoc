@@ -9,16 +9,22 @@ Julien Ponge <julien.ponge@insa-lyon.fr>
 
 :leveloffset: +1
 
+:imagesdir: step-1
 include::step-1/README.adoc[]
 
+:imagesdir: step-2
 include::step-2/README.adoc[]
 
+:imagesdir: step-3
 include::step-3/README.adoc[]
 
+:imagesdir: step-4
 include::step-4/README.adoc[]
 
+:imagesdir: step-5
 include::step-5/README.adoc[]
 
+:imagesdir: step-6
 include::step-6/README.adoc[]
 
 :leveloffset: -1
