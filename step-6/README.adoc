@@ -2,7 +2,7 @@
 
 = Exposing a web API
 
-TIP: The corresponding source code is in the `step-5` folder of the guide repository.
+TIP: The corresponding source code is in the `step-6` folder of the guide repository.
 
 Exposing a web HTTP/JSON API is very straightforward using what we have already covered from the `vertx-web` module.
 We are going to expose a web API with the following URL scheme:
