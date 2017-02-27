@@ -1,0 +1,44 @@
+= Securing and controlling access
+
+TIP: The corresponding source code is in the `step-7` folder of the guide repository.
+
+Securing and controlling access is easy to do with Vert.x.
+In this section, we will:
+
+1. move from HTTP to HTTPS, and
+2. add user authentication with group-based privileges to the web application, and
+3. control access to the web API using https://jwt.io/[_JSON web tokens_ (JWT)].
+
+== HTTPS support in Vert.x
+
+Vert.x provides support for SSL-encrypted network connections.
+It is common to expose HTTP servers in production through a front HTTP server / proxy like Nginx, and have it use HTTPS for incoming connections.
+Vert.x can also expose HTTPS by itself, so as to provide end-to-end encryption.
+
+Certificates need to be stored in Java _KeyStore_ files.
+You will likely need a _self-signed certificate_ for testing purposes, and here is how to create one in a `server-keystore.jks` KeyStore where the password is `secret`:
+
+[source,text,indent=0]
+----
+include::gen-keystore.sh[tags=https-keygen]
+----
+
+We can then change the HTTP server creation to pass a `HttpServerOptions` object to specify that we want SSL, and to point to our KeyStore file:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=https-server]
+----
+
+We can point a web browser to https://localhost:8080/, but since the certificate is a self-signed one any good browser will rightfully yield a security warning:
+
+image::images/invalid-cert.png[]
+
+Last but not least, we need to update the test case in `ApiTest` since the original code was made for issuing HTTP requests with the web client:
+
+[source,java,indent=0]
+----
+include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=test-https]
+----
+<1> Ensures SSL.
+<2> Since the certificate is self-signed, we need to explicitly trust it otherwise the web client connections will fail just like a web browser would.

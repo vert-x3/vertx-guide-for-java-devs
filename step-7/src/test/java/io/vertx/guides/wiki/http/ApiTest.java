@@ -58,11 +58,13 @@ public class ApiTest {
 
     vertx.deployVerticle(new HttpServerVerticle(), context.asyncAssertSuccess());
 
+    // tag::test-https[]
     webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions()
       .setDefaultHost("localhost")
       .setDefaultPort(8080)
-      .setSsl(true)
-      .setTrustOptions(new JksOptions().setPath("server-keystore.jks").setPassword("secret"))));
+      .setSsl(true) // <1>
+      .setTrustOptions(new JksOptions().setPath("server-keystore.jks").setPassword("secret")))); // <2>
+    // end::test-https[]
   }
 
   @After

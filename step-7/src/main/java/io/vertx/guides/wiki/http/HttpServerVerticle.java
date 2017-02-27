@@ -80,11 +80,13 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions().setSsl(true)));
 
+    // tag::https-server[]
     HttpServer server = vertx.createHttpServer(new HttpServerOptions()
       .setSsl(true)
       .setKeyStoreOptions(new JksOptions()
         .setPath("server-keystore.jks")
         .setPassword("secret")));
+    // end::https-server[]
 
     AuthProvider auth = ShiroAuth.create(vertx, new ShiroAuthOptions()
       .setType(ShiroAuthRealmType.PROPERTIES)
