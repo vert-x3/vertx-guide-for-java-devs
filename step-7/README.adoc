@@ -15,7 +15,7 @@ Vert.x provides support for SSL-encrypted network connections.
 It is common to expose HTTP servers in production through a front HTTP server / proxy like Nginx, and have it use HTTPS for incoming connections.
 Vert.x can also expose HTTPS by itself, so as to provide end-to-end encryption.
 
-Certificates need to be stored in Java _KeyStore_ files.
+Certificates can be stored in Java _KeyStore_ files.
 You will likely need a _self-signed certificate_ for testing purposes, and here is how to create one in a `server-keystore.jks` KeyStore where the password is `secret`:
 
 [source,text,indent=0]
