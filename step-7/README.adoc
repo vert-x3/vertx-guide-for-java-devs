@@ -42,3 +42,122 @@ include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=test-https]
 ----
 <1> Ensures SSL.
 <2> Since the certificate is self-signed, we need to explicitly trust it otherwise the web client connections will fail just like a web browser would.
+
+== Access control and authentication
+
+Vert.x provides a wide range of options for doing authentication and authorisation.
+The officially supported modules cover JDBC, MongoDB, https://shiro.apache.org/[Apache Shiro], OAuth2 with well-known providers and JWT (JSON web tokens).
+
+While the next section will cover JWT, this one focuses on using Apache Shiro which is especially interesting when authentication must be backed by a LDAP or Active Directory server.
+In our case we will simply store the credentials in a properties file to keep things simple, but the API usage against a LDAP server remains the same.
+
+The goal is to require users to authenticate for using the wiki, and have role-based permissions:
+
+* having no role only allows reading pages,
+* having a _writer_ role allows editing pages,
+* having an _editor_ role allows creating, editing and deleting pages,
+* having an _admin_ role is equivalent to having all possible roles.
+
+=== Adding Apache Shiro authentication to routes
+
+The first step is to add the `vertx-auth-shiro` module to the Maven dependencies list:
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=shiro]
+----
+
+The properties file definition that we use is the following, located in `src/main/resources/wiki-users.properties`:
+
+[source,index=0]
+----
+include::src/main/resources/wiki-users.properties[tags=props]
+----
+
+A `user`-prefixed entry is a user account, where the first value entry is the password possibly followed by roles.
+In this example user `bar` has password `baz`, is a `writer`, and a `writer` has `update` permission.
+
+Back to the `HttpServerVerticle` class code, we create an authentication provider using Apache Shiro:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=shiro-auth]
+----
+
+The `ShiroAuth` object instance is then used to deal with server-side user sessions:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=shiro-routes]
+----
+<1> We install a user session handler for all routes.
+<2> This automatically redirects requests to `/login` when there is no user session for the request.
+<3> We install `authHandler` for all routes where authentication is required.
+
+Finally, we need to create 3 routes for displaying a login form, handling login form submissions and logging out users:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=shiro-login]
+----
+<1> `FormLoginHandler` is a helper for processing login submission requests. By default it expects the HTTP POST request to have: `username` as the login, `password` as the password, and `return_url` as the URL to redirect to upon success.
+<2> Logging out a user is a simple as clearing it from the current `RoutingContext`.
+
+The code for the `loginHandler` method is:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=loginHandler]
+----
+
+The HTML template is placed in `src/main/resources/templates/login.ftl`:
+
+[source,html]
+----
+include::src/main/resources/templates/login.ftl[]
+----
+
+The login page looks as follows:
+
+image::images/login-form.png[]
+
+=== Supporting features based on roles
+
+Features need to be activated only if the user has sufficient permissions based on role.
+In the following screenshot an administrator can create a page and perform a backup:
+
+image::images/as-root.png[]
+
+By contrast a user with no role cannot perform these actions:
+
+image::images/as-baz.png[]
+
+To do that, we can access the `RoutingContext` user reference, and query for permissions.
+Here is how this is implemented for the `indexHandler` handler method:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=indexHandler]
+----
+<1> This is how a permission query is made. Note that this is an asynchronous operation.
+<2> We use the result to...
+<3> ...leverage it is the HTML template.
+<4> We also have access to the user login.
+
+The template code has been modified to only render certain fragments based on the value of `canCreatePage`:
+
+[source,html]
+----
+include::src/main/resources/templates/index.ftl[]
+----
+
+The code is similar for ensuring that updating or deleting a page is restricted to certain roles and is available from the guide Git repository.
+
+It is important to ensure that checkings are also being done on HTTP POST request handlers and not just when rendering HTML pages.
+Indeed, malicious attackers could still craft requests and perform actions while not being authenticated.
+Here is how to protect page deletions by wrapping the `pageDeletionHandler` code inside a topmost permission check:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=pageDeletionHandler]
+----

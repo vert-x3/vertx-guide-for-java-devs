@@ -88,20 +88,23 @@ public class HttpServerVerticle extends AbstractVerticle {
         .setPassword("secret")));
     // end::https-server[]
 
+    // tag::shiro-auth[]
     AuthProvider auth = ShiroAuth.create(vertx, new ShiroAuthOptions()
       .setType(ShiroAuthRealmType.PROPERTIES)
       .setConfig(new JsonObject()
         .put("properties_path", "classpath:wiki-users.properties")));
+    // end::shiro-auth[]
 
+    // tag::shiro-routes[]
     Router router = Router.router(vertx);
 
     router.route().handler(CookieHandler.create());
     router.route().handler(BodyHandler.create());
     router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-    router.route().handler(UserSessionHandler.create(auth));
+    router.route().handler(UserSessionHandler.create(auth));  // <1>
 
-    AuthHandler authHandler = RedirectAuthHandler.create(auth, "/login");
-    router.route("/").handler(authHandler);
+    AuthHandler authHandler = RedirectAuthHandler.create(auth, "/login"); // <2>
+    router.route("/").handler(authHandler);  // <3>
     router.route("/wiki/*").handler(authHandler);
     router.route("/action/*").handler(authHandler);
 
@@ -111,17 +114,20 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/action/create").handler(this::pageCreateHandler);
     router.get("/action/backup").handler(this::backupHandler);
     router.post("/action/delete").handler(this::pageDeletionHandler);
+    // end::shiro-routes[]
 
+    // tag::shiro-login[]
     router.get("/login").handler(this::loginHandler);
-    router.post("/login-auth").handler(FormLoginHandler.create(auth));
+    router.post("/login-auth").handler(FormLoginHandler.create(auth));  // <1>
 
     router.get("/logout").handler(context -> {
-      context.clearUser();
+      context.clearUser();  // <2>
       context.response()
         .setStatusCode(302)
         .putHeader("Location", "/")
         .end();
     });
+    // end::shiro-login[]
 
     JWTAuth jwtAuth = JWTAuth.create(vertx, new JsonObject()
       .put("keyStore", new JsonObject()
@@ -325,15 +331,16 @@ public class HttpServerVerticle extends AbstractVerticle {
     });
   }
 
+  // tag::indexHandler[]
   private void indexHandler(RoutingContext context) {
-    context.user().isAuthorised("create", res -> {
-      boolean canCreatePage = res.succeeded() && res.result();
+    context.user().isAuthorised("create", res -> {  // <1>
+      boolean canCreatePage = res.succeeded() && res.result();  // <2>
       dbService.fetchAllPages(reply -> {
         if (reply.succeeded()) {
           context.put("title", "Wiki home");
           context.put("pages", reply.result().getList());
-          context.put("canCreatePage", canCreatePage);
-          context.put("username", context.user().principal().getString("username"));
+          context.put("canCreatePage", canCreatePage);  // <3>
+          context.put("username", context.user().principal().getString("username"));  // <4>
           templateEngine.render(context, "templates/index.ftl", ar -> {
             if (ar.succeeded()) {
               context.response().putHeader("Content-Type", "text/html");
@@ -348,6 +355,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       });
     });
   }
+  // end::indexHandler[]
 
   private void pageRenderingHandler(RoutingContext context) {
     context.user().isAuthorised("update", updateResponse -> {
@@ -390,6 +398,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     });
   }
 
+  // tag::loginHandler[]
   private void loginHandler(RoutingContext context) {
     context.put("title", "Login");
     templateEngine.render(context, "templates/login.ftl", ar -> {
@@ -401,7 +410,8 @@ public class HttpServerVerticle extends AbstractVerticle {
       }
     });
   }
-
+  // end::loginHandler[]
+  
   private void pageUpdateHandler(RoutingContext context) {
     boolean pageCreation = "yes".equals(context.request().getParam("newPage"));
     context.user().isAuthorised(pageCreation ? "create" : "update", res -> {
@@ -443,10 +453,12 @@ public class HttpServerVerticle extends AbstractVerticle {
     context.response().end();
   }
 
+  // tag::pageDeletionHandler[]
   private void pageDeletionHandler(RoutingContext context) {
     context.user().isAuthorised("delete", res -> {
       if (res.succeeded() && res.result()) {
 
+        // Original code:
         dbService.deletePage(Integer.valueOf(context.request().getParam("id")), reply -> {
           if (reply.succeeded()) {
             context.response().setStatusCode(303);
@@ -462,6 +474,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::pageDeletionHandler[]
 
   private void backupHandler(RoutingContext context) {
     context.user().isAuthorised("role:writer", res -> {

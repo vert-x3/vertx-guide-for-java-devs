@@ -82,6 +82,7 @@
       <version>2.3.4</version>
     </dependency>
 
+    <!-- tag::shiro[] -->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-auth-shiro</artifactId>
@@ -91,6 +92,7 @@
       <artifactId>slf4j-api</artifactId>
       <version>1.7.21</version>
     </dependency>
+    <!-- end::shiro[] -->
 
     <dependency>
       <groupId>io.vertx</groupId>
