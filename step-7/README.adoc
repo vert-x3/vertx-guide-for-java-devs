@@ -58,6 +58,8 @@ The goal is to require users to authenticate for using the wiki, and have role-b
 * having an _editor_ role allows creating, editing and deleting pages,
 * having an _admin_ role is equivalent to having all possible roles.
 
+WARNING: The Vert.x Shiro integration has some issues due to the inner workings of Apache Shiro. Some parts are blocking which can hinder performance, and some data is stored using thread local state. You should not try abusing the exposed internal state APIs either.
+
 === Adding Apache Shiro authentication to routes
 
 The first step is to add the `vertx-auth-shiro` module to the Maven dependencies list:
