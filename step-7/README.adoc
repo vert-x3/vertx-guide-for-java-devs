@@ -163,3 +163,170 @@ Here is how to protect page deletions by wrapping the `pageDeletionHandler` code
 ----
 include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=pageDeletionHandler]
 ----
+
+== Authenticating web API requests with JWT
+
+https://jwt.io/[JSON Web Tokens] (https://tools.ietf.org/html/rfc7519[RFC 7519]) is a standard for issuing JSON-encoded tokens containing _claims_, typically identifying a user and permissions, although claims can be just about anything.
+
+A token is issued by a server and it is signed with the server key.
+A client can send a token back along with subsequent requests: both the client and the server can check that a token is authentic and unaltered.
+
+WARNING: While a JWT token is signed, its content is not encrypted. It must be transported over a secure channel (e.g., HTTPS) and it should never have sensitive data as a claim (e.g., passwords, private API keys, etc).
+
+=== Adding JWT support
+
+We start by adding the `vertx-auth-jwt` module to the Maven dependencies:
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=jwt]
+----
+
+We will have a JCEKS keystore to hold the keys for our tests.
+Here is how to generate a `keystore.jceks` with the suitable keys of various lengths:
+
+[source,text,indent=0]
+----
+include::gen-keystore.sh[tags=jwt-keygen]
+----
+
+We need to install a JWT token handler on API routes:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=jwtAuth]
+----
+
+We pass `/api/token` as a parameter for the `JWTAuthHandler` object creation to specify that this URL shall be ignored.
+Indeed, this URL is being used to generate new JWT tokens:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=issue-jwt]
+----
+<1> We expect login and password information to have been passed through HTTP request headers, and we authenticate using the Apache Shiro authentication provider of the previous section.
+<2> Upon success we can query for roles.
+<3> We generate a token with `username`, `canCreate`, `canDelete` and `canUpdate` claims.
+
+Each API handler method can now query the current user principal and claims.
+Here is how the `apiDeletePage` does it:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=apiDeletePage]
+----
+
+=== Using JWT tokens
+
+To illustrate how working with JWT tokens work, let's create a new one for the `root` user:
+
+----
+$ http --verbose --verify no GET https://localhost:8080/api/token login:root password:w00t
+GET /api/token HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:8080
+User-Agent: HTTPie/0.9.8
+login: root
+password: w00t
+
+
+
+HTTP/1.1 200 OK
+Content-Length: 242
+Content-Type: text/plain
+Set-Cookie: vertx-web.session=8cbb38ac4ce96737bfe31cc0ceaae2b9; Path=/
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InJvb3QiLCJjYW5DcmVhdGUiOnRydWUsImNhbkRlbGV0ZSI6dHJ1ZSwiY2FuVXBkYXRlIjp0cnVlLCJpYXQiOjE0ODk0NDE1OTAsImlzcyI6IlZlcnQueCIsInN1YiI6Ildpa2kgQVBJIn0=.RmtJb81QKVUFreXL-ajZ8ktLGasoKEqG8GSQncRWrN8=
+----
+
+The response text is the token value and shall be retained for API further access.
+
+We can check that performing an API request without the token results in a denial of access:
+
+----
+$ http --verbose --verify no GET https://localhost:8080/api/pages
+GET /api/pages HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: localhost:8080
+User-Agent: HTTPie/0.9.8
+
+
+
+HTTP/1.1 401 Unauthorized
+Content-Length: 12
+
+Unauthorized
+----
+
+Sending a JWT token along with a request is done using a `Authorization` HTTP request header where the value must be `Bearer <token value>`.
+Here is how to fix the API request above by passing the JWT token that had been issued to us:
+
+----
+$ http --verbose --verify no GET https://localhost:8080/api/pages 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InJvb3QiLCJjYW5DcmVhdGUiOnRydWUsImNhbkRlbGV0ZSI6dHJ1ZSwiY2FuVXBkYXRlIjp0cnVlLCJpYXQiOjE0ODk0NDE1OTAsImlzcyI6IlZlcnQueCIsInN1YiI6Ildpa2kgQVBJIn0=.RmtJb81QKVUFreXL-ajZ8ktLGasoKEqG8GSQncRWrN8='
+GET /api/pages HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InJvb3QiLCJjYW5DcmVhdGUiOnRydWUsImNhbkRlbGV0ZSI6dHJ1ZSwiY2FuVXBkYXRlIjp0cnVlLCJpYXQiOjE0ODk0NDE1OTAsImlzcyI6IlZlcnQueCIsInN1YiI6Ildpa2kgQVBJIn0=.RmtJb81QKVUFreXL-ajZ8ktLGasoKEqG8GSQncRWrN8=
+Connection: keep-alive
+Host: localhost:8080
+User-Agent: HTTPie/0.9.8
+
+
+
+HTTP/1.1 200 OK
+Content-Length: 99
+Content-Type: application/json
+Set-Cookie: vertx-web.session=0598697483371c7f3cb434fbe35f15e4; Path=/
+
+{
+    "pages": [
+        {
+            "id": 0,
+            "name": "Hello"
+        },
+        {
+            "id": 1,
+            "name": "Apple"
+        },
+        {
+            "id": 2,
+            "name": "Vert.x"
+        }
+    ],
+    "success": true
+}
+----
+
+=== Adapting the API test fixture
+
+The `ApiTest` class needs to be updated to support JWT tokens.
+
+We add a new field for retrieving the token value to be used in test cases:
+
+[source,java,indent=0]
+----
+include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=tokenField]
+----
+
+We add first step to retrieve a JTW token authenticated as user `foo`:
+
+[source,java,indent=0]
+----
+include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=fetch-token]
+----
+<1> Credentials are passed as headers.
+<2> The response payload is of `text/plain` type, so we use that for the body decoding codec.
+<3> Upon success we complete the `tokenRequest` future with the token value.
+
+Using the JWT token is now a matter of passing it back as a header to HTTP requests:
+
+[source,java,indent=0]
+----
+include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=use-token]
+----
+<1> We store the token with the `Bearer` prefix to the field for the next requests.
+<2> We pass the token as a header.

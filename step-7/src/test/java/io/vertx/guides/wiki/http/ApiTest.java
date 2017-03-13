@@ -44,7 +44,10 @@ public class ApiTest {
 
   private Vertx vertx;
   private WebClient webClient;
+  
+  // tag::tokenField[]
   private String jwtTokenHeaderValue;
+  // end::tokenField[]
 
   @Before
   public void prepare(TestContext context) {
@@ -72,32 +75,36 @@ public class ApiTest {
     vertx.close(context.asyncAssertSuccess());
   }
 
+  // tag::fetch-token[]
   @Test
   public void play_with_api(TestContext context) {
     Async async = context.async();
 
     Future<String> tokenRequest = Future.future();
     webClient.get("/api/token")
-      .putHeader("login", "foo")
+      .putHeader("login", "foo")  // <1>
       .putHeader("password", "bar")
-      .as(BodyCodec.string())
+      .as(BodyCodec.string()) // <2>
       .send(ar -> {
         if (ar.succeeded()) {
-          tokenRequest.complete(ar.result().body());
+          tokenRequest.complete(ar.result().body());  // <3>
         } else {
           context.fail(ar.cause());
         }
       });
+      // (...)
+  // end::fetch-token[]
 
     JsonObject page = new JsonObject()
       .put("name", "Sample")
       .put("markdown", "# A page");
 
+    // tag::use-token[]
     Future<JsonObject> postRequest = Future.future();
     tokenRequest.compose(token -> {
-      jwtTokenHeaderValue = "Bearer " + token;
+      jwtTokenHeaderValue = "Bearer " + token;  // <1>
       webClient.post("/api/pages")
-        .putHeader("Authorization", jwtTokenHeaderValue)
+        .putHeader("Authorization", jwtTokenHeaderValue)  // <2>
         .as(BodyCodec.jsonObject())
         .sendJsonObject(page, ar -> {
           if (ar.succeeded()) {
@@ -107,7 +114,7 @@ public class ApiTest {
             context.fail(ar.cause());
           }
         });
-    }, postRequest);
+    }, postRequest);    
 
     Future<JsonObject> getRequest = Future.future();
     postRequest.compose(h -> {
@@ -123,6 +130,8 @@ public class ApiTest {
           }
         });
     }, getRequest);
+    // (...)
+    // end::use-token[]
 
     Future<JsonObject> putRequest = Future.future();
     getRequest.compose(response -> {

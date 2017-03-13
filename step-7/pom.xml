@@ -94,10 +94,12 @@
     </dependency>
     <!-- end::shiro[] -->
 
+    <!-- tag::jwt[] -->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-auth-jwt</artifactId>
     </dependency>
+    <!-- end::jwt[] -->
 
     <dependency>
       <groupId>io.vertx</groupId>

@@ -129,30 +129,33 @@ public class HttpServerVerticle extends AbstractVerticle {
     });
     // end::shiro-login[]
 
+    // tag::jwtAuth[]
+    Router apiRouter = Router.router(vertx);
+
     JWTAuth jwtAuth = JWTAuth.create(vertx, new JsonObject()
       .put("keyStore", new JsonObject()
         .put("path", "keystore.jceks")
         .put("type", "jceks")
-        .put("password", "secret")));
-
-    Router apiRouter = Router.router(vertx);
+        .put("password", "secret")));    
 
     apiRouter.route().handler(JWTAuthHandler.create(jwtAuth, "/api/token"));
+    // end::jwtAuth[]
 
+    // tag::issue-jwt[]
     apiRouter.get("/token").handler(context -> {
 
       JsonObject creds = new JsonObject()
         .put("username", context.request().getHeader("login"))
         .put("password", context.request().getHeader("password"));
-      auth.authenticate(creds, authResult -> {
+      auth.authenticate(creds, authResult -> {  // <1>
 
         if (authResult.succeeded()) {
           User user = authResult.result();
-          user.isAuthorised("create", canCreate -> {
+          user.isAuthorised("create", canCreate -> {  // <2>
             user.isAuthorised("delete", canDelete -> {
               user.isAuthorised("update", canUpdate -> {
 
-                String token = jwtAuth.generateToken(
+                String token = jwtAuth.generateToken( // <3>
                   new JsonObject()
                     .put("username", context.request().getHeader("login"))
                     .put("canCreate", canCreate.succeeded() && canCreate.result())
@@ -170,6 +173,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         }
       });
     });
+    // end::issue-jwt[]
 
     apiRouter.get("/pages").handler(this::apiRoot);
     apiRouter.get("/pages/:id").handler(this::apiGetPage);
@@ -194,6 +198,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       });
   }
 
+  // tag::apiDeletePage[]
   private void apiDeletePage(RoutingContext context) {
     if (context.user().principal().getBoolean("canDelete", false)) {
       int id = Integer.valueOf(context.request().getParam("id"));
@@ -204,6 +209,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       context.fail(401);
     }
   }
+  // end::apiDeletePage[]
 
   private void handleSimpleDbReply(RoutingContext context, AsyncResult<Void> reply) {
     if (reply.succeeded()) {
