@@ -39,8 +39,4 @@ Access control and security
 
 == Step 8
 
-Turn to client-side web app, remove server-side rendering.
-
-== Step 9
-
 Refactor to RxJava.
