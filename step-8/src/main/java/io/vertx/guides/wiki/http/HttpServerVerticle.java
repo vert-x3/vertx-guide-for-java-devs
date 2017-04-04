@@ -368,6 +368,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         return user.rxIsAuthorised("delete");
       })
       .flatMap(canDeletePage -> {
+        context.put("canDeletePage", canDeletePage);
         String requestedPage = context.request().getParam("page");
         context.put("title", requestedPage);
         return dbService.rxFetchPage(requestedPage);
