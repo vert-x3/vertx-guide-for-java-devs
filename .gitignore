@@ -7,3 +7,4 @@ db/
 *.iws
 *.ipr
 *.iml
+.vertx
