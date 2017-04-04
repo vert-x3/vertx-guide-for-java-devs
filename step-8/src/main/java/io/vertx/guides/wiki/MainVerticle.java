@@ -17,12 +17,10 @@
 
 package io.vertx.guides.wiki;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
-import io.vertx.guides.wiki.http.HttpServerVerticle;
+import io.vertx.rxjava.core.AbstractVerticle;
+import rx.Single;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
@@ -32,21 +30,14 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
-    Future<String> httpVerticleDeployment = Future.future();
-    vertx.deployVerticle(
+    Single<String> dbVerticleDeployment = vertx.rxDeployVerticle(
+      "io.vertx.guides.wiki.database.WikiDatabaseVerticle");
+
+    Single<String> httpVerticleDeployment = vertx.rxDeployVerticle(
       "io.vertx.guides.wiki.http.HttpServerVerticle",
-      new DeploymentOptions().setInstances(2),
-      httpVerticleDeployment.completer());
+      new DeploymentOptions().setInstances(2));
 
-    Future<String> dbVerticleDeployment = Future.future();
-    vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment.completer());
-
-    CompositeFuture.all(httpVerticleDeployment, dbVerticleDeployment).setHandler(ar -> {
-      if (ar.succeeded()) {
-        startFuture.succeeded();
-      } else {
-        startFuture.fail(ar.cause());
-      }
-    });
+    dbVerticleDeployment.flatMap(id -> httpVerticleDeployment)
+      .subscribe(id -> startFuture.complete(), startFuture::fail);
   }
 }
