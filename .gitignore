@@ -8,3 +8,4 @@ db/
 *.ipr
 *.iml
 .vertx
+guide.html
