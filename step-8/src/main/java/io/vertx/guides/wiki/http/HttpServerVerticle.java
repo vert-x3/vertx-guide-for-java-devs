@@ -18,10 +18,10 @@
 package io.vertx.guides.wiki.http;
 
 import com.github.rjeschke.txtmark.Processor;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -50,12 +50,11 @@ import io.vertx.rxjava.ext.web.handler.SessionHandler;
 import io.vertx.rxjava.ext.web.handler.UserSessionHandler;
 import io.vertx.rxjava.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava.ext.web.templ.FreeMarkerTemplateEngine;
+import rx.Observable;
 import rx.Single;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
@@ -142,31 +141,22 @@ public class HttpServerVerticle extends AbstractVerticle {
       JsonObject creds = new JsonObject()
         .put("username", context.request().getHeader("login"))
         .put("password", context.request().getHeader("password"));
-      auth.authenticate(creds, authResult -> {
 
-        if (authResult.succeeded()) {
-          User user = authResult.result();
-          user.isAuthorised("create", canCreate -> {
-            user.isAuthorised("delete", canDelete -> {
-              user.isAuthorised("update", canUpdate -> {
-
-                String token = jwtAuth.generateToken(
-                  new JsonObject()
-                    .put("username", context.request().getHeader("login"))
-                    .put("canCreate", canCreate.succeeded() && canCreate.result())
-                    .put("canDelete", canDelete.succeeded() && canDelete.result())
-                    .put("canUpdate", canUpdate.succeeded() && canUpdate.result()),
-                  new JWTOptions()
-                    .setSubject("Wiki API")
-                    .setIssuer("Vert.x"));
-                context.response().putHeader("Content-Type", "text/plain").end(token);
-              });
-            });
-          });
-        } else {
-          context.fail(401);
-        }
-      });
+      auth.rxAuthenticate(creds).flatMap(user -> {
+        return Single.zip(user.rxIsAuthorised("create"), user.rxIsAuthorised("delete"), user.rxIsAuthorised("update"), (canCreate, canDelete, canUpdate) -> {
+          return jwtAuth.generateToken(
+            new JsonObject()
+              .put("username", context.request().getHeader("login"))
+              .put("canCreate", canCreate)
+              .put("canDelete", canDelete)
+              .put("canUpdate", canUpdate),
+            new JWTOptions()
+              .setSubject("Wiki API")
+              .setIssuer("Vert.x"));
+        });
+      }).subscribe(token -> {
+        context.response().putHeader("Content-Type", "text/plain").end(token);
+      }, t -> context.fail(401));
     });
 
     apiRouter.get("/pages").handler(this::apiRoot);
@@ -181,52 +171,28 @@ public class HttpServerVerticle extends AbstractVerticle {
     int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);
     server
       .requestHandler(router::accept)
-      .listen(portNumber, ar -> {
-        if (ar.succeeded()) {
-          LOGGER.info("HTTP server running on port " + portNumber);
-          startFuture.complete();
-        } else {
-          LOGGER.error("Could not start a HTTP server", ar.cause());
-          startFuture.fail(ar.cause());
-        }
+      .rxListen(portNumber)
+      .subscribe(s -> {
+        LOGGER.info("HTTP server running on port " + portNumber);
+        startFuture.complete();
+      }, t -> {
+        LOGGER.error("Could not start a HTTP server", t);
+        startFuture.fail(t);
       });
   }
 
   private Single<Void> checkAuthorised(RoutingContext context, String authority) {
-    return context.user().rxIsAuthorised(authority).<Void>map(granted -> {
-      if (!granted) {
-        context.response().setStatusCode(403);
-      }
-      return null;
-    }).doOnError(err -> {
-      if (context.response().getStatusCode() == 200) {
-        context.fail(err);
-      }
-    });
+    return context.user().rxIsAuthorised("role:writer")
+      .flatMap(authorized -> authorized ? Single.<Void>just(null) : Single.error(new UnauthorizedThrowable(authority)));
   }
 
   private void apiDeletePage(RoutingContext context) {
     if (context.user().principal().getBoolean("canDelete", false)) {
       int id = Integer.valueOf(context.request().getParam("id"));
-      dbService.deletePage(id, reply -> {
-        handleSimpleDbReply(context, reply);
-      });
+      dbService.rxDeletePage(id)
+        .subscribe(v -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
     } else {
       context.fail(401);
-    }
-  }
-
-  private void handleSimpleDbReply(RoutingContext context, AsyncResult<Void> reply) {
-    if (reply.succeeded()) {
-      context.response().setStatusCode(200);
-      context.response().putHeader("Content-Type", "application/json");
-      context.response().end(new JsonObject().put("success", true).encode());
-    } else {
-      context.response().setStatusCode(500);
-      context.response().putHeader("Content-Type", "application/json");
-      context.response().end(new JsonObject()
-        .put("success", false)
-        .put("error", reply.cause().getMessage()).encode());
     }
   }
 
@@ -237,9 +203,8 @@ public class HttpServerVerticle extends AbstractVerticle {
       if (!validateJsonPageDocument(context, page, "markdown")) {
         return;
       }
-      dbService.savePage(id, page.getString("markdown"), reply -> {
-        handleSimpleDbReply(context, reply);
-      });
+      dbService.rxSavePage(id, page.getString("markdown"))
+        .subscribe(v -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
     } else {
       context.fail(401);
     }
@@ -264,19 +229,8 @@ public class HttpServerVerticle extends AbstractVerticle {
       if (!validateJsonPageDocument(context, page, "name", "markdown")) {
         return;
       }
-      dbService.createPage(page.getString("name"), page.getString("markdown"), reply -> {
-        if (reply.succeeded()) {
-          context.response().setStatusCode(201);
-          context.response().putHeader("Content-Type", "application/json");
-          context.response().end(new JsonObject().put("success", true).encode());
-        } else {
-          context.response().setStatusCode(500);
-          context.response().putHeader("Content-Type", "application/json");
-          context.response().end(new JsonObject()
-            .put("success", false)
-            .put("error", reply.cause().getMessage()).encode());
-        }
-      });
+      dbService.rxCreatePage(page.getString("name"), page.getString("markdown"))
+        .subscribe(v -> apiResponse(context, 201, null, null), t -> apiFailure(context, t));
     } else {
       context.fail(401);
     }
@@ -284,62 +238,49 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void apiGetPage(RoutingContext context) {
     int id = Integer.valueOf(context.request().getParam("id"));
-    dbService.fetchPageById(id, reply -> {
-      JsonObject response = new JsonObject();
-      if (reply.succeeded()) {
-        JsonObject dbObject = reply.result();
+    dbService.rxFetchPageById(id)
+      .subscribe(dbObject -> {
         if (dbObject.getBoolean("found")) {
           JsonObject payload = new JsonObject()
             .put("name", dbObject.getString("name"))
             .put("id", dbObject.getInteger("id"))
             .put("markdown", dbObject.getString("content"))
             .put("html", Processor.process(dbObject.getString("content")));
-          response
-            .put("success", true)
-            .put("page", payload);
-          context.response().setStatusCode(200);
+          apiResponse(context, 200, "page", payload);
         } else {
-          context.response().setStatusCode(404);
-          response
-            .put("success", false)
-            .put("error", "There is no page with ID " + id);
+          apiFailure(context, 404, "There is no page with ID " + id);
         }
-      } else {
-        response
-          .put("success", false)
-          .put("error", reply.cause().getMessage());
-        context.response().setStatusCode(500);
-      }
-      context.response().putHeader("Content-Type", "application/json");
-      context.response().end(response.encode());
-    });
+      }, t -> apiFailure(context, t));
   }
 
   private void apiRoot(RoutingContext context) {
-    dbService.fetchAllPagesData(reply -> {
-      JsonObject response = new JsonObject();
-      if (reply.succeeded()) {
-        List<JsonObject> pages = reply.result()
-          .stream()
-          .map(obj -> new JsonObject()
-            .put("id", obj.getInteger("ID"))
-            .put("name", obj.getString("NAME")))
-          .collect(Collectors.toList());
-        response
-          .put("success", true)
-          .put("pages", pages);
-        context.response().setStatusCode(200);
-        context.response().putHeader("Content-Type", "application/json");
-        context.response().end(response.encode());
-      } else {
-        response
-          .put("success", false)
-          .put("error", reply.cause().getMessage());
-        context.response().setStatusCode(500);
-        context.response().putHeader("Content-Type", "application/json");
-        context.response().end(response.encode());
-      }
-    });
+    dbService.rxFetchAllPagesData()
+      .flatMapObservable(Observable::from)
+      .map(obj -> new JsonObject()
+        .put("id", obj.getInteger("ID"))
+        .put("name", obj.getString("NAME")))
+      .collect(JsonArray::new, JsonArray::add)
+      .subscribe(pages -> apiResponse(context, 200, "pages", pages), t -> apiFailure(context, t));
+  }
+
+  private void apiResponse(RoutingContext context, int statusCode, String jsonField, Object jsonData) {
+    context.response().setStatusCode(statusCode);
+    context.response().putHeader("Content-Type", "application/json");
+    JsonObject wrapped = new JsonObject().put("success", true);
+    if (jsonField != null && jsonData != null) wrapped.put(jsonField, jsonData);
+    context.response().end(wrapped.encode());
+  }
+
+  private void apiFailure(RoutingContext context, Throwable t) {
+    apiFailure(context, 500, t.getMessage());
+  }
+
+  private void apiFailure(RoutingContext context, int statusCode, String error) {
+    context.response().setStatusCode(statusCode);
+    context.response().putHeader("Content-Type", "application/json");
+    context.response().end(new JsonObject()
+      .put("success", false)
+      .put("error", error).encode());
   }
 
   private void indexHandler(RoutingContext context) {
@@ -420,7 +361,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/wiki/" + title);
         context.response().end();
-      });
+      }, t -> onError(context, t));
   }
 
   private void pageCreateHandler(RoutingContext context) {
@@ -441,7 +382,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/");
         context.response().end();
-      });
+      }, t -> onError(context, t));
   }
 
   private void backupHandler(RoutingContext context) {
@@ -471,6 +412,20 @@ public class HttpServerVerticle extends AbstractVerticle {
         } else {
           context.fail(502);
         }
-      });
+      }, t -> onError(context, t));
+  }
+
+  private void onError(RoutingContext context, Throwable t) {
+    if (t instanceof HttpServerVerticle.UnauthorizedThrowable) {
+      context.fail(403);
+    } else {
+      context.fail(t);
+    }
+  }
+
+  private static final class UnauthorizedThrowable extends Throwable {
+    UnauthorizedThrowable(String message) {
+      super(message, null, false, false);
+    }
   }
 }
