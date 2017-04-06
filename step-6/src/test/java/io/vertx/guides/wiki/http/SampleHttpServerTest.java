@@ -57,7 +57,7 @@ public class SampleHttpServerTest {
       req.response().putHeader("Content-Type", "text/plain").end("Ok"))
       .listen(8080, context.asyncAssertSuccess(server -> {
 
-        WebClient webClient = WebClient.wrap(vertx.createHttpClient());
+        WebClient webClient = WebClient.create(vertx);
 
         webClient.get(8080, "localhost", "/").send(ar -> {
           if (ar.succeeded()) {

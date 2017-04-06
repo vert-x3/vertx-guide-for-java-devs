@@ -22,19 +22,19 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.templ.FreeMarkerTemplateEngine;
 import io.vertx.guides.wiki.database.WikiDatabaseService;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -68,7 +68,9 @@ public class HttpServerVerticle extends AbstractVerticle {
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
 
-    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions().setSsl(true)));
+    webClient = WebClient.create(vertx, new WebClientOptions()
+      .setSsl(true)
+      .setUserAgent("vert-x3"));
 
     HttpServer server = vertx.createHttpServer();
 

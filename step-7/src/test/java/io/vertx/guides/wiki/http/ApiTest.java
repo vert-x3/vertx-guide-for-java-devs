@@ -20,7 +20,6 @@ package io.vertx.guides.wiki.http;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
@@ -29,6 +28,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
 import org.junit.After;
@@ -44,7 +44,7 @@ public class ApiTest {
 
   private Vertx vertx;
   private WebClient webClient;
-  
+
   // tag::tokenField[]
   private String jwtTokenHeaderValue;
   // end::tokenField[]
@@ -62,11 +62,11 @@ public class ApiTest {
     vertx.deployVerticle(new HttpServerVerticle(), context.asyncAssertSuccess());
 
     // tag::test-https[]
-    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions()
+    webClient = WebClient.create(vertx, new WebClientOptions()
       .setDefaultHost("localhost")
       .setDefaultPort(8080)
       .setSsl(true) // <1>
-      .setTrustOptions(new JksOptions().setPath("server-keystore.jks").setPassword("secret")))); // <2>
+      .setTrustOptions(new JksOptions().setPath("server-keystore.jks").setPassword("secret"))); // <2>
     // end::test-https[]
   }
 
@@ -114,7 +114,7 @@ public class ApiTest {
             context.fail(ar.cause());
           }
         });
-    }, postRequest);    
+    }, postRequest);
 
     Future<JsonObject> getRequest = Future.future();
     postRequest.compose(h -> {

@@ -22,7 +22,6 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
@@ -38,13 +37,21 @@ import io.vertx.ext.auth.shiro.ShiroAuthOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.codec.BodyCodec;
-import io.vertx.ext.web.handler.*;
+import io.vertx.ext.web.handler.AuthHandler;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CookieHandler;
+import io.vertx.ext.web.handler.FormLoginHandler;
+import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.ext.web.handler.RedirectAuthHandler;
+import io.vertx.ext.web.handler.SessionHandler;
+import io.vertx.ext.web.handler.UserSessionHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.templ.FreeMarkerTemplateEngine;
 import io.vertx.guides.wiki.database.WikiDatabaseService;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -78,7 +85,9 @@ public class HttpServerVerticle extends AbstractVerticle {
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
 
-    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions().setSsl(true)));
+    webClient = WebClient.create(vertx, new WebClientOptions()
+      .setSsl(true)
+      .setUserAgent("vert-x3"));
 
     // tag::https-server[]
     HttpServer server = vertx.createHttpServer(new HttpServerOptions()
@@ -136,7 +145,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       .put("keyStore", new JsonObject()
         .put("path", "keystore.jceks")
         .put("type", "jceks")
-        .put("password", "secret")));    
+        .put("password", "secret")));
 
     apiRouter.route().handler(JWTAuthHandler.create(jwtAuth, "/api/token"));
     // end::jwtAuth[]
@@ -417,7 +426,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     });
   }
   // end::loginHandler[]
-  
+
   private void pageUpdateHandler(RoutingContext context) {
     boolean pageCreation = "yes".equals(context.request().getParam("newPage"));
     context.user().isAuthorised(pageCreation ? "create" : "update", res -> {

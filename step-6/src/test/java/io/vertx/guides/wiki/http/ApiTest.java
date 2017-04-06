@@ -20,7 +20,6 @@ package io.vertx.guides.wiki.http;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -28,6 +27,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
 import org.junit.After;
@@ -52,15 +52,15 @@ public class ApiTest {
     JsonObject dbConf = new JsonObject()
       .put(WikiDatabaseVerticle.CONFIG_WIKIDB_JDBC_URL, "jdbc:hsqldb:mem:testdb;shutdown=true") // <1>
       .put(WikiDatabaseVerticle.CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, 4);
-    
+
     vertx.deployVerticle(new WikiDatabaseVerticle(),
       new DeploymentOptions().setConfig(dbConf), context.asyncAssertSuccess());
 
     vertx.deployVerticle(new HttpServerVerticle(), context.asyncAssertSuccess());
 
-    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions()
+    webClient = WebClient.create(vertx, new WebClientOptions()
       .setDefaultHost("localhost")
-      .setDefaultPort(8080)));
+      .setDefaultPort(8080));
   }
 
   @After

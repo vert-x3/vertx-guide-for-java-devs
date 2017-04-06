@@ -19,7 +19,6 @@ package io.vertx.guides.wiki.http;
 
 import com.github.rjeschke.txtmark.Processor;
 import io.vertx.core.Future;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -29,6 +28,7 @@ import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.jwt.JWTOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.guides.wiki.database.rxjava.WikiDatabaseService;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.http.HttpServer;
@@ -83,7 +83,9 @@ public class HttpServerVerticle extends AbstractVerticle {
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = io.vertx.guides.wiki.database.WikiDatabaseService.createProxy(vertx.getDelegate(), wikiDbQueue);
 
-    webClient = WebClient.wrap(vertx.createHttpClient(new HttpClientOptions().setSsl(true)));
+    webClient = WebClient.create(vertx, new WebClientOptions()
+      .setSsl(true)
+      .setUserAgent("vert-x3"));
 
     HttpServer server = vertx.createHttpServer(new HttpServerOptions()
       .setSsl(true)
