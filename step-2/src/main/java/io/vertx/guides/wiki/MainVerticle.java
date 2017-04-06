@@ -18,7 +18,6 @@
 package io.vertx.guides.wiki;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 
@@ -34,21 +33,23 @@ public class MainVerticle extends AbstractVerticle {
     Future<String> dbVerticleDeployment = Future.future();  // <1>
     vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment.completer());  // <2>
 
-    Future<String> httpVerticleDeployment = Future.future();
-    vertx.deployVerticle(
-      "io.vertx.guides.wiki.HttpServerVerticle",  // <3>
-      new DeploymentOptions().setInstances(2),    // <4>
-      httpVerticleDeployment.completer());    
+    dbVerticleDeployment.compose(id -> {  // <3>
 
-    CompositeFuture
-      .all(httpVerticleDeployment, dbVerticleDeployment)  // <5>
-      .setHandler(ar -> {   // <6>
-        if (ar.succeeded()) {
-          startFuture.succeeded();
-        } else {
-          startFuture.fail(ar.cause());
-        }
-      });
+      Future<String> httpVerticleDeployment = Future.future();
+      vertx.deployVerticle(
+        "io.vertx.guides.wiki.HttpServerVerticle",  // <4>
+        new DeploymentOptions().setInstances(2),    // <5>
+        httpVerticleDeployment.completer());
+
+      return httpVerticleDeployment;  // <6>
+
+    }).setHandler(ar -> {   // <7>
+      if (ar.succeeded()) {
+        startFuture.complete();
+      } else {
+        startFuture.fail(ar.cause());
+      }
+    });
   }
 }
 // end::main[]
