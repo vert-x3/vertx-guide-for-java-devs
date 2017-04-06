@@ -18,20 +18,20 @@
 package io.vertx.guides.wiki.database;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.sql.ResultSet;
+import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.ext.jdbc.JDBCClient;
 import io.vertx.rxjava.ext.sql.SQLConnection;
+import rx.Observable;
 import rx.Single;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
@@ -49,7 +49,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
     getConnection()
       .flatMap(conn -> conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE)))
-      .subscribe(r -> readyHandler.handle(Future.succeededFuture(this)), err -> readyHandler.handle(Future.failedFuture(err)));;
+      .map(v -> this)
+      .subscribe(RxHelper.toSubscriber(readyHandler));
   }
 
   private Single<SQLConnection> getConnection() {
@@ -60,13 +61,11 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   public WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) {
     getConnection()
       .flatMap(conn -> conn.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES)))
-      .map(res -> new JsonArray(res
-        .getResults()
-        .stream()
-        .map(json -> json.getString(0))
-        .sorted()
-        .collect(Collectors.toList())))
-      .subscribe(r -> resultHandler.handle(Future.succeededFuture(r)), err -> resultHandler.handle(Future.failedFuture(err)));;
+      .flatMapObservable(res -> Observable.from(res.getResults()))
+      .map(json -> json.getString(0))
+      .sorted()
+      .collect(JsonArray::new, JsonArray::add)
+      .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
   }
 
@@ -85,7 +84,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
           return new JsonObject().put("found", false);
         }
       })
-      .subscribe(r -> resultHandler.handle(Future.succeededFuture(r)), err -> resultHandler.handle(Future.failedFuture(err)));;
+      .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
   }
 
@@ -105,7 +104,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
           return new JsonObject().put("found", false);
         }
       })
-      .subscribe(r -> resultHandler.handle(Future.succeededFuture(r)), err -> resultHandler.handle(Future.failedFuture(err)));;
+      .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
   }
 
@@ -113,7 +112,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   public WikiDatabaseService createPage(String title, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     getConnection()
       .flatMap(conn -> conn.rxUpdateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), new JsonArray().add(title).add(markdown)))
-      .subscribe(r -> resultHandler.handle(Future.succeededFuture()), err -> resultHandler.handle(Future.failedFuture(err)));;
+      .map(res -> (Void) null)
+      .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
   }
 
@@ -121,7 +121,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   public WikiDatabaseService savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     getConnection()
       .flatMap(conn -> conn.rxUpdateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), new JsonArray().add(markdown).add(id)))
-      .subscribe(r -> resultHandler.handle(Future.succeededFuture()), err -> resultHandler.handle(Future.failedFuture(err)));;
+      .map(res -> (Void) null)
+      .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
   }
 
@@ -132,7 +133,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
         JsonArray data = new JsonArray().add(id);
         return connection.rxUpdateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data);
       })
-      .subscribe(r -> resultHandler.handle(Future.succeededFuture()), err -> resultHandler.handle(Future.failedFuture(err)));;
+      .map(res -> (Void) null)
+      .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
   }
 
@@ -141,7 +143,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     getConnection()
       .flatMap(connection -> connection.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES_DATA)))
       .map(ResultSet::getRows)
-      .subscribe(r -> resultHandler.handle(Future.succeededFuture(r)), err -> resultHandler.handle(Future.failedFuture(err)));
+      .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
   }
 }
