@@ -145,7 +145,14 @@ public class HttpServerVerticle extends AbstractVerticle {
         .put("password", context.request().getHeader("password"));
 
       auth.rxAuthenticate(creds).flatMap(user -> {
-        return Single.zip(user.rxIsAuthorised("create"), user.rxIsAuthorised("delete"), user.rxIsAuthorised("update"), (canCreate, canDelete, canUpdate) -> {
+
+        // tag::rx-concurrent-composition[]
+
+        Single<Boolean> create = user.rxIsAuthorised("create"); // <1>
+        Single<Boolean> delete = user.rxIsAuthorised("delete");
+        Single<Boolean> update = user.rxIsAuthorised("update");
+
+        return Single.zip(create, delete, update, (canCreate, canDelete, canUpdate) -> { // <2>
           return jwtAuth.generateToken(
             new JsonObject()
               .put("username", context.request().getHeader("login"))
@@ -156,6 +163,9 @@ public class HttpServerVerticle extends AbstractVerticle {
               .setSubject("Wiki API")
               .setIssuer("Vert.x"));
         });
+
+        // end::rx-concurrent-composition[]
+
       }).subscribe(token -> {
         context.response().putHeader("Content-Type", "text/plain").end(token);
       }, t -> context.fail(401));

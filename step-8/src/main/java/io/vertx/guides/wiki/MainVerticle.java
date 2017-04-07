@@ -30,14 +30,22 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
+    // tag::rx-deploy-verticle[]
     Single<String> dbVerticleDeployment = vertx.rxDeployVerticle(
       "io.vertx.guides.wiki.database.WikiDatabaseVerticle");
+    // end::rx-deploy-verticle[]
 
-    Single<String> httpVerticleDeployment = vertx.rxDeployVerticle(
-      "io.vertx.guides.wiki.http.HttpServerVerticle",
-      new DeploymentOptions().setInstances(2));
+    // tag::rx-sequential-composition[]
+    dbVerticleDeployment
+      .flatMap(id -> { // <1>
 
-    dbVerticleDeployment.flatMap(id -> httpVerticleDeployment)
-      .subscribe(id -> startFuture.complete(), startFuture::fail);
+        Single<String> httpVerticleDeployment = vertx.rxDeployVerticle(
+          "io.vertx.guides.wiki.http.HttpServerVerticle",
+          new DeploymentOptions().setInstances(2));
+
+        return httpVerticleDeployment;
+      })
+      .subscribe(id -> startFuture.complete(), startFuture::fail); // <2>
+    // end::rx-sequential-composition[]
   }
 }

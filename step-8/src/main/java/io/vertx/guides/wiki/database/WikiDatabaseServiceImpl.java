@@ -58,16 +58,18 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   }
 
   @Override
-  public WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) {
+  // tag::rx-data-flow[]
+  public WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) { // <1>
     getConnection()
-      .flatMap(conn -> conn.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES)))
-      .flatMapObservable(res -> Observable.from(res.getResults()))
-      .map(json -> json.getString(0))
-      .sorted()
-      .collect(JsonArray::new, JsonArray::add)
-      .subscribe(RxHelper.toSubscriber(resultHandler));
+      .flatMap(conn -> conn.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES))) // <2>
+      .flatMapObservable(res -> Observable.from(res.getResults())) // <3>
+      .map(json -> json.getString(0)) // <4>
+      .sorted() // <5>
+      .collect(JsonArray::new, JsonArray::add) // <6>
+      .subscribe(RxHelper.toSubscriber(resultHandler)); // <7>
     return this;
   }
+  // end::rx-data-flow[]
 
   @Override
   public WikiDatabaseService fetchPage(String name, Handler<AsyncResult<JsonObject>> resultHandler) {
@@ -139,11 +141,13 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   }
 
   @Override
-  public WikiDatabaseService fetchAllPagesData(Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+  // tag::rxhelper-to-subscriber[]
+  public WikiDatabaseService fetchAllPagesData(Handler<AsyncResult<List<JsonObject>>> resultHandler) { // <1>
     getConnection()
       .flatMap(connection -> connection.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES_DATA)))
       .map(ResultSet::getRows)
-      .subscribe(RxHelper.toSubscriber(resultHandler));
+      .subscribe(RxHelper.toSubscriber(resultHandler));  // <2>
     return this;
   }
+  // end::rxhelper-to-subscriber[]
 }
