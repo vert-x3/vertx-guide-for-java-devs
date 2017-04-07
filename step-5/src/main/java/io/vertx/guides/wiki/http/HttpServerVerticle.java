@@ -213,17 +213,28 @@ public class HttpServerVerticle extends AbstractVerticle {
           .putHeader("Content-Type", "application/json")
           .as(BodyCodec.jsonObject()) // <5>
           .sendJsonObject(gistPayload, ar -> {  // <6>
-          if (ar.succeeded()) {
-            HttpResponse<JsonObject> response = ar.result();
-            if (response.statusCode() == 201) {
-              context.put("backup_gist_url", response.body().getString("html_url"));  // <7>
-              indexHandler(context);
+            if (ar.succeeded()) {
+              HttpResponse<JsonObject> response = ar.result();
+              if (response.statusCode() == 201) {
+                context.put("backup_gist_url", response.body().getString("html_url"));  // <7>
+                indexHandler(context);
+              } else {
+                StringBuilder message = new StringBuilder()
+                  .append("Could not backup the wiki: ")
+                  .append(response.statusMessage());
+                JsonObject body = response.body();
+                if (body != null) {
+                  message.append(System.getProperty("line.separator"))
+                    .append(body.encodePrettily());
+                }
+                LOGGER.error(message.toString());
+                context.fail(502);
+              }
             } else {
               Throwable err = ar.cause();
               LOGGER.error("HTTP Client error", err);
               context.fail(err);
             }
-          }
         });
 
       } else {

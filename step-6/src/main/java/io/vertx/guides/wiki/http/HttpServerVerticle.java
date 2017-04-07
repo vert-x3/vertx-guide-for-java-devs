@@ -371,6 +371,15 @@ public class HttpServerVerticle extends AbstractVerticle {
               context.put("backup_gist_url", response.body().getString("html_url"));
               indexHandler(context);
             } else {
+              StringBuilder message = new StringBuilder()
+                .append("Could not backup the wiki: ")
+                .append(response.statusMessage());
+              JsonObject body = response.body();
+              if (body != null) {
+                message.append(System.getProperty("line.separator"))
+                  .append(body.encodePrettily());
+              }
+              LOGGER.error(message.toString());
               context.fail(502);
             }
           } else {
