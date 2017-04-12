@@ -36,7 +36,7 @@ Besides, the operation does not start when the method is called.
 It starts when you subscribe to the `Single`.
 When the operation completes, it emits the deployment `id` or signals the cause of the problem with a `Throwable`.
 
-== Sequential composition
+== Deploying verticles in order
 
 To finalize the `MainVerticle` refactoring, we must make sure the deployment operations get triggered and happen in order.
 
@@ -47,7 +47,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=rx-sequential
 <1> The `flatMap` operator applies the function to the result of `dbVerticleDeployment`. Here it schedules the deployment of the `HttpServerVerticle`.
 <2> Operations start when subscribing. On success or on error, the `MainVerticle` start future is either completed or failed.
 
-== Concurrent composition
+== Executing authorization queries concurrently
 
 In the previous example, we saw how to use RxJava operators and the Rxified Vert.x API to execute asynchronous operations in order.
 But sometimes this guarantee is not required, or you simply want them to run concurrently for performance reasons.
