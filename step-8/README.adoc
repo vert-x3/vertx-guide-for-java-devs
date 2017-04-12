@@ -62,6 +62,34 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=rx
 <1> Three `Single` are created, representing the different authorization queries.
 <2> When the three operations complete successfully, the `zip` operator callback is invoked with the results.
 
+== Working with database connections
+
+To acquire a database connection from the pool, you simply need to call `rxGetConnection` on the `JDBCClient`.
+
+[source,java,indent=0]
+----
+Single<SQLConnection> connection = dbClient.rxGetConnection();
+----
+
+The method returns a `Single<Connection>` which you can easily transform to execute SQL queries with `flatMap`.
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-execute-query-with-params]
+----
+
+But how can we release the connection if the variable is no longer reachable?
+A simple and convenient way to do this is to invoke `close` when the `Single<SQLConnection>` is unsubscribed.
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-get-connection]
+----
+<1> After the connection is acquired we wrap it into a `Single`
+<2> The `Single` is modified to invoke `close` when unsubscribed
+
+Now we shall use `getConnection` anytime we need to execute SQL queries in our database verticle.
+
 == Bridging the gap between callbacks and RxJava
 
 At times, you may have to mix your RxJava code with a callback-based API.
