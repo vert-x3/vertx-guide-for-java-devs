@@ -1,5 +1,5 @@
 = Vert.x guide: a wiki web application
-Julien Ponge <julien.ponge@insa-lyon.fr>
+Julien Ponge <julien.ponge@insa-lyon.fr>; Thomas Segismont <tsegismont@gmail.com>
 
 == Step 1
 
