@@ -59,14 +59,17 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   @Override
   // tag::rx-data-flow[]
-  public WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) { // <1>
+  public WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) {
     getConnection()
-      .flatMap(conn -> conn.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES))) // <2>
-      .flatMapObservable(res -> Observable.from(res.getResults())) // <3>
-      .map(json -> json.getString(0)) // <4>
-      .sorted() // <5>
-      .collect(JsonArray::new, JsonArray::add) // <6>
-      .subscribe(RxHelper.toSubscriber(resultHandler)); // <7>
+      .flatMap(conn -> conn.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES)))
+      .flatMapObservable(res -> {  // <1>
+        List<JsonArray> results = res.getResults();
+        return Observable.from(results); // <2>
+      })
+      .map(json -> json.getString(0)) // <3>
+      .sorted() // <4>
+      .collect(JsonArray::new, JsonArray::add) // <5>
+      .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
   }
   // end::rx-data-flow[]

@@ -76,9 +76,20 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.jav
 <1> `fetchAllPagesData` is an asynchronous service proxy operation, defined with a `Handler<AsyncResult<List<JsonObject>>>` callback.
 <2> The `toSubscriber` method adapts the `resultHandler` to a `Subscriber<List<JsonObject>>`, so that the handler is invoked when the rows are emitted.
 
-== Data flow
+== Data flows
+
+RxJava is not only great at combining different sources of events, it is also very helpful with data flows.
+Unlike a Vert.x or JDK future, an `Observable` emits a stream of events, not just a single one.
+And it comes with an extensive set of data manipulation operators.
+
+We can use a few of them to refactor the `fetchAllPages` database verticle method.
 
 [source,java,indent=0]
 ----
 include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-data-flow]
 ----
+<1> With `flatMapObservable` we will create an `Observable` from the item emitted by the `Single<Result>`.
+<2> `from` converts the database `results` iterable into an `Observable` emitting the database row items.
+<3> Since we only need the page name we can `map` each `JsonObject` row to the first column.
+<4> The client expects the data to be `sorted` in alphabetical order.
+<5> The event bus service reply consists in a single `JsonArray`. `collect` creates a new one with `JsonArray:new` and later adds items as they are emitted with `JsonArray::add`.
