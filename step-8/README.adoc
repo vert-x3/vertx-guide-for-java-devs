@@ -64,21 +64,21 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=rx
 
 == Working with database connections
 
-To acquire a database connection from the pool, you simply need to call `rxGetConnection` on the `JDBCClient`.
+To acquire a database connection from the pool, all you have to do is calling `rxGetConnection` on the `JDBCClient`.
 
 [source,java,indent=0]
 ----
 Single<SQLConnection> connection = dbClient.rxGetConnection();
 ----
 
-The method returns a `Single<Connection>` which you can easily transform to execute SQL queries with `flatMap`.
+The method returns a `Single<Connection>` which you can easily transform with `flatMap` to execute SQL queries.
 
 [source,java,indent=0]
 ----
 include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-execute-query-with-params]
 ----
 
-But how can we release the connection if the variable is no longer reachable?
+But how can we release the connection if the `SQLConnection` reference is no longer reachable?
 A simple and convenient way to do this is to invoke `close` when the `Single<SQLConnection>` is unsubscribed.
 
 [source,java,indent=0]
@@ -102,7 +102,7 @@ In this case, the `io.vertx.rx.java.RxHelper` class can adapt a `Handler<AsyncRe
 include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rxhelper-to-subscriber]
 ----
 <1> `fetchAllPagesData` is an asynchronous service proxy operation, defined with a `Handler<AsyncResult<List<JsonObject>>>` callback.
-<2> The `toSubscriber` method adapts the `resultHandler` to a `Subscriber<List<JsonObject>>`, so that the handler is invoked when the rows are emitted.
+<2> The `toSubscriber` method adapts the `resultHandler` to a `Subscriber<List<JsonObject>>`, so that the handler is invoked when the list of rows is emitted.
 
 == Data flows
 
