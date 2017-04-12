@@ -4,7 +4,9 @@ TIP: The corresponding source code is in the `step-8` folder of the guide reposi
 
 So far we have explored various areas of the Vert.x stack, using the callback-based APIs.
 It just works and this programming model is well-known from developers in many languages.
-But it can become a bit tedious, especially when you combine different sources of events, or deal with complex data flows.
+However, it can become a bit tedious, especially when you combine several sources of events, or deal with complex data flows.
+
+This is exactly where RxJava shines, and Vert.x integrates with it seamlessly.
 
 == Enabling the RxJava API
 
