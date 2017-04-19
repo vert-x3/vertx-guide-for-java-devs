@@ -1,4 +1,4 @@
-= Using the Rxified API
+= Reactive programming with RxJava 
 
 TIP: The corresponding source code is in the `step-8` folder of the guide repository.
 
@@ -8,9 +8,9 @@ However, it can become a bit tedious, especially when you combine several source
 
 This is exactly where RxJava shines, and Vert.x integrates with it seamlessly.
 
-== Enabling the RxJava API
+== Enabling the RxJava APIs
 
-In addition to the callback-based API, the Vert.x modules offer an Rxified API.
+In addition to the callback-based API, the Vert.x modules offer an _"Rxified"_ API.
 To enable it, start by adding the `vertx-rx-java` module to the Maven POM file:
 
 [source,xml,indent=0]
@@ -18,19 +18,18 @@ To enable it, start by adding the `vertx-rx-java` module to the Maven POM file:
 include::pom.xml[tags=vertx-rx-java]
 ----
 
-Then modify verticles so that they extend `io.vertx.rxjava.core.AbstractVerticle` instead of `io.vertx.core.AbstractVerticle`.
+Verticles then have to be modified so that they extend `io.vertx.rxjava.core.AbstractVerticle` instead of `io.vertx.core.AbstractVerticle`.
 How is this different? The former class extends the latter and exposes a `io.vertx.rxjava.core.Vertx` field.
 
-`io.vertx.rxjava.core.Vertx` defines extra `rxXXXX` methods, equivalent to the callback-based asynchronous operations.
+`io.vertx.rxjava.core.Vertx` defines extra `rxSomething(...)` methods that are equivalent to their callback-based counterparts.
 
-Let's take a look at the `MainVerticle` to get a better idea of how that works in practice.
+Let's take a look at the `MainVerticle` to get a better idea of how it works in practice:
 
 [source,java,indent=0]
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=rx-deploy-verticle]
 ----
 
-Can you spot the difference?
 The `rxDeploy` method does not take a `Handler<AsyncResult<String>>` as final parameter.
 Instead, it returns a `Single<String>`.
 
@@ -40,7 +39,7 @@ When the operation completes, it emits the deployment `id` or signals the cause 
 
 == Deploying verticles in order
 
-To finalize the `MainVerticle` refactoring, we must make sure the deployment operations get triggered and happen in order.
+To finalize the `MainVerticle` refactoring, we must make sure the deployment operations get triggered and happen in order:
 
 [source,java,indent=0]
 ----
@@ -55,25 +54,25 @@ In the previous example, we saw how to use RxJava operators and the Rxified Vert
 But sometimes this guarantee is not required, or you simply want them to run concurrently for performance reasons.
 
 The JWT token generation process in the `HttpServerVerticle` is a good example of such a situation.
-To create a token, we need all authorization query results to complete, but queries are independent from each other.
+To create a token, we need all authorization query results to complete, but queries are independent from each other:
 
 [source,java,indent=0]
 ----
 include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=rx-concurrent-composition]
 ----
-<1> Three `Single` are created, representing the different authorization queries.
+<1> Three `Single` objects are created, representing the different authorization queries.
 <2> When the three operations complete successfully, the `zip` operator callback is invoked with the results.
 
 == Working with database connections
 
-To acquire a database connection from the pool, all you have to do is calling `rxGetConnection` on the `JDBCClient`.
+To acquire a database connection from the pool, all you have to do is calling `rxGetConnection` on the `JDBCClient`:
 
 [source,java,indent=0]
 ----
 Single<SQLConnection> connection = dbClient.rxGetConnection();
 ----
 
-The method returns a `Single<Connection>` which you can easily transform with `flatMap` to execute SQL queries.
+The method returns a `Single<Connection>` which you can easily transform with `flatMap` to execute SQL queries:
 
 [source,java,indent=0]
 ----
@@ -81,7 +80,7 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.jav
 ----
 
 But how can we release the connection if the `SQLConnection` reference is no longer reachable?
-A simple and convenient way to do this is to invoke `close` when the `Single<SQLConnection>` is unsubscribed.
+A simple and convenient way to do this is to invoke `close` when the `Single<SQLConnection>` is unsubscribed:
 
 [source,java,indent=0]
 ----
@@ -97,7 +96,7 @@ Now we shall use `getConnection` anytime we need to execute SQL queries in our d
 At times, you may have to mix your RxJava code with a callback-based API.
 For example, service proxy interfaces can only be defined with callbacks, but the implementation uses the Vert.x Rxified API.
 
-In this case, the `io.vertx.rx.java.RxHelper` class can adapt a `Handler<AsyncResult<T>>` to an RxJava `Subscriber<T>`.
+In this case, the `io.vertx.rx.java.RxHelper` class can adapt a `Handler<AsyncResult<T>>` to an RxJava `Subscriber<T>`:
 
 [source,java,indent=0]
 ----
@@ -112,7 +111,7 @@ RxJava is not only great at combining different sources of events, it is also ve
 Unlike a Vert.x or JDK future, an `Observable` emits a stream of events, not just a single one.
 And it comes with an extensive set of data manipulation operators.
 
-We can use a few of them to refactor the `fetchAllPages` database verticle method.
+We can use a few of them to refactor the `fetchAllPages` database verticle method:
 
 [source,java,indent=0]
 ----
