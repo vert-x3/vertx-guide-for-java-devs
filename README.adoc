@@ -1,5 +1,5 @@
 = Vert.x guide
-Julien Ponge <julien.ponge@insa-lyon.fr>
+Julien Ponge <julien.ponge@insa-lyon.fr> ; Thomas Segismont <tsegismo@redhat.com> ; Julien Viet <jviet@redhat.com>
 :source-highlighter: highlight.js
 :icons: font
 :data-uri:
@@ -32,6 +32,5 @@ include::step-7/README.adoc[]
 
 :imagesdir: step-8
 include::step-8/README.adoc[]
-
 
 :leveloffset: -1
