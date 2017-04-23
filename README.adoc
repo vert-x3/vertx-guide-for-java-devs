@@ -9,6 +9,9 @@ Julien Ponge <julien.ponge@insa-lyon.fr> ; Thomas Segismont <tsegismo@redhat.com
 
 :leveloffset: +1
 
+:imagesdir: intro
+include::intro/README.adoc[]
+
 :imagesdir: step-1
 include::step-1/README.adoc[]
 
