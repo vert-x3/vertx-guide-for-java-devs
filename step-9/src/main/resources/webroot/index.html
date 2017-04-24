@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!--
+  ~  Copyright (c) 2017 Red Hat, Inc. and/or its affiliates.
+  ~  Copyright (c) 2017 INSA Lyon, CITI Laboratory.
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<html lang="en" ng-app="wikiApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Wiki Angular App</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css"
+        integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+  <script src="/app/wiki.js"></script>
+  <style>
+    body {
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" ng-controller="WikiController">
+
+  <div class="row">
+
+    <div class="col-md-12">
+      <span class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="pageDropdownButton" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+          <i class="fa fa-file-text" aria-hidden="true"></i> Pages
+        </button>
+        <div class="dropdown-menu" aria-labelledby="pageDropdownButton">
+          <a ng-repeat="page in pages track by page.id" class="dropdown-item" ng-click="load(page.id)" href="#">{{page.name}}</a>
+        </div>
+      </span>
+      <span>
+        <button type="button" class="btn btn-secondary" ng-click="reload()"><i class="fa fa-refresh"
+                                                                               aria-hidden="true"></i> Reload</button>
+      </span>
+      <span>
+        <button type="button" class="btn btn-secondary" ng-click="newPage()"><i class="fa fa-plus-square"
+                                                                                aria-hidden="true"></i> New page</button>
+      </span>
+      <span class="float-right">
+        <button type="button" class="btn btn-secondary" ng-click="delete()" ng-show="pageExists()"><i class="fa fa-trash" aria-hidden="true"></i> Delete page</button>
+      </span>
+    </div>
+
+    <div class="col-md-12">
+      <div class="invisible alert" role="alert" id="alertMessage">
+        {{alertMessage}}
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row">
+
+    <div class="col-md-6" id="rendering"></div>
+
+    <div class="col-md-6">
+      <form>
+        <div class="form-group">
+          <label for="markdown">Markdown</label>
+          <textarea id="markdown" class="form-control" rows="25" ng-model="pageMarkdown"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="pageName">Name</label>
+          <input class="form-control" type="text" value="" id="pageName" ng-model="pageName" ng-disabled="pageExists()">
+        </div>
+        <button type="button" class="btn btn-secondary" ng-click="save()"><i class="fa fa-pencil" aria-hidden="true"></i> Save</button>
+      </form>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"
+        integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"
+        integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"
+        integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"
+        crossorigin="anonymous"></script>
+
+</body>
+</html>
