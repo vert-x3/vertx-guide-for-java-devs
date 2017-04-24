@@ -33,4 +33,7 @@ include::step-7/README.adoc[]
 :imagesdir: step-8
 include::step-8/README.adoc[]
 
+:imagesdir: step-9
+include::step-9/README.adoc[]
+
 :leveloffset: -1

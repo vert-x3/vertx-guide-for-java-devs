@@ -1,124 +1,29 @@
-= Reactive programming with RxJava 
+= Client-side web application using AngularJS 
 
-TIP: The corresponding source code is in the `step-8` folder of the guide repository.
+TIP: The corresponding source code is in the `step-9` folder of the guide repository.
 
-So far we have explored various areas of the Vert.x stack, using the callback-based APIs.
-It just works and this programming model is well-known from developers in many languages.
-However, it can become a bit tedious, especially when you combine several sources of events, or deal with complex data flows.
+So far our web interface was using traditional server-side rendering of HTML content.
+Some types of applications can take advantage of client-side rendering to improve user experience by avoiding full page reloads, and approaching the experience of native applications.
 
-This is exactly where RxJava shines, and Vert.x integrates with it seamlessly.
+Many popular frameworks exist for that purpose.
+We chose the popular http://angularjs.org/[AngularJS framework] for this guide, but one could equally choose https://facebook.github.io/react/[React], https://vuejs.org/[Vue.js], http://riotjs.com/[Riot] or another framework/library without any loss of generality.
 
-== Enabling the RxJava APIs
+== Single page application
 
-In addition to the callback-based API, the Vert.x modules offer an _"Rxified"_ API.
-To enable it, start by adding the `vertx-rx-java` module to the Maven POM file:
+image::images/edit-page.png[]
 
-[source,xml,indent=0]
-----
-include::pom.xml[tags=vertx-rx-java]
-----
+image::images/new-page.png[]
 
-Verticles then have to be modified so that they extend `io.vertx.rxjava.core.AbstractVerticle` instead of `io.vertx.core.AbstractVerticle`.
-How is this different? The former class extends the latter and exposes a `io.vertx.rxjava.core.Vertx` field.
+== Simplifying the HTTP verticle
 
-`io.vertx.rxjava.core.Vertx` defines extra `rxSomething(...)` methods that are equivalent to their callback-based counterparts.
+A client-side application needs a backend that exposes:
 
-Let's take a look at the `MainVerticle` to get a better idea of how it works in practice:
+1. the static HTML, CSS and JavaScript content to bootstrap applications in web browsers, and
+2. a web API, typically a HTTP/JSON service.
 
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=rx-deploy-verticle]
-----
+We simplified the HTTP verticle implementation to _just_ cover what is needed.
+Starting fron the RxJava version from step 8, we removed all server-side rendering code as well as the authentication and JWT token issuing code to expose a plain open HTTP interface.
+Of course building a version that leverages JWT tokens and authentication makes sense for a real-world deployments, but we would rather focus on the essential bits in this guide.
 
-The `rxDeploy` method does not take a `Handler<AsyncResult<String>>` as final parameter.
-Instead, it returns a `Single<String>`.
 
-Besides, the operation does not start when the method is called.
-It starts when you subscribe to the `Single`.
-When the operation completes, it emits the deployment `id` or signals the cause of the problem with a `Throwable`.
 
-== Deploying verticles in order
-
-To finalize the `MainVerticle` refactoring, we must make sure the deployment operations get triggered and happen in order:
-
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=rx-sequential-composition]
-----
-<1> The `flatMap` operator applies the function to the result of `dbVerticleDeployment`. Here it schedules the deployment of the `HttpServerVerticle`.
-<2> Operations start when subscribing. On success or on error, the `MainVerticle` start future is either completed or failed.
-
-== Executing authorization queries concurrently
-
-In the previous example, we saw how to use RxJava operators and the Rxified Vert.x API to execute asynchronous operations in order.
-But sometimes this guarantee is not required, or you simply want them to run concurrently for performance reasons.
-
-The JWT token generation process in the `HttpServerVerticle` is a good example of such a situation.
-To create a token, we need all authorization query results to complete, but queries are independent from each other:
-
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=rx-concurrent-composition]
-----
-<1> Three `Single` objects are created, representing the different authorization queries.
-<2> When the three operations complete successfully, the `zip` operator callback is invoked with the results.
-
-== Working with database connections
-
-To acquire a database connection from the pool, all you have to do is calling `rxGetConnection` on the `JDBCClient`:
-
-[source,java,indent=0]
-----
-Single<SQLConnection> connection = dbClient.rxGetConnection();
-----
-
-The method returns a `Single<Connection>` which you can easily transform with `flatMap` to execute SQL queries:
-
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-execute-query-with-params]
-----
-
-But how can we release the connection if the `SQLConnection` reference is no longer reachable?
-A simple and convenient way to do this is to invoke `close` when the `Single<SQLConnection>` is unsubscribed:
-
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-get-connection]
-----
-<1> After the connection is acquired we wrap it into a `Single`
-<2> The `Single` is modified to invoke `close` when unsubscribed
-
-Now we shall use `getConnection` anytime we need to execute SQL queries in our database verticle.
-
-== Bridging the gap between callbacks and RxJava
-
-At times, you may have to mix your RxJava code with a callback-based API.
-For example, service proxy interfaces can only be defined with callbacks, but the implementation uses the Vert.x Rxified API.
-
-In this case, the `io.vertx.rx.java.RxHelper` class can adapt a `Handler<AsyncResult<T>>` to an RxJava `Subscriber<T>`:
-
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rxhelper-to-subscriber]
-----
-<1> `fetchAllPagesData` is an asynchronous service proxy operation, defined with a `Handler<AsyncResult<List<JsonObject>>>` callback.
-<2> The `toSubscriber` method adapts the `resultHandler` to a `Subscriber<List<JsonObject>>`, so that the handler is invoked when the list of rows is emitted.
-
-== Data flows
-
-RxJava is not only great at combining different sources of events, it is also very helpful with data flows.
-Unlike a Vert.x or JDK future, an `Observable` emits a stream of events, not just a single one.
-And it comes with an extensive set of data manipulation operators.
-
-We can use a few of them to refactor the `fetchAllPages` database verticle method:
-
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-data-flow]
-----
-<1> With `flatMapObservable` we will create an `Observable` from the item emitted by the `Single<Result>`.
-<2> `from` converts the database `results` iterable into an `Observable` emitting the database row items.
-<3> Since we only need the page name we can `map` each `JsonObject` row to the first column.
-<4> The client expects the data to be `sorted` in alphabetical order.
-<5> The event bus service reply consists in a single `JsonArray`. `collect` creates a new one with `JsonArray:new` and later adds items as they are emitted with `JsonArray::add`.
