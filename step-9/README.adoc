@@ -10,11 +10,21 @@ We chose the popular http://angularjs.org/[AngularJS framework] for this guide, 
 
 == Single page application
 
+The wiki editing application that we are building allows to select a page, and edit it with the first half of the screen being a HTML preview, and the other half being the Markdown editor:
+
 image::images/edit-page.png[]
+
+The HTML preview is being rendered by calling a new endpoint in our backend.
+Rendering is triggered when the Markdown editor text changes.
+To avoid overloading the backend with unecessary requests when the user is busy typing Markdown, a delay is being introduced so as to only trigger the rendering when no change has been made during that delay.
+
+The application interface is also dynamic, as new pages make the deletion button disapear:
 
 image::images/new-page.png[]
 
-== Simplifying the HTTP verticle
+== Vert.x Backend
+
+=== Simplifying the HTTP verticle code
 
 A client-side application needs a backend that exposes:
 
@@ -22,8 +32,39 @@ A client-side application needs a backend that exposes:
 2. a web API, typically a HTTP/JSON service.
 
 We simplified the HTTP verticle implementation to _just_ cover what is needed.
-Starting fron the RxJava version from step 8, we removed all server-side rendering code as well as the authentication and JWT token issuing code to expose a plain open HTTP interface.
+Starting fron the RxJava version from _step #8_, we removed all server-side rendering code as well as the authentication and JWT token issuing code to expose a plain open HTTP interface.
 Of course building a version that leverages JWT tokens and authentication makes sense for a real-world deployments, but we would rather focus on the essential bits in this guide.
 
+As an example, the `apiUpdatePage` method implementation code is now:
 
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=apiUpdatePage]
+----
 
+=== Exposed routes
+
+The HTTP/JSON API is exposed through the sames routes as in the previous steps:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=routes]
+----
+
+The front application static assets are being served from `/app`, and we redirect requests to `/` to the `/app/index.html` static file:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=static-assets]
+----
+<1> Disabling caching is useful in development.
+<2> By default the files are expected to be in the `webroot` package on the _classpath_, so the files shall be placed under `src/main/resources/webroot` in a Maven or Gradle project.
+
+Last but not least, we anticipate that the application will need the backend to render Markdown to HTML, so we offer a HTTP POST endpoint for this purpose:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=preview-rendering]
+----
+
+=== AngularJS frontend
