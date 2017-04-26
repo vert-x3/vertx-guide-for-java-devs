@@ -67,4 +67,57 @@ Last but not least, we anticipate that the application will need the backend to 
 include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=preview-rendering]
 ----
 
-=== AngularJS frontend
+== AngularJS frontend
+
+TIP: This guide is not a proper introduction to AngularJS (https://docs.angularjs.org/tutorial[see the official tutorial instead]), we assume some familiarity of the framework from the reader.
+
+=== Application view
+
+The interface fits in a single HTML file located at `src/main/resources/webroot/index.html`.
+The `head` section is:
+
+[source,html,indent=0]
+----
+include::src/main/resources/webroot/index.html[tags=head]
+----
+<1> The AngularJS module is named `wikiApp`.
+<2> `wiki.js` holds the code for our AngularJS module and controller.
+
+As you can see beyond AngularJS we are using the following dependencies from external CDNs:
+
+* https://getbootstrap.com/[Boostrap] to style our interface,
+* http://fontawesome.io/[Font Awesome] to provide icons,
+* https://lodash.com/[Lodash] to help with some functional idioms in our JavaScript code.
+
+Bootstrap requires some further scripts that can be loaded at the end of the document for performance reasons:
+
+[source,html,indent=0]
+----
+include::src/main/resources/webroot/index.html[tags=bottom]
+----
+
+Our controller is called `WikiController` and it is bound to a `div` which is also a Bootstrap container:
+
+[source,html,indent=0]
+----
+include::src/main/resources/webroot/index.html[tags=container]
+----
+
+The buttons on top of the interface consist of the following elements:
+
+[source,html,indent=0]
+----
+include::src/main/resources/webroot/index.html[tags=buttons-row]
+----
+<1> For each wiki page name we generate an element using `ng-repeat` and `ng-click` to define the controller action (`load`) when it is being clicked.
+<2> The refresh button is bound to the `reload` controller action. All other buttons work the same way.
+<3> The `ng-show` directive allows us to show or hide the element depending on the controller `pageExists` method value.
+<4> This `div` is used to display notifications of success or failures.
+
+The Markdown preview and editor elements are the following:
+
+[source,html,indent=0]
+----
+include::src/main/resources/webroot/index.html[tags=markdown]
+----
+<1> `ng-model` binds the `textarea` content to the `pageMarkdown` property of the controller.
