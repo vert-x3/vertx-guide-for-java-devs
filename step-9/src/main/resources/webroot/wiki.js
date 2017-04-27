@@ -15,13 +15,24 @@
  * limitations under the License.
  */
 
+// tag::module-decl[]
 'use strict';
-
-var DEFAULT_PAGENAME = "Example page";
-var DEFAULT_MARKDOWN = "# Example page\n\nSome text _here_.\n";
 
 angular.module("wikiApp", [])
   .controller("WikiController", ["$scope", "$http", "$timeout", function ($scope, $http, $timeout) {
+
+    var DEFAULT_PAGENAME = "Example page";
+    var DEFAULT_MARKDOWN = "# Example page\n\nSome text _here_.\n";
+
+    // (...)
+// end::module-decl[]
+
+    // tag::new-reload-exists[]
+    $scope.newPage = function() {
+      $scope.pageId = undefined;
+      $scope.pageName = DEFAULT_PAGENAME;
+      $scope.pageMarkdown = DEFAULT_MARKDOWN;
+    };
 
     $scope.reload = function () {
       $http.get("/api/pages").then(function (response) {
@@ -32,47 +43,10 @@ angular.module("wikiApp", [])
     $scope.pageExists = function() {
       return $scope.pageId !== undefined;
     };
+    // end::new-reload-exists[]
 
-    $scope.success = function(message) {
-      $scope.alertMessage = message;
-      var alert = document.getElementById("alertMessage");
-      alert.classList.add("alert-success");
-      alert.classList.remove("invisible");
-      $timeout(function() {
-        alert.classList.add("invisible");
-        alert.classList.remove("alert-success");
-      }, 3000);
-    };
-
-    $scope.error = function(message) {
-      $scope.alertMessage = message;
-      var alert = document.getElementById("alertMessage");
-      alert.classList.add("alert-danger");
-      alert.classList.remove("invisible");
-      $timeout(function() {
-        alert.classList.add("invisible");
-        alert.classList.remove("alert-danger");
-      }, 5000);
-    };
-
-    $scope.newPage = function() {
-      $scope.pageId = undefined;
-      $scope.pageName = DEFAULT_PAGENAME;
-      $scope.pageMarkdown = DEFAULT_MARKDOWN;
-    };
-
-    $scope.updateRendering = function(html) {
-      document.getElementById("rendering").innerHTML = html;
-    };
-
+    // tag::load[]
     $scope.load = function (id) {
-      var page = _.find($scope.pages, function (page) {
-        return page.id === id;
-      });
-      if (page === undefined) {
-        console.log("Page not found for id=", id);
-        return;
-      }
       $http.get("/api/pages/" + id).then(function(response) {
         var page = response.data.page;
         $scope.pageId = page.id;
@@ -82,6 +56,12 @@ angular.module("wikiApp", [])
       });
     };
 
+    $scope.updateRendering = function(html) {
+      document.getElementById("rendering").innerHTML = html;
+    };
+    // tag::load[]
+
+    // tag::save-delete-notifications[]
     $scope.save = function() {
       var payload;
       if ($scope.pageId === undefined) {
@@ -119,19 +99,47 @@ angular.module("wikiApp", [])
       });
     };
 
+    $scope.success = function(message) {
+      $scope.alertMessage = message;
+      var alert = document.getElementById("alertMessage");
+      alert.classList.add("alert-success");
+      alert.classList.remove("invisible");
+      $timeout(function() {
+        alert.classList.add("invisible");
+        alert.classList.remove("alert-success");
+      }, 3000);
+    };
+
+    $scope.error = function(message) {
+      $scope.alertMessage = message;
+      var alert = document.getElementById("alertMessage");
+      alert.classList.add("alert-danger");
+      alert.classList.remove("invisible");
+      $timeout(function() {
+        alert.classList.add("invisible");
+        alert.classList.remove("alert-danger");
+      }, 5000);
+    };
+    // end::save-delete-notifications[]
+
+    // tag::init[]
     $scope.reload();
     $scope.newPage();
+    // end::init[]
 
+    // tag::live-rendering[]
     var markdownRenderingPromise = null;
-    $scope.$watch("pageMarkdown", function(text) {
+    $scope.$watch("pageMarkdown", function(text) {  // <1>
       if (markdownRenderingPromise !== null) {
-        $timeout.cancel(markdownRenderingPromise);
+        $timeout.cancel(markdownRenderingPromise);  // <3>
       }
       markdownRenderingPromise = $timeout(function() {
-        $http.post("/app/markdown", text).then(function(response) {
+        markdownRenderingPromise = null;
+        $http.post("/app/markdown", text).then(function(response) { // <4>
           $scope.updateRendering(response.data);
         });
-      }, 300);
+      }, 300); // <2>
     });
+    // end::live-rendering[]
 
   }]);
