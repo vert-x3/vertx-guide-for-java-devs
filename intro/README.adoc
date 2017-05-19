@@ -1,11 +1,27 @@
 = Introduction
 
-== Who is this guide for?
-
-== What is Vert.x?
-
 == Vert.x threading and programming models
 
-
+The unit of deployment in Vert.x is called a _Verticle_.
+A verticle processes incoming events over an _event-loop_, where events can be anything like receiving network buffers, timing events, or messages sent by other verticles.
+Event-loops are typical in asynchronous programming models: 
 
 image::images/event-loop.png[]
+
+Each event shall be processed in a _reasonnable_ amount of time to not block the event loop.
+This means that _blocking_ operations shall not be performed while executed on the event loop, exactly like processing events in a graphical user interface like Java/Swing (e.g., freezing the interface by doing a slow network request).
+As we will see later in this guide, Vert.x offers mechanisms to deal with blocking operations outside of the event loop.
+In any case Vert.x emits warnings in logs when the event loop has been processing an event for _too long_, which is also configurable to match application-specific requirements (e.g., when working on slower IoT ARM boards).
+
+Every event loop is attached to a thread.
+By default Vert.x attaches 2 event loops per CPU core thread.
+The direct consequence is that a regular verticle always processes events on the same thread, so there is no need to use thread coordination mechanisms to manipulate a verticle state (e.g, Java class fields).
+
+A verticle can be passed some configuration (e.g., credentials, network addresses, etc) and a verticle can be deployed several times:
+
+image::images/verticle-threading-config.png[]
+
+Incoming network data is being received from acceptor threads and then are then passed as events to the corresponding verticles.
+When a verticle opens a network server and is deployed more than once, then the events are being distributed to the verticle instances in a round-robin fashion which is very useful for maximising CPU usage with lots of concurrent networked requests.
+
+Finally, verticles have a simple start / stop lifecycle, and verticles can deploy other verticles as the remainder of the guide will show.
