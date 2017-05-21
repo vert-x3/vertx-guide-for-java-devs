@@ -10,7 +10,7 @@
     <fileSet>
       <includes>
         <include>pom.xml</include>
-        <include>**/README.adoc</include>
+        <include>step-*/README.adoc</include>
         <include>step-*/pom.xml</include>
         <include>step-*/gen-keystore.sh</include>
         <include>step-*/src/**/*</include>
@@ -18,4 +18,10 @@
       </includes>
     </fileSet>
   </fileSets>
+  <files>
+    <file>
+      <source>README.adoc</source>
+      <destName>index.adoc</destName>
+    </file>
+  </files>
 </assembly>
