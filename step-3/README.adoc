@@ -41,7 +41,7 @@ Obviously we need the `vertx-service-proxy` APIs:
 include::pom.xml[tags=service-proxy-dep]
 ----
 
-Ee need the Vert.x code generation module as a compilation time only dependency (hence the `provided` scope):
+We need the Vert.x code generation module as a compilation time only dependency (hence the `provided` scope):
 
 [source,xml,indent=0]
 ----
@@ -68,7 +68,7 @@ TIP: The full documentation on Vert.x services is available at http://vertx.io/d
 
 == Database service interface
 
-Defining a service interface is as simple as defining a Java interface, except that there are certain rules to respect for code generation to work and also to ensure interoperability with other code in Vert.x.
+Defining a service interface is as simple as defining a Java interface, except that there are certain rules to respect for code generation to work and also to ensure inter-operability with other code in Vert.x.
 
 The beginning of the interface definition is:
 

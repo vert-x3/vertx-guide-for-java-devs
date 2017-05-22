@@ -27,7 +27,7 @@ public class SomeTest {
 }
 ----
 
-With that runner, JUnit test and lifecycle methods accept a `TestContext` argument.
+With that runner, JUnit test and life-cycle methods accept a `TestContext` argument.
 This object provides access to basic assertions, a context to store data, and several async-oriented helpers that we will see in this section.
 
 To illustrate that, let us consider an asynchronous scenario where we want to check that a timer task has been called once, and that a periodic task has been called 3 times.
@@ -44,7 +44,7 @@ include::src/test/java/io/vertx/guides/wiki/database/WikiDatabaseVerticleTest.ja
 <5> This `Async` object works as a countdown that completes successfully after 3 calls.
 <6> We complete when the timer fires.
 <7> Each periodic task tick triggers a countdown. The test passes when all `Async` objects have completed.
-<8> There is a default (long) timeout for asynchronous test cases, but it can be overriden through the JUnit `@Test` annotation.
+<8> There is a default (long) timeout for asynchronous test cases, but it can be overridden through the JUnit `@Test` annotation.
 
 == Testing database operations
 
@@ -53,7 +53,7 @@ The database service is a good example of a Vert.x test.
 We first need to deploy the database verticle.
 We will configure the JDBC connection to be HSQLDB with an in-memory storage, and upon success we will fetch a service proxy for our test cases.
 
-Since these operations are involving, we leverage the JUnit _before_ / _after_ lifecycle methods:
+Since these operations are involving, we leverage the JUnit _before_ / _after_ life-cycle methods:
 
 [source,java,indent=0]
 ----

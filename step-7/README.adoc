@@ -45,7 +45,7 @@ include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=test-https]
 
 == Access control and authentication
 
-Vert.x provides a wide range of options for doing authentication and authorisation.
+Vert.x provides a wide range of options for doing authentication and authorization.
 The officially supported modules cover JDBC, MongoDB, https://shiro.apache.org/[Apache Shiro], OAuth2 with well-known providers and JWT (JSON web tokens).
 
 While the next section will cover JWT, this one focuses on using Apache Shiro which is especially interesting when authentication must be backed by a LDAP or Active Directory server.
@@ -155,7 +155,7 @@ include::src/main/resources/templates/index.ftl[]
 
 The code is similar for ensuring that updating or deleting a page is restricted to certain roles and is available from the guide Git repository.
 
-It is important to ensure that checkings are also being done on HTTP POST request handlers and not just when rendering HTML pages.
+It is important to ensure that checks are also being done on HTTP POST request handlers and not just when rendering HTML pages.
 Indeed, malicious attackers could still craft requests and perform actions while not being authenticated.
 Here is how to protect page deletions by wrapping the `pageDeletionHandler` code inside a topmost permission check:
 

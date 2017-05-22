@@ -22,7 +22,7 @@ A new button is going to be added on the wiki index page:
 
 image::images/backup-button.png[]
 
-Cliking the _backup_ button will trigger the creating of a Gist:
+Clicking the _backup_ button will trigger the creating of a Gist:
 
 image::images/gist-created.png[]
 
@@ -35,7 +35,7 @@ image::images/gist.png[]
 The Vert.x core library offers a `createHttpClient` method from the `vertx` context object.
 Instances of `io.vertx.core.http.HttpClient` provides low-level methods for doing all kinds of HTTP requests with a fine-grained control over the protocol and the stream events.
 
-The web client API provides a simpler facade, especially for simplifying the payload data (un)marshalling.
+The web client API provides a simpler facade, especially for simplifying the payload data (un)marshaling.
 This API comes in the form of a new dependency:
 
 [source,xml]
@@ -48,7 +48,7 @@ This API comes in the form of a new dependency:
 ----
 
 The following is a sample usage from a unit test.
-The test starts a HTTP server and then it does a HTTP GET request with the web client API to check that the request to the server suceeded:
+The test starts a HTTP server and then it does a HTTP GET request with the web client API to check that the request to the server succeeded:
 
 [source,java,indent=0]
 ----

@@ -25,7 +25,7 @@ As Vert.x is _polyglot_, JSON is ideal shall verticles written in different lang
 
 == The HTTP server verticle
 
-The verticle class preambule and `start` method look as follows:
+The verticle class preamble and `start` method look as follows:
 
 [source,java,indent=0]
 ----

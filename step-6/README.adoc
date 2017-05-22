@@ -57,7 +57,7 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=ap
 ----
 
 This handler and other handlers need to deal with incoming JSON documents.
-The following `validateJsonPageDocument` method is a helper for doing validation and early error reporting, so that the remainder of the processings assume the presence of certain JSON entries:
+The following `validateJsonPageDocument` method is a helper for doing validation and early error reporting, so that the remainder of the processing assume the presence of certain JSON entries:
 
 [source,java,indent=0]
 ----
@@ -90,7 +90,7 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=ap
 We write a basic test case in the `io.vertx.guides.wiki.http.ApiTest` class.
 
 The preamble consists in preparing the test environment.
-The HTTP server vertile needs the database verticle to be running, so we need to deploy both in our test Vert.x context:
+The HTTP server verticle needs the database verticle to be running, so we need to deploy both in our test Vert.x context:
 
 [source,java,indent=0]
 ----
