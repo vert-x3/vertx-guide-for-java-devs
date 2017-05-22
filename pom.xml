@@ -37,6 +37,7 @@
     <module>step-7</module>
     <module>step-8</module>
     <module>step-9</module>
+    <module>step-10</module>
   </modules>
 
   <build>
