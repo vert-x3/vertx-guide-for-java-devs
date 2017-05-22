@@ -1,7 +1,6 @@
 = Vert.x guide
 Julien Ponge <julien.ponge@insa-lyon.fr> ; Thomas Segismont <tsegismo@redhat.com> ; Julien Viet <jviet@redhat.com>
 :source-highlighter: highlight.js
-:icons: font
 :data-uri:
 :toc:
 :toclevels: 4
