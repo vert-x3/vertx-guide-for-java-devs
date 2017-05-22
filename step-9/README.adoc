@@ -16,9 +16,9 @@ image::images/edit-page.png[]
 
 The HTML preview is being rendered by calling a new endpoint in our backend.
 Rendering is triggered when the Markdown editor text changes.
-To avoid overloading the backend with unecessary requests when the user is busy typing Markdown, a delay is being introduced so as to only trigger the rendering when no change has been made during that delay.
+To avoid overloading the backend with unnecessary requests when the user is busy typing Markdown, a delay is being introduced so as to only trigger the rendering when no change has been made during that delay.
 
-The application interface is also dynamic, as new pages make the deletion button disapear:
+The application interface is also dynamic, as new pages make the deletion button disappear:
 
 image::images/new-page.png[]
 
@@ -32,7 +32,7 @@ A client-side application needs a backend that exposes:
 2. a web API, typically a HTTP/JSON service.
 
 We simplified the HTTP verticle implementation to _just_ cover what is needed.
-Starting fron the RxJava version from _step #8_, we removed all server-side rendering code as well as the authentication and JWT token issuing code to expose a plain open HTTP interface.
+Starting from the RxJava version from _step #8_, we removed all server-side rendering code as well as the authentication and JWT token issuing code to expose a plain open HTTP interface.
 Of course building a version that leverages JWT tokens and authentication makes sense for a real-world deployments, but we would rather focus on the essential bits in this guide.
 
 As an example, the `apiUpdatePage` method implementation code is now:
@@ -136,7 +136,7 @@ The controller requires dependency injection of the following objects:
 
 * `$scope` to provide DOM scoping to the controller, and
 * `$http` to perform asynchronous HTTP requests to the backend, and
-* `$timeout` to trigger actions after a given delay while staying tied to the AngularJS lifecycle (e.g., to ensure that any state modification triggers view changes, which is not the case when using the https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout[classic setTimeout function]).
+* `$timeout` to trigger actions after a given delay while staying tied to the AngularJS life-cycle (e.g., to ensure that any state modification triggers view changes, which is not the case when using the https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout[classic setTimeout function]).
 
 Controller methods are being tied to the `$scope` object.
 Let us start with 3 simple methods:
@@ -159,7 +159,7 @@ include::src/main/resources/webroot/wiki.js[tags=load]
 
 The next methods support saving / updating and deleting pages.
 For these operations we used the full `then` promise method with the first argument being called on success, and the second one being called on error.
-We also introduce the `success` and `error` helper methods to display notifications (3 secondes on success, 5 seconds on error):
+We also introduce the `success` and `error` helper methods to display notifications (3 seconds on success, 5 seconds on error):
 
 [source,javascript,indent=0]
 ----

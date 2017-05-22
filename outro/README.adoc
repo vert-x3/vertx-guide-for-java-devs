@@ -8,7 +8,7 @@ Let us take a moment to recapitulate the important takeaways from the previous s
 We started this guide by building a wiki web application with Vert.x.
 While the first iteration was typical of _"quick and dirty rapid prototyping"_ it showed that one could quickly and easily build such an application with server-side rendering of web templates and persistence with a relational database.
 
-The next steps showed how to improve the design through successive refactorings: first separating each technical concern as a standalone verticle, then extracting Vert.x services for API cleanliness and finally introducing JUnit tests for asynchronous code.
+The next steps showed how to improve the design through successive refactoring: first separating each technical concern as a standalone verticle, then extracting Vert.x services for API cleanliness and finally introducing JUnit tests for asynchronous code.
 
 We then ventured into consuming third-party HTTP/JSON services using the web client API that further simplifies the usage of the HTTP client from Vert.x core.
 Conversely, we also saw how to expose HTTP/JSON web APIs with the elegant Vert.x web module.
@@ -51,10 +51,10 @@ There are many features and modules that we haven't covered in this guide, such 
 * messaging with AMQP, Stomp, Kafka, MQTT or RabbitMQ,
 * using OAuth2 authentication from custom and popular providers,
 * Vert.x sync for writing blocking-style code that is later turned into _fibers_ non-blocking code at runtime,
-* publishing and discovering microservices from registries, for instance when deploying on cloud environments like OpenShift,
+* publishing and discovering micro-services from registries, for instance when deploying on cloud environments like OpenShift,
 * exposing metrics and health checks.
 
-This list is not limitative: Vert.x is a toolkit so you are the one to decide what ingredients are required for your project, big or small.
+This list is not exhaustive: Vert.x is a toolkit so you are the one to decide what ingredients are required for your project, big or small.
 
 You may also find it useful to browse the https://github.com/vert-x3/vertx-awesome[Vert.x awesome] curated list of community projects as it goes beyond what is being supported by the project.
 
