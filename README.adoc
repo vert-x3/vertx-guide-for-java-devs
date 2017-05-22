@@ -1,4 +1,4 @@
-= Vert.x guide
+= A gentle guide to asynchronous programming with Eclipse Vert.x for enterprise application developers
 Julien Ponge <julien.ponge@insa-lyon.fr> ; Thomas Segismont <tsegismo@redhat.com> ; Julien Viet <jviet@redhat.com>
 :source-highlighter: highlight.js
 :data-uri:
@@ -7,6 +7,9 @@ Julien Ponge <julien.ponge@insa-lyon.fr> ; Thomas Segismont <tsegismo@redhat.com
 :sectnums:
 
 :leveloffset: +1
+
+:imagesdir: intro
+include::intro/README.adoc[]
 
 :imagesdir: step-1
 include::step-1/README.adoc[]
