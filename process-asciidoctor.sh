@@ -1,2 +1,2 @@
 #!/bin/sh
-bundle exec asciidoctor -o guide.html README.adoc
+bundle exec asciidoctor -a icons=font -o guide.html README.adoc
