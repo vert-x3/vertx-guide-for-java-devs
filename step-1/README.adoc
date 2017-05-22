@@ -8,7 +8,7 @@ To do so, we will use the following libraries.
 
 1. http://vertx.io/docs/vertx-web/java/[Vert.x web] since while the Vert.x core library _does_ support the creation of HTTP servers, it does not provide elegant APIs to deal with routing, handling of request payloads, etc.
 2. http://vertx.io/docs/vertx-jdbc-client/java/[Vert.x JDBC client] to provide an asynchronous API over JDBC.
-3. http://freemarker.org/[Apache FreeMarker] to render server-side pages as it is an uncomplicated templating engine.
+3. http://freemarker.org/[Apache FreeMarker] to render server-side pages as it is an uncomplicated template engine.
 4. https://github.com/rjeschke/txtmark[Txtmark] to render Markdown text to HTML, allowing the edition of wiki pages in Markdown.
 
 == Bootstrapping a Maven project
@@ -48,7 +48,7 @@ The first batch of dependencies to add to the Maven `pom.xml` file are those for
 include::pom.xml[tags=web-deps]
 ----
 
-TIP: As the `vertx-web-templ-freemarker` name suggests, Vert.x web provides pluggable support for popular templating engines: Handlebars, Jade, MVEL, Pebble, Thymeleaf and of course Freemarker.
+TIP: As the `vertx-web-templ-freemarker` name suggests, Vert.x web provides pluggable support for popular template engines: Handlebars, Jade, MVEL, Pebble, Thymeleaf and of course Freemarker.
 
 The second set of dependencies are those required for JDBC database access:
 
@@ -59,7 +59,7 @@ include::pom.xml[tags=db-deps]
 
 The Vert.x JDBC client library provides access to any JDBC-compliant database, but of course our project needs to have a JDBC driver on the _classpath_.
 
-http://hsqldb.org/[HSQLDB] is well-known relationnal database that is written in Java.
+http://hsqldb.org/[HSQLDB] is well-known relational database that is written in Java.
 It is quite popular when used as an embedded database to avoid the requirement of having a third-party database server running separately.
 It is also popular for unit and integration testing as it offers a (volatile) in-memory storage.
 
@@ -216,7 +216,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=startHttpServ
 ----
 <1> The `vertx` context object provides methods to create HTTP servers, clients, TCP/UDP servers and clients, etc.
 <2> The `Router` class comes from `vertx-web`: `io.vertx.ext.web.Router`.
-<3> Routes have their own handlers, and they can be defined by URL and/or by HTTP method. For short handlers a Java lambda is an option, but for more elaborated handlers it is a good idea to reference private methods instead. Note that URLs can be parameterized: `/wiki/:page` will match a request like `/wiki/Hello`, in which case a `page` parameter will be available with value `Hello`.
+<3> Routes have their own handlers, and they can be defined by URL and/or by HTTP method. For short handlers a Java lambda is an option, but for more elaborated handlers it is a good idea to reference private methods instead. Note that URLs can be parametric: `/wiki/:page` will match a request like `/wiki/Hello`, in which case a `page` parameter will be available with value `Hello`.
 <4> This makes all HTTP POST requests got through a first handler, here `io.vertx.ext.web.handler.BodyHandler`. This handler automatically decodes the body from the HTTP requests (e.g., form submissions), which can then be manipulated as Vert.x buffer objects.
 <5> The router object can be used as a HTTP server handler, which then dispatches to other handlers as defined above.
 <6> Starting a HTTP server is an asynchronous operation, so an `AsyncResult<HttpServer>` needs to be checked for success. By the way the `8080` parameter specifies the TCP port to be used by the server.
@@ -320,7 +320,7 @@ This happens both when updating an existing page (issuing a SQL `update` query) 
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageUpdateHandler]
 ----
-<1> Form parameters sent through a HTTP POST request are avilable from the `RoutingContext` object. Note that without a `BodyHandler` within the `Router` configuration chain these values would not be available, and the form submission payload would need to be manually decoded from the HTTP POST request payload.
+<1> Form parameters sent through a HTTP POST request are available from the `RoutingContext` object. Note that without a `BodyHandler` within the `Router` configuration chain these values would not be available, and the form submission payload would need to be manually decoded from the HTTP POST request payload.
 <2> We rely on a form hidden field rendered in the `page.ftl` FreeMarker template to know if we are updating an existing page or saving a new page.
 <3> Again, preparing the SQL query with parameters uses a `JsonArray` to pass values.
 <4> The `updateWithParams` method is used for `insert` / `update` / `delete` SQL queries.
