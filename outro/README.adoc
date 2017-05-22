@@ -1,0 +1,70 @@
+= Conclusion
+
+This is the end of this guide.
+Let us take a moment to recapitulate the important takeaways from the previous sections, and then conclude by pointing to further useful resources.
+
+== Summary
+
+We started this guide by building a wiki web application with Vert.x.
+While the first iteration was typical of _"quick and dirty rapid prototyping"_ it showed that one could quickly and easily build such an application with server-side rendering of web templates and persistence with a relational database.
+
+The next steps showed how to improve the design through successive refactorings: first separating each technical concern as a standalone verticle, then extracting Vert.x services for API cleanliness and finally introducing JUnit tests for asynchronous code.
+
+We then ventured into consuming third-party HTTP/JSON services using the web client API that further simplifies the usage of the HTTP client from Vert.x core.
+Conversely, we also saw how to expose HTTP/JSON web APIs with the elegant Vert.x web module.
+
+From there it is very easy to extend the approach to build API gateways for providing facades to many services.
+If you were to build such gateways, we suggest that you take advantage of:
+
+* the Vert.x RxJava support to describe service consumption data flow streams, and
+* the Vert.x circuit-breaker module to deal consistently with the potential failure of services.
+
+Access control, authentication and security are often neglected or come as an aftermath.
+We saw that Vert.x provides a simple pluggable authentication mechanism to leverage databases, files or LDAP directories.
+SSL network encryption is very easy to setup for a server, or for a client to use.
+Finally Vert.x supports JWT tokens, a very useful authentication scheme for web APIs.
+
+The Vert.x core API relies on callbacks as it is the most generic way of processing asynchronous events.
+Vert.x provides a simple promise / future API.
+While Vert.x futures are composable, they shall be confined to limited usages such as dealing with verticle deployments and initialization.
+We saw how RxJava is supported in Vert.x, and we encourage you to use it for your own verticles.
+What's more RxJava is the most popular reactive programming library on the JVM, so you will easily find third-party libraries to integrate consistently in your end-to-end reactive applications.
+
+Modern web applications tend to have the server expose _just_ HTTP/JSON APIs, and rely on client-side web frameworks for the user interface.
+We saw how to do that with AngularJS so as to turn our wiki into a single-page application.
+
+Finally, we saw how elegant it was to extend the event bus of an application to allow web applications to send and receive events from the browser using the SockJS bridge.
+While it may initially seem like to be a small feature, in practice it turns out to greatly simplify the development of _real-time_ web application features.
+The SockJS bridge can actually be useful also in cases where one would have used an HTTP endpoint: sending a message then getting a response over the event bus can sometimes be simpler than doing an HTTP call, having the server process the HTTP request, forwarding it to a verticle on the event bus and eventually terminating the HTTP exchange by encoding a JSON response.
+
+== Going further
+
+The http://vertx.io/[Vert.x website] is of course the authority on all things Vert.x.
+
+There are many features and modules that we haven't covered in this guide, such as:
+
+* clustering using Hazelcast, Infinispan, Apache Ignite or Apache Zookeeper,
+* how the code looks like with other supported languages,
+* exposing and consuming over HTTP/2, possibly (but not necessarily) with gRPC 
+* using NoSQL databases such as MongoDB or Redis,
+* sending emails over SMTP,
+* messaging with AMQP, Stomp, Kafka, MQTT or RabbitMQ,
+* using OAuth2 authentication from custom and popular providers,
+* Vert.x sync for writing blocking-style code that is later turned into _fibers_ non-blocking code at runtime,
+* publishing and discovering microservices from registries, for instance when deploying on cloud environments like OpenShift,
+* exposing metrics and health checks.
+
+This list is not limitative: Vert.x is a toolkit so you are the one to decide what ingredients are required for your project, big or small.
+
+You may also find it useful to browse the https://github.com/vert-x3/vertx-awesome[Vert.x awesome] curated list of community projects as it goes beyond what is being supported by the project.
+
+If you are developing micro-services, we suggest reading the https://developers.redhat.com/promotions/building-reactive-microservices-in-java/["Building Reactive Microservices in Java" book by Clément Escoffier].
+
+== That's all folks!
+
+We hope that you enjoyed reading this guide, and that it turned out to be useful in your journey towards asynchronous programming with Vert.x.
+
+Feel-free to get in touch with the authors, either directly by email or through https://groups.google.com/forum/?fromgroups#!forum/vertx/[the Vert.x project user group].
+Of course we appreciate praise, but we appreciate as much any constructive feedback that can improve this content.
+
+Thank you very much!
