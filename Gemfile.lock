@@ -1,13 +1,62 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    Ascii85 (1.0.2)
+    addressable (2.5.1)
+      public_suffix (~> 2.0, >= 2.0.2)
+    afm (0.2.2)
     asciidoctor (1.5.5)
+    asciidoctor-pdf (1.5.0.alpha.15)
+      asciidoctor (>= 1.5.0)
+      prawn (>= 1.3.0, < 2.3.0)
+      prawn-icon (= 1.3.0)
+      prawn-svg (>= 0.21.0, < 0.27.0)
+      prawn-table (= 0.2.2)
+      prawn-templates (>= 0.0.3, <= 0.0.5)
+      safe_yaml (~> 1.0.4)
+      thread_safe (~> 0.3.6)
+      treetop (= 1.5.3)
+    css_parser (1.5.0)
+      addressable
+    hashery (2.1.2)
+    pdf-core (0.7.0)
+    pdf-reader (1.4.1)
+      Ascii85 (~> 1.0.0)
+      afm (~> 0.2.1)
+      hashery (~> 2.0)
+      ruby-rc4
+      ttfunk
+    polyglot (0.3.5)
+    prawn (2.2.2)
+      pdf-core (~> 0.7.0)
+      ttfunk (~> 1.5)
+    prawn-icon (1.3.0)
+      prawn (>= 1.1.0, < 3.0.0)
+    prawn-svg (0.26.0)
+      css_parser (~> 1.3)
+      prawn (>= 0.11.1, < 3)
+    prawn-table (0.2.2)
+      prawn (>= 1.3.0, < 3.0.0)
+    prawn-templates (0.0.5)
+      pdf-core (>= 0.5.0)
+      pdf-reader (~> 1.3)
+      prawn (>= 2.2.1)
+    public_suffix (2.0.5)
+    rouge (2.0.7)
+    ruby-rc4 (0.1.5)
+    safe_yaml (1.0.4)
+    thread_safe (0.3.6)
+    treetop (1.5.3)
+      polyglot (~> 0.3)
+    ttfunk (1.5.1)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   asciidoctor
+  asciidoctor-pdf
+  rouge
 
 BUNDLED WITH
    1.13.7

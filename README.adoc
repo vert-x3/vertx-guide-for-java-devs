@@ -1,5 +1,6 @@
 = A gentle guide to asynchronous programming with Eclipse Vert.x for enterprise application developers
 Julien Ponge <julien.ponge@insa-lyon.fr> ; Thomas Segismont <tsegismo@redhat.com> ; Julien Viet <jviet@redhat.com>
+:doctype: book
 
 :leveloffset: +1
 
