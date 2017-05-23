@@ -23,6 +23,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.handler.sockjs.BridgeOptions;
+import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.guides.wiki.database.rxjava.WikiDatabaseService;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.http.HttpServer;
@@ -32,6 +34,7 @@ import io.vertx.rxjava.ext.web.handler.BodyHandler;
 import io.vertx.rxjava.ext.web.handler.CookieHandler;
 import io.vertx.rxjava.ext.web.handler.SessionHandler;
 import io.vertx.rxjava.ext.web.handler.StaticHandler;
+import io.vertx.rxjava.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.rxjava.ext.web.sstore.LocalSessionStore;
 import rx.Observable;
 
@@ -62,6 +65,14 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.route().handler(CookieHandler.create());
     router.route().handler(BodyHandler.create());
     router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+
+    // tag::sockjs-handler-setup[]
+    SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
+    BridgeOptions bridgeOptions = new BridgeOptions()
+      .addOutboundPermitted(new PermittedOptions().setAddress("page.saved"));
+    sockJSHandler.bridge(bridgeOptions);
+    router.route("/eventbus/*").handler(sockJSHandler);
+    // end::sockjs-handler-setup[]
 
     router.get("/app/*").handler(StaticHandler.create().setCachingEnabled(false));
     router.get("/").handler(context -> context.reroute("/app/index.html"));
@@ -105,12 +116,17 @@ public class HttpServerVerticle extends AbstractVerticle {
   private void apiUpdatePage(RoutingContext context) {
     int id = Integer.valueOf(context.request().getParam("id"));
     JsonObject page = context.getBodyAsJson();
-    if (!validateJsonPageDocument(context, page, "markdown")) {
+    if (!validateJsonPageDocument(context, page, "client", "markdown")) {
       return;
     }
-    dbService.rxSavePage(id, page.getString("markdown")).subscribe(
-      v -> apiResponse(context, 200, null, null),
-      t -> apiFailure(context, t));
+    // tag:publish-on-page-updated
+    dbService.rxSavePage(id, page.getString("markdown"))
+      .doOnSuccess(v -> {
+        JsonObject event = new JsonObject().put("id", id).put("client", page.getString("client"));
+        vertx.eventBus().publish("page.saved", event);
+      })
+      .subscribe(v -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
+    // end:publish-on-page-updated
   }
 
   private boolean validateJsonPageDocument(RoutingContext context, JsonObject page, String... expectedKeys) {

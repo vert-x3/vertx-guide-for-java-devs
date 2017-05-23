@@ -25,6 +25,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
   <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+  <!-- tag::load-sockjs-eventbus-scripts[] -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"
+          integrity="sha256-KWJavOowudybFMUCd547Wvd/u8vUg/2g0uSWYU5Ae+w="
+          crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vertx/3.4.1/vertx-eventbus.min.js"
+          integrity="sha256-EX8Kk2SwcSUXBJ4RORlETHNwHWEw+57C/YDLnbiIl3U="
+          crossorigin="anonymous"></script>
+  <!-- end::load-sockjs-eventbus-scripts[] -->
   <script src="/app/wiki.js"></script>
   <style>
     body {
@@ -68,6 +76,15 @@
         {{alertMessage}}
       </div>
     </div>
+
+    <!-- tag::reload-warning[] -->
+    <div class="col-md-12">
+      <div class="alert alert-warning ng-class:{'invisible': !pageModified};" role="alert">
+        The page has been modified by another user.
+        <a href="#" ng-click="load(pageId)">Reload</a>
+      </div>
+    </div>
+    <!-- end::reload-warning[] -->
 
   </div>
 

@@ -17,6 +17,18 @@
 
 'use strict';
 
+// tag::generate-uuid[]
+// Adapted from https://stackoverflow.com/a/8809472/2133695
+function generateUUID() {
+  var d = new Date().getTime();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = (d + Math.random() * 16) % 16 | 0;
+    d = Math.floor(d / 16);
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+// end::generate-uuid[]
+
 angular.module("wikiApp", [])
   .controller("WikiController", ["$scope", "$http", "$timeout", function ($scope, $http, $timeout) {
 
@@ -39,7 +51,9 @@ angular.module("wikiApp", [])
       return $scope.pageId !== undefined;
     };
 
+    // tag::page-load[]
     $scope.load = function (id) {
+      $scope.pageModified = false;
       $http.get("/api/pages/" + id).then(function(response) {
         var page = response.data.page;
         $scope.pageId = page.id;
@@ -48,6 +62,7 @@ angular.module("wikiApp", [])
         $scope.updateRendering(page.html);
       });
     };
+    // end::page-load[]
 
     $scope.updateRendering = function(html) {
       document.getElementById("rendering").innerHTML = html;
@@ -70,6 +85,7 @@ angular.module("wikiApp", [])
         });
       } else {
         var payload = {
+          "client": clientUuid,
           "markdown": $scope.pageMarkdown
         };
         $http.put("/api/pages/" + $scope.pageId, payload).then(function(ok) {
@@ -127,5 +143,21 @@ angular.module("wikiApp", [])
         });
       }, 300);
     });
+
+    // tag::event-bus-js-setup[]
+    var clientUuid = generateUUID();
+    var eb = new EventBus(window.location.protocol + "//" + window.location.host + "/eventbus");
+    eb.onopen = function () {
+      eb.registerHandler("page.saved", function (error, message) {
+        if (message.body
+          && $scope.pageId === message.body.id
+          && clientUuid !== message.body.client) {
+          $scope.$apply(function () {
+            $scope.pageModified = true;
+          });
+        }
+      });
+    };
+    // end::event-bus-js-setup[]
 
   }]);
