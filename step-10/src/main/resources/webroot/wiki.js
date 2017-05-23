@@ -133,13 +133,22 @@ angular.module("wikiApp", [])
 
     var markdownRenderingPromise = null;
     $scope.$watch("pageMarkdown", function (text) {
+      if (eb.state !== EventBus.OPEN) return;
       if (markdownRenderingPromise !== null) {
         $timeout.cancel(markdownRenderingPromise);
       }
       markdownRenderingPromise = $timeout(function() {
         markdownRenderingPromise = null;
-        $http.post("/app/markdown", text).then(function (response) {
-          $scope.updateRendering(response.data);
+        // tag::eventbus-markdown-sender[]
+        eb.send("app.markdown", text, function (err, reply) {
+          if (err === null) {
+            $scope.$apply(function () {
+              $scope.updateRendering(reply.body);
+            });
+          } else {
+            console.warn("Error rendering Markdown content: " + JSON.stringify(err));
+          }
+          // end::eventbus-markdown-sender[]
         });
       }, 300);
     });

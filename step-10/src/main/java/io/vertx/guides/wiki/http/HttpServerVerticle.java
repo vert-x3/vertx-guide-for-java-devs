@@ -69,21 +69,21 @@ public class HttpServerVerticle extends AbstractVerticle {
     // tag::sockjs-handler-setup[]
     SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
     BridgeOptions bridgeOptions = new BridgeOptions()
+      .addInboundPermitted(new PermittedOptions().setAddress("app.markdown"))
       .addOutboundPermitted(new PermittedOptions().setAddress("page.saved"));
     sockJSHandler.bridge(bridgeOptions);
     router.route("/eventbus/*").handler(sockJSHandler);
     // end::sockjs-handler-setup[]
 
+    // tag::eventbus-markdown-consumer[]
+    vertx.eventBus().<String>consumer("app.markdown", msg -> {
+      String html = Processor.process(msg.body());
+      msg.reply(html);
+    });
+    // end::eventbus-markdown-consumer[]
+
     router.get("/app/*").handler(StaticHandler.create().setCachingEnabled(false));
     router.get("/").handler(context -> context.reroute("/app/index.html"));
-
-    router.post("/app/markdown").handler(context -> {
-      String html = Processor.process(context.getBodyAsString());
-      context.response()
-        .putHeader("Content-Type", "text/html")
-        .setStatusCode(200)
-        .end(html);
-    });
 
     router.get("/api/pages").handler(this::apiRoot);
     router.get("/api/pages/:id").handler(this::apiGetPage);
