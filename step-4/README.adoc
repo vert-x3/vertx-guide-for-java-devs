@@ -48,7 +48,7 @@ include::src/test/java/io/vertx/guides/wiki/database/WikiDatabaseVerticleTest.ja
 
 == Testing database operations
 
-The database service is a good example of a Vert.x test.
+The database service is a good fit for writing tests.
 
 We first need to deploy the database verticle.
 We will configure the JDBC connection to be HSQLDB with an in-memory storage, and upon success we will fetch a service proxy for our test cases.

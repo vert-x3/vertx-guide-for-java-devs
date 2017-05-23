@@ -1,12 +1,14 @@
 = A minimally viable wiki written with Vert.x
 
-We are going to start with a first iteration with the simplest code possible to have a wiki written with Vert.x.
+TIP: The corresponding source code is in the `step-1` folder of the guide repository.
+
+We are going to start with a first iteration and the simplest code possible to have a wiki written with Vert.x.
 While the next iterations will introduce more elegance into the code base as well as proper testing, we will see that quick prototyping with Vert.x is both a simple and a realistic target.
 
 At this stage the wiki will use server-side rendering of HTML pages and data persistence through a JDBC connection.
 To do so, we will use the following libraries.
 
-1. http://vertx.io/docs/vertx-web/java/[Vert.x web] since while the Vert.x core library _does_ support the creation of HTTP servers, it does not provide elegant APIs to deal with routing, handling of request payloads, etc.
+1. http://vertx.io/docs/vertx-web/java/[Vert.x web] as while the Vert.x core library _does_ support the creation of HTTP servers, it does not provide elegant APIs to deal with routing, handling of request payloads, etc.
 2. http://vertx.io/docs/vertx-jdbc-client/java/[Vert.x JDBC client] to provide an asynchronous API over JDBC.
 3. http://freemarker.org/[Apache FreeMarker] to render server-side pages as it is an uncomplicated template engine.
 4. https://github.com/rjeschke/txtmark[Txtmark] to render Markdown text to HTML, allowing the edition of wiki pages in Markdown.
@@ -37,7 +39,7 @@ You will notice that the Maven project `pom.xml` does 2 interesting things:
 2. it uses the http://www.mojohaus.org/exec-maven-plugin/[Exec Maven Plugin] to provide the `exec:java` goal that in turns starts the application through the Vert.x `io.vertx.core.Launcher` class. This is actually equivalent to running using the `vertx` command-line tool that ships in the Vert.x distribution.
 
 Finally, you will notice the presence of the `redeploy.sh` and `redeploy.bat` scripts that you can alternatively use for automatic compilation and redeployment upon code changes.
-Note that doing requires ensuring that the `VERTICLE` variable in these scripts matches the main verticle to be used.
+Note that doing so requires ensuring that the `VERTICLE` variable in these scripts matches the main verticle to be used.
 
 == Adding the required dependencies
 
@@ -68,9 +70,9 @@ It stores data in local files, and since the HSQLDB library Jar provides a JDBC 
 
 [NOTE]
 ====
-Vert.x also offers a dedicated http://vertx.io/docs/vertx-mysql-postgresql-client/java/[MySQL and PostgreSQL client] library.
+Vert.x also offers dedicated http://vertx.io/docs/vertx-mysql-postgresql-client/java/[MySQL and PostgreSQL client] libraries.
 
-Of course you can use the general-purpose Vert.x JDBC client to connect to MySQL or PostgreSQL databases, but this library offers better performance and asynchronous support by working with these 2 database server network protocols rather than going through the blocking JDBC APIs.
+Of course you can use the general-purpose Vert.x JDBC client to connect to MySQL or PostgreSQL databases, but these libraries offers better performance by working with these 2 database server network protocols rather than going through the (blocking) JDBC APIs.
 ====
 
 NOTE: Vert.x also provides libraries to deal with the popular non-relational databases http://vertx.io/docs/vertx-mongo-client/java/[MongoDB] and http://vertx.io/docs/vertx-redis-client/java/[Redis].
@@ -80,8 +82,8 @@ NOTE: Vert.x also provides libraries to deal with the popular non-relational dat
 The verticle for our wiki consists of a single `io.vertx.guides.wiki.MainVerticle` Java class.
 This class extends `io.vertx.core.AbstractVerticle`, the base class for verticles that mainly provides:
 
-1. life-cycle `start` and `stop` methods to eventually override, and
-2. a _protected_ field called `vertx` that references the Vert.x environment where the verticle is being deployed, and
+1. life-cycle `start` and `stop` methods to override,
+2. a _protected_ field called `vertx` that references the Vert.x environment where the verticle is being deployed,
 3. an accessor to some configuration object that allows passing external configuration to a verticle.
 
 To get started our verticle can just override the `start` method as follows:
@@ -136,7 +138,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=start]
 ----
 
 When the _future_ of `prepareDatabase` completes successfully, then `startHttpServer` is called and the `steps` future completes depending of the outcome of the future returned by `startHttpServer`.
-`startHttpServer` is never called if `prepareDatabase` encounters an error, in which case the `steps` _future_ is in a _failed_ state and has been completed with the exception describing the error.
+`startHttpServer` is never called if `prepareDatabase` encounters an error, in which case the `steps` _future_ is in a _failed_ state and becomes completed with the exception describing the error.
 
 Eventually `steps` completes: `setHandler` defines a handler to be called upon completion.
 In our case we simply want to complete `startFuture` with `steps` and use the `completer` method to obtain a handler.
@@ -170,7 +172,7 @@ The wiki database schema consists of a single table `Pages` with the following c
 
 The database operations will be typical _create, read, update, delete_ operations.
 To get us started, we simply store the corresponding SQL queries as static fields of the `MainVerticle` class.
-Note that they are written in a dialect that HSQLDB understands, but that other relational databases may not necessarily support:
+Note that they are written in a SQL dialect that HSQLDB understands, but that other relational databases may not necessarily support:
 
 [source,java,indent=0]
 ----
@@ -240,7 +242,7 @@ The `indexHandler` method code is as follows:
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=indexHandler]
 ----
-<1> SQL query results are being returned as instances of `JsonArray` and `JsonObject` instances.
+<1> SQL query results are being returned as instances of `JsonArray` and `JsonObject`.
 <2> The `RoutingContext` instance can be used to put arbitrary key / value data that is then available from templates, or chained router handlers.
 <3> Rendering a template is an asynchronous operation that leads us to the usual `AsyncResult` handling pattern.
 <4> The `AsyncResult` contains the template rendering as a `String` in case of success, and we can end the HTTP response stream with the value.

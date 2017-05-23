@@ -121,4 +121,4 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.jav
 <2> `from` converts the database `results` iterable into an `Observable` emitting the database row items.
 <3> Since we only need the page name we can `map` each `JsonObject` row to the first column.
 <4> The client expects the data to be `sorted` in alphabetical order.
-<5> The event bus service reply consists in a single `JsonArray`. `collect` creates a new one with `JsonArray:new` and later adds items as they are emitted with `JsonArray::add`.
+<5> The event bus service reply consists in a single `JsonArray`. `collect` creates a new one with `JsonArray::new` and later adds items as they are emitted with `JsonArray::add`.

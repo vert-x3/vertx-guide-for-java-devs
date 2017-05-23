@@ -6,7 +6,7 @@ The previous refactoring was a big step forward compared to our initial implemen
 We also saw that we could deploy several instances of a given verticle to better cope with load and to better leverage CPU cores.
 
 In this section we see how to design and use Vert.x services.
-The main advantage of a service is that it defines an interface for doing certain operations that a verticle expose.
+The main advantage of a service is that it defines an interface for doing certain operations that a verticle exposes.
 We also leverage code generation for all the event bus messaging plumbing, instead of crafting it ourselves like we did in the previous section.
 
 We are also going to refactor the code into different Java packages:
@@ -41,7 +41,7 @@ Obviously we need the `vertx-service-proxy` APIs:
 include::pom.xml[tags=service-proxy-dep]
 ----
 
-We need the Vert.x code generation module as a compilation time only dependency (hence the `provided` scope):
+We need the Vert.x code generation module as a compilation-time only dependency (hence the `provided` scope):
 
 [source,xml,indent=0]
 ----
@@ -78,7 +78,7 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[ta
 ----
 
 1. The `ProxyGen` annotation is used to trigger the code generation of a proxy for clients of that service.
-2. The `Fluent` annotation is optional, but allows _fluent_ interfaces where operations can be chained by returning the service instance. This is mostly useful for the code generator if other JVM languages intend on consuming the interface.
+2. The `Fluent` annotation is optional, but allows _fluent_ interfaces where operations can be chained by returning the service instance. This is mostly useful for the code generator when the service shall be consumed from other JVM languages.
 3. Parameter types need to be strings, Java primitive types, JSON objects or arrays, any enumeration type or a `java.util` collection (`List` / `Set` / `Map`) of the previous types. The only way to support arbitrary Java classes is to have them as Vert.x data objects, annotated with `@DataObject`. The last opportunity to pass other types is service reference types.
 4. Since services provide asynchronous results, the last argument of a service method needs to be a `Handler<AsyncResult<T>>` where `T` is any of the types suitable for code generation as described above.
 
@@ -133,7 +133,7 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseVerticle.java[t
 Registering a service requires an interface class, a Vert.x context, an implementation and an event bus destination.
 
 The `WikiDatabaseServiceVertxEBProxy` generated class handles receiving messages on the event bus and then dispatching them to the `WikiDatabaseServiceImpl`.
-What it does is actually very close to what we did in the previous section: messages are being sent with a `action` header to specify which method to invokes, and parameters are being encoded to a JSON document.
+What it does is actually very close to what we did in the previous section: messages are being sent with a `action` header to specify which method to invoke, and parameters are encoded in JSON.
 
 == Obtaining a database service proxy
 
@@ -150,4 +150,4 @@ We just need to make sure to use the same event bus destination as the service t
 
 The `WikiDatabaseServiceVertxProxyHandler` generated class deals with forwarding calls as event bus messages.
 
-TIP: It is perfectly possible to consume a Vert.x service directly via event bus messages since this is what the generated proxys do.
+TIP: It is still perfectly possible to consume a Vert.x service directly via event bus messages since this is what generated proxys do.

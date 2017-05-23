@@ -33,7 +33,7 @@ image::images/gist.png[]
 == The web client API
 
 The Vert.x core library offers a `createHttpClient` method from the `vertx` context object.
-Instances of `io.vertx.core.http.HttpClient` provides low-level methods for doing all kinds of HTTP requests with a fine-grained control over the protocol and the stream events.
+Instances of `io.vertx.core.http.HttpClient` provides low-level methods for doing all kinds of HTTP requests with a fine-grained control over the protocol and the stream of events.
 
 The web client API provides a simpler facade, especially for simplifying the payload data (un)marshaling.
 This API comes in the form of a new dependency:

@@ -32,8 +32,9 @@ A client-side application needs a backend that exposes:
 2. a web API, typically a HTTP/JSON service.
 
 We simplified the HTTP verticle implementation to _just_ cover what is needed.
-Starting from the RxJava version from _step #8_, we removed all server-side rendering code as well as the authentication and JWT token issuing code to expose a plain open HTTP interface.
-Of course building a version that leverages JWT tokens and authentication makes sense for a real-world deployments, but we would rather focus on the essential bits in this guide.
+Starting from the RxJava version from _step #8_, we removed all server-side rendering code as well as the authentication and JWT token issuing code to expose a plain open HTTP/JSON interface.
+
+Of course building a version that leverages JWT tokens and authentication makes sense for a real-world deployments, but now that we have covered these features we would rather focus on the essential bits in this part of the guide.
 
 As an example, the `apiUpdatePage` method implementation code is now:
 
@@ -69,7 +70,7 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=pr
 
 == AngularJS frontend
 
-TIP: This guide is not a proper introduction to AngularJS (https://docs.angularjs.org/tutorial[see the official tutorial instead]), we assume some familiarity of the framework from the reader.
+TIP: This guide is not a proper introduction to AngularJS (https://docs.angularjs.org/tutorial[see the official tutorial instead]), we assume some familiarity with the framework from the reader.
 
 === Application view
 
@@ -96,7 +97,7 @@ Bootstrap requires some further scripts that can be loaded at the end of the doc
 include::src/main/resources/webroot/index.html[tags=bottom]
 ----
 
-Our controller is called `WikiController` and it is bound to a `div` which is also a Bootstrap container:
+Our AngularJS controller is called `WikiController` and it is bound to a `div` which is also a Bootstrap container:
 
 [source,html,indent=0]
 ----

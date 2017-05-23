@@ -78,7 +78,7 @@ SQL queries are being stored in a properties file, with the default ones for HSQ
 include::src/main/resources/db-queries.properties[tags=queries]
 ----
 
-The following code from the `WikiDatabaseVerticle` class load the SQL queries from a file, and make them available from a map:
+The following code from the `WikiDatabaseVerticle` class loads the SQL queries from a file, and make them available from a map:
 
 [source,java,indent=0]
 ----
@@ -132,7 +132,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=main]
 <7> We define a handler that eventually completes the `MainVerticle` start future.
 
 The astute reader will probably wonder how we can deploy the code for a HTTP server on the same TCP port twice and not expect any error for either of the instances, since the TCP port will already be in use.
-With many web framework we would need to choose different TCP ports, and have a frontal HTTP proxy to perform load balancing between the ports.
+With many web frameworks we would need to choose different TCP ports, and have a frontal HTTP proxy to perform load balancing between the ports.
 
 There is no need to do that with Vert.x as multiple verticles can share the same TCP ports.
-Incoming connections are simply distributed in a round-robin fashion.
+Incoming connections are simply distributed in a round-robin fashion from accepting threads.

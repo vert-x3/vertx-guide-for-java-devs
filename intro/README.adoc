@@ -2,21 +2,21 @@
 
 == About this guide
 
-This guide is a gentle introduction to asynchronous programming with Vert.x, primarily aimed at developers familiar with mainstream non-asynchronous web development framework and libraries (e.g., Java EE, Spring).
-We assume that the reader is familiar with the Java programming language and ecosystem.
+This guide is a gentle introduction to asynchronous programming with Vert.x, primarily aimed at developers familiar with mainstream non-asynchronous web development frameworks and libraries (e.g., Java EE, Spring).
+We assume that the reader is familiar with the Java programming language and its ecosystem.
 
-We will start from a wiki web application backed by a relational database and server-side rendering of pages; then we will evolve it through several steps until it becomes a modern single-page application with _real-time web_ features.
+We will start from a wiki web application backed by a relational database and server-side rendering of pages; then we will evolve the application through several steps until it becomes a modern single-page application with "real-time".footnote:[Note that the widespread usage of the term "real-time" in the context of web technologies shall not be confused with _hard_ or _soft_ real-time in specialized operating systems.] web features.
 Along the way you will learn to:
 
 1. Design a web application with server-side rendering of pages through templates, and using a relational database for persisting data.
-2. Cleanly isolate each technical component as a reusable component unit called a _verticle_.
+2. Cleanly isolate each technical component as a reusable event processing unit called a _verticle_.
 3. Extract Vert.x services for facilitating the design of verticles that communicate with each other seamlessly both within the same JVM process or among distributed nodes in a cluster.
-4. Testing asynchronous operations.
+4. Testing code with asynchronous operations.
 5. Integrating with third-party services exposing a HTTP/JSON web API.
 6. Exposing a HTTP/JSON web API.
 7. Securing and controlling access using HTTPS, user authentication for web browser sessions and JWT tokens for third-party client applications.
-8. Refactoring some code to use reactive programming with the widely used RxJava library and its Vert.x integration.
-9. Client-side programming with AngularJS.
+8. Refactoring some code to use reactive programming with the popular RxJava library and its Vert.x integration.
+9. Client-side programming of a single-page application with AngularJS.
 10. Real-time web programming using the unified Vert.x event bus integration over SockJS.
 
 == What is Vert.x?
@@ -42,8 +42,8 @@ While it may sound like Vert.x is only useful for demanding applications, the pr
 As we will see, the code will remain relatively easy to comprehend, and should an application need to face a sudden peak in traffic then the code is already written with the essential ingredient for scaling up: _asynchronous processing of events_.
 
 Finally, it is worth mentioning that Vert.x is _polyglot_ as it supports a wide range of popular JVM languages: Java, Groovy, Scala, Kotlin, JavaScript, Ruby and Ceylon.
-The goal when supporting a language in Vert.x is not just to provide access to the APIs, but also to make sure that the language-specific APIs are idiomatic in each target language.
-It is well-possible to develop different technical parts of an application with different JVM languages and the Vert.x APIs.
+The goal when supporting a language in Vert.x is not just to provide access to the APIs, but also to make sure that the language-specific APIs are idiomatic in each target language (e.g., using Scala futures in place of Vert.x futures).
+It is well-possible to develop different technical parts of a Vert.x application using different JVM languages.
 
 == Core Vert.x concepts
 
@@ -61,7 +61,7 @@ Event-loops are typical in asynchronous programming models:
 image::images/event-loop.png[]
 
 Each event shall be processed in a _reasonable_ amount of time to not block the event loop.
-This means that _blocking_ operations shall not be performed while executed on the event loop, exactly like processing events in a graphical user interface like Java/Swing (e.g., freezing the interface by doing a slow network request).
+This means that _thread blocking_ operations shall not be performed while executed on the event loop, exactly like processing events in a graphical user interface (e.g., freezing a Java / Swing interface by doing a slow network request).
 As we will see later in this guide, Vert.x offers mechanisms to deal with blocking operations outside of the event loop.
 In any case Vert.x emits warnings in logs when the event loop has been processing an event for _too long_, which is also configurable to match application-specific requirements (e.g., when working on slower IoT ARM boards).
 
@@ -73,16 +73,15 @@ A verticle can be passed some configuration (e.g., credentials, network addresse
 
 image::images/verticle-threading-config.png[]
 
-Incoming network data is being received from accepting threads and then are then passed as events to the corresponding verticles.
+Incoming network data are being received from accepting threads then passed as events to the corresponding verticles.
 When a verticle opens a network server and is deployed more than once, then the events are being distributed to the verticle instances in a round-robin fashion which is very useful for maximizing CPU usage with lots of concurrent networked requests.
-
-Finally, verticles have a simple start / stop life-cycle, and verticles can deploy other verticles as the remainder of the guide will show.
+Finally, verticles have a simple start / stop life-cycle, and verticles can deploy other verticles.
 
 === Event bus 
 
 Verticles form technical units of deployments of code in Vert.x.
 The Vert.x _event bus_ is the main tool for different verticles to communicate through asynchronous message passing.
-For instance suppose we have a verticle for dealing with HTTP requests, and a verticle for managing access to the database.
+For instance suppose that we have a verticle for dealing with HTTP requests, and a verticle for managing access to the database.
 The event bus allows the HTTP verticle to send a request to the database verticle that performs a SQL query, and responds back to the HTTP verticle:
 
 image::images/event-bus.png[]

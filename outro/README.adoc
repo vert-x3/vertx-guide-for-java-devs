@@ -22,7 +22,7 @@ If you were to build such gateways, we suggest that you take advantage of:
 Access control, authentication and security are often neglected or come as an aftermath.
 We saw that Vert.x provides a simple pluggable authentication mechanism to leverage databases, files or LDAP directories.
 SSL network encryption is very easy to setup for a server, or for a client to use.
-Finally Vert.x supports JWT tokens, a very useful authentication scheme for web APIs.
+Finally Vert.x supports JWT tokens, a very useful and decentralized authentication scheme for web APIs.
 
 The Vert.x core API relies on callbacks as it is the most generic way of processing asynchronous events.
 Vert.x provides a simple promise / future API.

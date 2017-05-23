@@ -59,7 +59,7 @@ angular.module("wikiApp", [])
     $scope.updateRendering = function(html) {
       document.getElementById("rendering").innerHTML = html;
     };
-    // tag::load[]
+    // end::load[]
 
     // tag::save-delete-notifications[]
     $scope.save = function() {

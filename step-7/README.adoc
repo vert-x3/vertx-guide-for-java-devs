@@ -125,7 +125,7 @@ image::images/login-form.png[]
 
 === Supporting features based on roles
 
-Features need to be activated only if the user has sufficient permissions based on role.
+Features need to be activated only if the user has sufficient permissions.
 In the following screenshot an administrator can create a page and perform a backup:
 
 image::images/as-root.png[]
@@ -218,7 +218,7 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=ap
 
 === Using JWT tokens
 
-To illustrate how working with JWT tokens work, let's create a new one for the `root` user:
+To illustrate how to work with JWT tokens, let's create a new one for the `root` user:
 
 ----
 $ http --verbose --verify no GET https://localhost:8080/api/token login:root password:w00t
@@ -241,7 +241,7 @@ Set-Cookie: vertx-web.session=8cbb38ac4ce96737bfe31cc0ceaae2b9; Path=/
 eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InJvb3QiLCJjYW5DcmVhdGUiOnRydWUsImNhbkRlbGV0ZSI6dHJ1ZSwiY2FuVXBkYXRlIjp0cnVlLCJpYXQiOjE0ODk0NDE1OTAsImlzcyI6IlZlcnQueCIsInN1YiI6Ildpa2kgQVBJIn0=.RmtJb81QKVUFreXL-ajZ8ktLGasoKEqG8GSQncRWrN8=
 ----
 
-The response text is the token value and shall be retained for API further access.
+The response text is the token value and shall be retained.
 
 We can check that performing an API request without the token results in a denial of access:
 
