@@ -17,8 +17,8 @@
 
 'use strict';
 
-// tag::generate-uuid[]
 // Adapted from https://stackoverflow.com/a/8809472/2133695
+// Not a perfect GUID generator but good enough for the purpose of this demo
 function generateUUID() {
   var d = new Date().getTime();
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -27,7 +27,6 @@ function generateUUID() {
     return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
   });
 }
-// end::generate-uuid[]
 
 angular.module("wikiApp", [])
   .controller("WikiController", ["$scope", "$http", "$timeout", function ($scope, $http, $timeout) {
@@ -51,7 +50,6 @@ angular.module("wikiApp", [])
       return $scope.pageId !== undefined;
     };
 
-    // tag::page-load[]
     $scope.load = function (id) {
       $scope.pageModified = false;
       $http.get("/api/pages/" + id).then(function(response) {
@@ -62,7 +60,6 @@ angular.module("wikiApp", [])
         $scope.updateRendering(page.html);
       });
     };
-    // end::page-load[]
 
     $scope.updateRendering = function(html) {
       document.getElementById("rendering").innerHTML = html;
@@ -140,33 +137,35 @@ angular.module("wikiApp", [])
       markdownRenderingPromise = $timeout(function() {
         markdownRenderingPromise = null;
         // tag::eventbus-markdown-sender[]
-        eb.send("app.markdown", text, function (err, reply) {
+        eb.send("app.markdown", text, function (err, reply) { // <1>
           if (err === null) {
-            $scope.$apply(function () {
-              $scope.updateRendering(reply.body);
+            $scope.$apply(function () { // <2>
+              $scope.updateRendering(reply.body); // <3>
             });
           } else {
             console.warn("Error rendering Markdown content: " + JSON.stringify(err));
           }
-          // end::eventbus-markdown-sender[]
         });
+        // end::eventbus-markdown-sender[]
       }, 300);
     });
 
     // tag::event-bus-js-setup[]
-    var clientUuid = generateUUID();
     var eb = new EventBus(window.location.protocol + "//" + window.location.host + "/eventbus");
+    // end::event-bus-js-setup[]
+    // tag::register-page-saved-handler[]
+    var clientUuid = generateUUID(); // <1>
     eb.onopen = function () {
-      eb.registerHandler("page.saved", function (error, message) {
-        if (message.body
-          && $scope.pageId === message.body.id
-          && clientUuid !== message.body.client) {
-          $scope.$apply(function () {
-            $scope.pageModified = true;
+      eb.registerHandler("page.saved", function (error, message) { // <2>
+        if (message.body // <3>
+          && $scope.pageId === message.body.id // <4>
+          && clientUuid !== message.body.client) { // <5>
+          $scope.$apply(function () { // <6>
+            $scope.pageModified = true; // <7>
           });
         }
       });
     };
-    // end::event-bus-js-setup[]
+    // end::register-page-saved-handler[]
 
   }]);

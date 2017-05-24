@@ -67,12 +67,12 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
 
     // tag::sockjs-handler-setup[]
-    SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
+    SockJSHandler sockJSHandler = SockJSHandler.create(vertx); // <1>
     BridgeOptions bridgeOptions = new BridgeOptions()
-      .addInboundPermitted(new PermittedOptions().setAddress("app.markdown"))
-      .addOutboundPermitted(new PermittedOptions().setAddress("page.saved"));
-    sockJSHandler.bridge(bridgeOptions);
-    router.route("/eventbus/*").handler(sockJSHandler);
+      .addInboundPermitted(new PermittedOptions().setAddress("app.markdown"))  // <2>
+      .addOutboundPermitted(new PermittedOptions().setAddress("page.saved")); // <3>
+    sockJSHandler.bridge(bridgeOptions); // <4>
+    router.route("/eventbus/*").handler(sockJSHandler); // <5>
     // end::sockjs-handler-setup[]
 
     // tag::eventbus-markdown-consumer[]
@@ -119,14 +119,16 @@ public class HttpServerVerticle extends AbstractVerticle {
     if (!validateJsonPageDocument(context, page, "client", "markdown")) {
       return;
     }
-    // tag:publish-on-page-updated
+    // tag::publish-on-page-updated[]
     dbService.rxSavePage(id, page.getString("markdown"))
-      .doOnSuccess(v -> {
-        JsonObject event = new JsonObject().put("id", id).put("client", page.getString("client"));
-        vertx.eventBus().publish("page.saved", event);
+      .doOnSuccess(v -> { // <1>
+        JsonObject event = new JsonObject()
+          .put("id", id) // <2>
+          .put("client", page.getString("client")); // <3>
+        vertx.eventBus().publish("page.saved", event); // <4>
       })
       .subscribe(v -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
-    // end:publish-on-page-updated
+    // end::publish-on-page-updated[]
   }
 
   private boolean validateJsonPageDocument(RoutingContext context, JsonObject page, String... expectedKeys) {
