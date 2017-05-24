@@ -1,4 +1,4 @@
-= Cross-border messaging: sending and receiving event bus messages on the browser
+= Real-time web features using cross-border messaging over the event bus
 
 TIP: The corresponding source code is in the `step-10` folder of the guide repository.
 
