@@ -15,8 +15,6 @@ To do so, we will use the following libraries.
 
 == Bootstrapping a Maven project
 
-TIP: The corresponding source code is in the `step-1` folder of the guide repository.
-
 This guide makes the choice of using https://maven.apache.org[Apache Maven] as the build tool, primarily because it is very well integrated with the major integrated development environments.
 You can equally use another build tool such as https://gradle.org/[Gradle].
 
@@ -40,6 +38,20 @@ You will notice that the Maven project `pom.xml` does 2 interesting things:
 
 Finally, you will notice the presence of the `redeploy.sh` and `redeploy.bat` scripts that you can alternatively use for automatic compilation and redeployment upon code changes.
 Note that doing so requires ensuring that the `VERTICLE` variable in these scripts matches the main verticle to be used.
+
+[NOTE]
+====
+Alternatively, the Fabric8 project hosts https://vmp.fabric8.io/[a Vert.x Maven plugin].
+It has goals to initialize, build, package and run a Vert.x project.
+
+To generate a similar project as by cloning the Git starter repository:
+
+    mkdir vertx-wiki
+    cd vertx-wiki
+    mvn io.fabric8:vertx-maven-plugin:1.0.7:setup -DvertxVersion=3.4.1
+    git init
+
+====
 
 == Adding the required dependencies
 
