@@ -116,6 +116,37 @@ The no-argument variants imply that the verticle initialization or house-keeping
 The variants with a _future_ object provide a more fine-grained approach to _eventually_ signal that operations succeeded or not.
 Indeed, some initialization or cleanup code may require asynchronous operations, so reporting via a _future_ object naturally fits with asynchronous idioms.
 
+== A word on Vert.x future objects and callbacks
+
+Vert.x futures are not JDK futures: they can be composed and queried in a non-blocking fashion.
+They shall be used for simple coordination of asynchronous tasks, and especially those of deploying verticles and checking if they were successfully deployed or not.
+
+The Vert.x core APIs are based on callbacks to notify of asynchronous events.
+The seasoned developer will naturally think that this opens the door to the so-called _"callback hell"_ where multiple levels of nested callbacks render the code difficult to comprehend as illustrated by this fictional code:
+
+[source,java]
+----
+foo.a(1, res1 -> {
+  if (res1.succeeded()) {
+    bar.b("abc", 1, res2 -> {
+      if (res.succeeded()) {
+         baz.c(res3 -> {
+           dosomething(res1, res2, res3, res4 -> {
+               // (...)
+           });
+         });
+      }
+    });
+  }  
+});
+----
+
+While the core APIs could have been designed to favor promises and futures, the choice of callbacks is actually interesting since it allows different programming abstractions to be used.
+Vert.x is a largely un-opinionated project, and callbacks allow the implementation of different models that better cope with asynchronous programming: reactive extensions (via RxJava), promises and futures, fibers (using bytecode instrumentation), etc.
+
+Since all Vert.x APIs are callback-oriented before other abstractions like RxJava can be leveraged, this guide only uses callbacks in the first sections to ensure that the reader gets familiar with the core concepts in Vert.x.
+Once it becomes evident in the sample code that callbacks do not always lead to readable code, we will introduce the RxJava support to show how the same asynchronous code can be better expressed by thinking in streams of processed events.
+
 == Wiki verticle initialization phases
 
 To get our wiki running, we need to perform a 2-phases initialization:
@@ -216,6 +247,9 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=prepareDataba
 <7> The `SQLConnection` is the result of the successful `AsyncResult`. We can use it to perform a SQL query.
 <8> Before checking whether the SQL query succeeded or not, we must release it by calling `close`, otherwise the JDBC client connection pool can eventually drain.
 <9> We complete the method _future_ object with a success.
+
+TIP: The SQL database modules supported by the Vert.x project do not currently offer anything beyond passing SQL queries (e.g., an object-relationnal mapper) as they focus on providing asynchronous access to databases.
+However, nothing forbids using https://github.com/vert-x3/vertx-awesome[more advanced modules from the community], and we especially recommend checking out projects like https://github.com/jklingsporn/vertx-jooq[this jOOq generator for Vert.x] or https://github.com/BraintagsGmbH/vertx-pojo-mapper[this POJO mapper].
 
 === HTTP server initialization
 
