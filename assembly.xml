@@ -10,6 +10,10 @@
     <fileSet>
       <includes>
         <include>pom.xml</include>
+        <include>intro/README.adoc</include>
+        <include>intro/images/**/*</include>
+        <include>outro/README.adoc</include>
+        <include>outro/images/**/*</include>
         <include>step-*/README.adoc</include>
         <include>step-*/pom.xml</include>
         <include>step-*/gen-keystore.sh</include>
