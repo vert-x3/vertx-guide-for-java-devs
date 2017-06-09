@@ -22,7 +22,7 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.vertx.guides</groupId>
+  <groupId>io.vertx</groupId>
   <artifactId>wiki-step-1</artifactId>
   <version>1.0-SNAPSHOT</version>
 
