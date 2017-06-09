@@ -38,8 +38,8 @@ Because Vert.x was designed for asynchronous communications it can deal with mor
 Vert.x is useful for a large range of applications: high volume message / event processing, micro-services, API gateways, HTTP APIs for mobile applications, etc.
 Vert.x and its ecosystem provide all sorts of technical tools for building end-to-end reactive applications.
 
-While it may sound like Vert.x is only useful for demanding applications, the present guide also stresses that Vert.x also works very well for more traditional web applications.
-As we will see, the code will remain relatively easy to comprehend, and should an application need to face a sudden peak in traffic then the code is already written with the essential ingredient for scaling up: _asynchronous processing of events_.
+While it may sound like Vert.x is only useful for demanding applications, the present guide also states that Vert.x works very well for more traditional web applications.
+As we will see, the code will remain relatively easy to comprehend, but if the application needs to face a sudden peak in traffic then the code is already written with the essential ingredient for scaling up: _asynchronous processing of events_.
 
 Finally, it is worth mentioning that Vert.x is _polyglot_ as it supports a wide range of popular JVM languages: Java, Groovy, Scala, Kotlin, JavaScript, Ruby and Ceylon.
 The goal when supporting a language in Vert.x is not just to provide access to the APIs, but also to make sure that the language-specific APIs are idiomatic in each target language (e.g., using Scala futures in place of Vert.x futures).
