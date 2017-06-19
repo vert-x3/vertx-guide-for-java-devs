@@ -88,6 +88,7 @@ Of course you can use the general-purpose Vert.x JDBC client to connect to MySQL
 ====
 
 NOTE: Vert.x also provides libraries to deal with the popular non-relational databases http://vertx.io/docs/vertx-mongo-client/java/[MongoDB] and http://vertx.io/docs/vertx-redis-client/java/[Redis].
+The larger community offers integration with other storage systems like Apache Cassandra, OrientDB or ElasticSearch.
 
 == Anatomy of a verticle
 
@@ -145,7 +146,8 @@ While the core APIs could have been designed to favor promises and futures, the 
 Vert.x is a largely un-opinionated project, and callbacks allow the implementation of different models that better cope with asynchronous programming: reactive extensions (via RxJava), promises and futures, fibers (using bytecode instrumentation), etc.
 
 Since all Vert.x APIs are callback-oriented before other abstractions like RxJava can be leveraged, this guide only uses callbacks in the first sections to ensure that the reader gets familiar with the core concepts in Vert.x.
-Once it becomes evident in the sample code that callbacks do not always lead to readable code, we will introduce the RxJava support to show how the same asynchronous code can be better expressed by thinking in streams of processed events.
+It is also arguably easier to start with callbacks to draw a line between the many sections of asynchronous code.
+Once it becomes evident in the sample code that callbacks do not always lead to easily readable code, we will introduce the RxJava support to show how the same asynchronous code can be better expressed by thinking in streams of processed events.
 
 == Wiki verticle initialization phases
 
@@ -156,7 +158,7 @@ To get our wiki running, we need to perform a 2-phases initialization:
 
 Each phase can fail (e.g., the HTTP server TCP port is already being used), and they should not run in parallel as the web application code first needs the database access to work.
 
-To make our code _cleaner_ we will define 1 method per phase, and adopt a pattern of returning a _future_ object to notify when each phases completes, and whether it did so successfully or not:
+To make our code _cleaner_ we will define 1 method per phase, and adopt a pattern of returning a _future / promise_ object to notify when each of the phases completes, and whether it did so successfully or not:
 
 [source,java]
 ----
@@ -191,6 +193,8 @@ This is equivalent to:
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=another-start]
 ----
+<1> `ar` is of type `AsyncResult<Void>`.
+`AsyncResult<T>` is used to pass the result of an asynchronous processing and may either yield a value of type `T` on success or a failure exception is the processing failed.
 
 === Database initialization
 
@@ -255,6 +259,7 @@ However, nothing forbids using https://github.com/vert-x3/vertx-awesome[more adv
 
 The HTTP server makes use of the `vertx-web` project to easily define _dispatching routes_ for incoming HTTP requests.
 Indeed, the Vert.x core API allows to start HTTP servers and listen for incoming connections, but it does not provide any facility to, say, have different handlers depending on the requested URL or processing request bodies.
+This is the role of a _router_ as it dispatches requests to different processing handlers depending on the URL, the HTTP method, etc.
 
 The initialization consists in setting up a _request router_, then starting the HTTP server:
 

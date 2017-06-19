@@ -288,7 +288,7 @@ public class MainVerticle extends AbstractVerticle {
   public void anotherStart(Future<Void> startFuture) throws Exception {
     // tag::another-start[]
     Future<Void> steps = prepareDatabase().compose(v -> startHttpServer());
-    steps.setHandler(ar -> {
+    steps.setHandler(ar -> {  // <1>
       if (ar.succeeded()) {
         startFuture.complete();
       } else {
