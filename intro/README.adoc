@@ -54,6 +54,11 @@ There are 2 key concepts to learn in Vert.x:
 
 === Threading and programming models
 
+Many networking libraries and frameworks rely on a simple threading strategy: each network client is being assigned a thread upon connection, and this thread deals with the client until it disconnects.
+This is the case with Servlet or networking code written with the `java.io` and `java.net` packages.
+While this _"synchronous I/O"_ threading model has the advantage of remaining simple to comprehend, it hurts scalability with too many concurrent connections as system threads are not cheap, and under heavy loads an operating system kernel spends significant time _just_ on thread scheduling management.
+In such cases we need to move to _"asynchronous I/O"_ for which Vert.x provides a solid foundation. 
+
 The unit of deployment in Vert.x is called a _Verticle_.
 A verticle processes incoming events over an _event-loop_, where events can be anything like receiving network buffers, timing events, or messages sent by other verticles.
 Event-loops are typical in asynchronous programming models: 
