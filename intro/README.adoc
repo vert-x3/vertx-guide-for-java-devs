@@ -1,8 +1,9 @@
 = Introduction
 
+This guide is a gentle introduction to asynchronous programming with Vert.x, primarily aimed at developers familiar with mainstream non-asynchronous web development frameworks and libraries (e.g., Java EE, Spring).
+
 == About this guide
 
-This guide is a gentle introduction to asynchronous programming with Vert.x, primarily aimed at developers familiar with mainstream non-asynchronous web development frameworks and libraries (e.g., Java EE, Spring).
 We assume that the reader is familiar with the Java programming language and its ecosystem.
 
 We will start from a wiki web application backed by a relational database and server-side rendering of pages; then we will evolve the application through several steps until it becomes a modern single-page application with "real-time".footnote:[Note that the widespread usage of the term "real-time" in the context of web technologies shall not be confused with _hard_ or _soft_ real-time in specialized operating systems.] web features.
@@ -18,6 +19,9 @@ Along the way you will learn to:
 8. Refactoring some code to use reactive programming with the popular RxJava library and its Vert.x integration.
 9. Client-side programming of a single-page application with AngularJS.
 10. Real-time web programming using the unified Vert.x event bus integration over SockJS.
+
+NOTE: The source of both this document and the code examples are available from https://github.com/vert-x3/vertx-guide-for-java-devs.
+We welcome issue reports, feedback and pull-requests!
 
 == What is Vert.x?
 
