@@ -10,6 +10,7 @@
     <fileSet>
       <includes>
         <include>pom.xml</include>
+        <include>cover.pdf</include>
         <include>intro/README.adoc</include>
         <include>intro/images/**/*</include>
         <include>outro/README.adoc</include>

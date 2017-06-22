@@ -7,4 +7,5 @@ bundle exec asciidoctor-pdf \
     -a toc \
     -a toclevels=4 \
     -a sectnums \
+    -a front-cover-image=cover.pdf \
     README.adoc
