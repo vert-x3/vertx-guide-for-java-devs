@@ -149,6 +149,12 @@
         <version>1.5.0</version>
         <configuration>
           <mainClass>io.vertx.core.Launcher</mainClass>
+          <systemProperties>
+            <systemProperty>
+              <key>hsqldb.reconfig_logging</key>
+              <value>false</value>
+            </systemProperty>
+          </systemProperties>
           <arguments>
             <argument>run</argument>
             <argument>${main.verticle}</argument>

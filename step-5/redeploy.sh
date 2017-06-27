@@ -11,4 +11,5 @@ java \
   $LAUNCHER $VERTX_CMD $VERTICLE \
   --redeploy="src/main/**/*" --on-redeploy=$CMD \
   --launcher-class=$LAUNCHER \
+  --java-opts="-Dhsqldb.reconfig_logging=false" \
   $@
