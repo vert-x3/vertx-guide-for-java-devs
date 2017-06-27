@@ -24,7 +24,7 @@
 
   <groupId>io.vertx</groupId>
   <artifactId>wiki-step-4</artifactId>
-  <version>1.0</version>
+  <version>1.0.1-SNAPSHOT</version>
 
   <properties>
     <vertx.version>3.4.2</vertx.version>
