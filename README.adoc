@@ -5,9 +5,7 @@ v1.0, 2017-06-23
 
 :leveloffset: +1
 
-You can read the latest published version of the guide on http://vertx.io/docs/guide-for-java-devs/, also available as a PDF.
-
-Or you can get a glimpse at the latest version below:
+NOTE: You can read the latest published version of the guide at http://vertx.io/docs/guide-for-java-devs/
 
 ifdef::rendered-pdf-link[]
 NOTE: This document is also link:{rendered-pdf-link}[available as a PDF].
