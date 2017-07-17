@@ -228,7 +228,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=sql-fields]
 <1> The `?` in the queries are placeholders to pass data when executing queries, and the Vert.x JDBC client prevents from SQL injections.
 
 The application verticle needs to keep a reference to a `JDBCClient` object (from the `io.vertx.ext.jdbc` package) that serves as the connection to the database.
-We do so using a field in `MainVerticle`, and we also create a general-purpose logger from the `io.vertx.core.logging` package:
+We do so using a field in `MainVerticle`, and we also create a general-purpose logger from the `org.slf4j` package:
 
 [source,java,indent=0]
 ----
@@ -254,6 +254,31 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=prepareDataba
 
 TIP: The SQL database modules supported by the Vert.x project do not currently offer anything beyond passing SQL queries (e.g., an object-relationnal mapper) as they focus on providing asynchronous access to databases.
 However, nothing forbids using https://github.com/vert-x3/vertx-awesome[more advanced modules from the community], and we especially recommend checking out projects like https://github.com/jklingsporn/vertx-jooq[this jOOq generator for Vert.x] or https://github.com/BraintagsGmbH/vertx-pojo-mapper[this POJO mapper].
+
+=== Notes about logging
+
+The previous subsection introduced a logger, and we opted for the https://www.slf4j.org/[SFL4J library].
+Vert.x is also unopinionated on logging: you can choose any popular Java logging library.
+We recommend SLF4J since it is a popular logging abstraction and unification library in the Java ecosystem.
+
+We also recommend using https://logback.qos.ch/[Logback] as a logger implementation.
+Integrating both SLF4J and Logback can be done by adding two dependencies, or just `logback-classic` that points to both libraries (incidentally they are from the same author):
+
+[source,xml,indent=0]
+----
+include::pom.xml[tags=logger]
+----
+
+By default SLF4J outputs many log events to the console from Vert.x, Netty, C3PO and the wiki application.
+We can reduce the verbosity by adding the a `src/main/resources/logback.xml` configuration file (see https://logback.qos.ch/ for more details):
+
+[source,xml,indent=0]
+----
+include::src/main/resources/logback.xml[tags=conf]
+----
+
+Last but not least HSQLDB does not integrate well with loggers when embedded.
+By default it tries to reconfigure the logging system in place, so we need to disable it by passing a `-Dhsqldb.reconfig_logging=false` property to the Java Virtual Machine when executing applications.
 
 === HTTP server initialization
 

@@ -24,8 +24,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -44,7 +44,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
 
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();  
+  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
 
   private static final String EMPTY_PAGE_MARKDOWN =
     "# A new page\n" +

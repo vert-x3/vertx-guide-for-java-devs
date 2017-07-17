@@ -22,8 +22,8 @@ import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
@@ -46,7 +46,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   public static final String CONFIG_WIKIDB_JDBC_DRIVER_CLASS = "wikidb.jdbc.driver_class";
   public static final String CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE = "wikidb.jdbc.max_pool_size";
   public static final String CONFIG_WIKIDB_SQL_QUERIES_RESOURCE_FILE = "wikidb.sqlqueries.resource.file";
-  
+
   public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WikiDatabaseVerticle.class);
@@ -54,7 +54,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   // (...)
   // end::preamble[]
 
-  // tag::loadSqlQueries[] 
+  // tag::loadSqlQueries[]
   private enum SqlQuery {
     CREATE_PAGES_TABLE,
     ALL_PAGES,
@@ -65,7 +65,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   }
 
   private final HashMap<SqlQuery, String> sqlQueries = new HashMap<>();
-  
+
   private void loadSqlQueries() throws IOException {
 
     String queriesFile = config().getString(CONFIG_WIKIDB_SQL_QUERIES_RESOURCE_FILE);
@@ -87,7 +87,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
     sqlQueries.put(SqlQuery.SAVE_PAGE, queriesProps.getProperty("save-page"));
     sqlQueries.put(SqlQuery.DELETE_PAGE, queriesProps.getProperty("delete-page"));
   }
-  // end::loadSqlQueries[]    
+  // end::loadSqlQueries[]
 
   // tag::start[]
   private JDBCClient dbClient;
