@@ -89,7 +89,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       if (reply.succeeded()) {
         context.put("title", "Wiki home");
         context.put("pages", reply.result().getList());
-        templateEngine.render(context, "templates/index.ftl", ar -> {
+        templateEngine.render(context, "templates", "/index.ftl", ar -> {
           if (ar.succeeded()) {
             context.response().putHeader("Content-Type", "text/html");
             context.response().end(ar.result());
@@ -118,7 +118,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("content", Processor.process(rawContent));
         context.put("timestamp", new Date().toString());
 
-        templateEngine.render(context, "templates/page.ftl", ar -> {
+        templateEngine.render(context, "templates", "/page.ftl", ar -> {
           if (ar.succeeded()) {
             context.response().putHeader("Content-Type", "text/html");
             context.response().end(ar.result());

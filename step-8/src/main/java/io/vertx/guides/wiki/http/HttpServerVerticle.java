@@ -305,7 +305,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("title", "Wiki home");
         context.put("pages", result.getList());
         context.put("username", context.user().principal().getString("username"));
-        return templateEngine.rxRender(context, "templates/index.ftl");
+        return templateEngine.rxRender(context, "templates", "/index.ftl");
       })
       .subscribe(markup -> {
         context.response().putHeader("Content-Type", "text/html");
@@ -335,7 +335,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("content", Processor.process(rawContent));
         context.put("timestamp", new Date().toString());
         context.put("username", user.principal().getString("username"));
-        return templateEngine.rxRender(context, "templates/page.ftl");
+        return templateEngine.rxRender(context, "templates", "/page.ftl");
       })
       .subscribe(
         markup -> {

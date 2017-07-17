@@ -172,7 +172,7 @@ public class MainVerticle extends AbstractVerticle {
 
             context.put("title", "Wiki home");  // <2>
             context.put("pages", pages);
-            templateEngine.render(context, "templates/index.ftl", ar -> {   // <3>
+            templateEngine.render(context, "templates", "/index.ftl", ar -> {   // <3>
               if (ar.succeeded()) {
                 context.response().putHeader("Content-Type", "text/html");
                 context.response().end(ar.result());  // <4>
@@ -257,7 +257,7 @@ public class MainVerticle extends AbstractVerticle {
             context.put("content", Processor.process(rawContent));  // <3>
             context.put("timestamp", new Date().toString());
 
-            templateEngine.render(context, "templates/page.ftl", ar -> {
+            templateEngine.render(context, "templates", "/page.ftl", ar -> {
               if (ar.succeeded()) {
                 context.response().putHeader("Content-Type", "text/html");
                 context.response().end(ar.result());
