@@ -22,11 +22,11 @@ import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -136,7 +136,10 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   public void onMessage(Message<JsonObject> message) {
 
     if (!message.headers().contains("action")) {
+      LOGGER.error("No action header specified for message with headers {} and body {}",
+        message.headers(), message.body().encodePrettily());
       message.fail(ErrorCodes.NO_ACTION_SPECIFIED.ordinal(), "No action header specified");
+      return;
     }
     String action = message.headers().get("action");
 
