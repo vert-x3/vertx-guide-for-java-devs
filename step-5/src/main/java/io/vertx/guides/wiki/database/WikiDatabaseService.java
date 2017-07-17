@@ -58,6 +58,8 @@ public interface WikiDatabaseService {
   @Fluent
   WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler);
 
+  // tag::fetchAllPagesData[]
   @Fluent
   WikiDatabaseService fetchAllPagesData(Handler<AsyncResult<List<JsonObject>>> resultHandler);
+  // end::fetchAllPagesData[]
 }

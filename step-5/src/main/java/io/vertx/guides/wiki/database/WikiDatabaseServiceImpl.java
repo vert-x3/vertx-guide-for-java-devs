@@ -196,6 +196,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     return this;
   }
 
+  // tag::fetchAllPagesData[]
   @Override
   public WikiDatabaseService fetchAllPagesData(Handler<AsyncResult<List<JsonObject>>> resultHandler) {
     dbClient.getConnection(car -> {
@@ -216,4 +217,5 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     });
     return this;
   }
+  // end::fetchAllPagesData[]
 }

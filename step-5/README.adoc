@@ -30,6 +30,27 @@ A backup Gist consists of 1 file per wiki page, with the content being the raw M
 
 image::images/gist.png[]
 
+== Updating the database service
+
+Before we dive into the web client API and perform HTTP requests to another service, we need to update the database service API to fetch all the wiki pages data in one pass.
+This corresponds to the following SQL query to add to `db-queries.properties`:
+
+    all-pages-data=select * from Pages
+
+A new method is added to the `WikiDatabaseService` interface:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[tags=fetchAllPagesData]
+----
+
+The implementation in `WikiDatabaseServiceImpl` is the following:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=fetchAllPagesData]
+----
+
 == The web client API
 
 The Vert.x core library offers a `createHttpClient` method from the `vertx` context object.
