@@ -22,6 +22,8 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.vertx.core.net.JksOptions;
@@ -128,11 +130,12 @@ public class HttpServerVerticle extends AbstractVerticle {
         .end();
     });
 
-    JWTAuth jwtAuth = JWTAuth.create(vertx, new JsonObject()
-      .put("keyStore", new JsonObject()
-        .put("path", "keystore.jceks")
-        .put("type", "jceks")
-        .put("password", "secret")));
+    JWTAuth jwtAuth = JWTAuth.create(vertx, new JWTAuthOptions()
+      .setKeyStore(
+        new KeyStoreOptions()
+          .setPath("keystore.jceks")
+          .setType("jceks")
+          .setPassword("secret")));
 
     Router apiRouter = Router.router(vertx);
 
