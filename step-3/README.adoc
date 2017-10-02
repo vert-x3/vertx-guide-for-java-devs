@@ -149,7 +149,7 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=db
 
 <1> We just need to make sure to use the same event bus destination as the service that was published by  `WikiDatabaseVerticle`.
 
-Then, we need to replace calls to the event bus messages with calls to the database service:
+Then, we need to replace calls to the event bus with calls to the database service:
 
 [source,java,indent=0]
 ----
