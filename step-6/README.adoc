@@ -106,4 +106,5 @@ It creates a page, fetches it, updates it then deletes it:
 include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=play-with-api]
 ----
 
-TIP: The test uses `Future` objects composition rather than nested callbacks.
+TIP: The test uses `Future` objects composition rather than nested callbacks; the last composition must complete the
+async future or the test will eventually time out.
