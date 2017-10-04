@@ -416,7 +416,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   // tag::loginHandler[]
   private void loginHandler(RoutingContext context) {
     context.put("title", "Login");
-    templateEngine.render(context, "templates/login.ftl", ar -> {
+    templateEngine.render(context, "templates", "/login.ftl", ar -> {
       if (ar.succeeded()) {
         context.response().putHeader("Content-Type", "text/html");
         context.response().end(ar.result());

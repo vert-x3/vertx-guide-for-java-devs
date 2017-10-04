@@ -143,7 +143,7 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=in
 ----
 <1> This is how a permission query is made. Note that this is an asynchronous operation.
 <2> We use the result to...
-<3> ...leverage it is the HTML template.
+<3> ...leverage it in the HTML template.
 <4> We also have access to the user login.
 
 The template code has been modified to only render certain fragments based on the value of `canCreatePage`:
