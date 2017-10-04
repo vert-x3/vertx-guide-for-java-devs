@@ -30,6 +30,7 @@ import io.vertx.ext.auth.shiro.ShiroAuthOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.guides.wiki.database.rxjava.WikiDatabaseService;
+// tag::rx-imports[]
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.http.HttpServer;
 import io.vertx.rxjava.ext.auth.AuthProvider;
@@ -39,6 +40,7 @@ import io.vertx.rxjava.ext.auth.shiro.ShiroAuth;
 import io.vertx.rxjava.ext.web.Router;
 import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.client.WebClient;
+import io.vertx.rxjava.ext.web.client.HttpResponse; // <1>
 import io.vertx.rxjava.ext.web.codec.BodyCodec;
 import io.vertx.rxjava.ext.web.handler.AuthHandler;
 import io.vertx.rxjava.ext.web.handler.BodyHandler;
@@ -52,6 +54,7 @@ import io.vertx.rxjava.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava.ext.web.templ.FreeMarkerTemplateEngine;
 import rx.Observable;
 import rx.Single;
+// end::rx-imports[]
 
 import java.util.Arrays;
 import java.util.Date;
@@ -77,11 +80,13 @@ public class HttpServerVerticle extends AbstractVerticle {
       "\n" +
       "Feel-free to write in Markdown!\n";
 
+  // tag::rx-vertx-delegate[]
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = io.vertx.guides.wiki.database.WikiDatabaseService.createProxy(vertx.getDelegate(), wikiDbQueue);
+    // end::rx-vertx-delegate[]
 
     webClient = WebClient.create(vertx, new WebClientOptions()
       .setSsl(true)
@@ -144,10 +149,9 @@ public class HttpServerVerticle extends AbstractVerticle {
         .put("username", context.request().getHeader("login"))
         .put("password", context.request().getHeader("password"));
 
+      // tag::rx-concurrent-composition[]
+
       auth.rxAuthenticate(creds).flatMap(user -> {
-
-        // tag::rx-concurrent-composition[]
-
         Single<Boolean> create = user.rxIsAuthorised("create"); // <1>
         Single<Boolean> delete = user.rxIsAuthorised("delete");
         Single<Boolean> update = user.rxIsAuthorised("update");
@@ -163,12 +167,12 @@ public class HttpServerVerticle extends AbstractVerticle {
               .setSubject("Wiki API")
               .setIssuer("Vert.x"));
         });
-
-        // end::rx-concurrent-composition[]
-
       }).subscribe(token -> {
         context.response().putHeader("Content-Type", "text/plain").end(token);
       }, t -> context.fail(401));
+
+      // end::rx-concurrent-composition[]
+
     });
 
     apiRouter.get("/pages").handler(this::apiRoot);
