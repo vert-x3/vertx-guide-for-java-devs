@@ -57,7 +57,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
-    String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
+    String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue"); // <1>
     dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
 
     HttpServer server = vertx.createHttpServer();
@@ -86,7 +86,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       });
   }
 
-
+  // tag::db-service-calls[]
   private void indexHandler(RoutingContext context) {
     dbService.fetchAllPages(reply -> {
       if (reply.succeeded()) {
@@ -179,4 +179,5 @@ public class HttpServerVerticle extends AbstractVerticle {
       }
     });
   }
+  // end::db-service-calls[]
 }

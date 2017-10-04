@@ -137,16 +137,24 @@ What it does is actually very close to what we did in the previous section: mess
 
 == Obtaining a database service proxy
 
-The final step to refactoring to Vert.x services is to adapt the HTTP server verticle to obtain a proxy to the database service.
+The final steps to refactoring to Vert.x services is to adapt the HTTP server verticle to obtain a proxy to the database service
+and use it in the handlers instead of the event bus.
 
-All we need to do for that is creating the proxy when the verticle starts:
+First, we need to create the proxy when the verticle starts:
 
 [source,java,indent=0]
 ----
 include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=db-consume]
 ----
 
-We just need to make sure to use the same event bus destination as the service that was published by  `WikiDatabaseVerticle`.
+<1> We just need to make sure to use the same event bus destination as the service that was published by  `WikiDatabaseVerticle`.
+
+Then, we need to replace calls to the event bus with calls to the database service:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=db-service-calls]
+----
 
 The `WikiDatabaseServiceVertxProxyHandler` generated class deals with forwarding calls as event bus messages.
 
