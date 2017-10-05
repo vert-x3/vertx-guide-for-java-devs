@@ -21,12 +21,12 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.ext.jdbc.JDBCClient;
 import io.vertx.rxjava.ext.sql.SQLConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Single;
 
@@ -62,8 +62,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   @Override
   public WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) {
-    getConnection()
-      .flatMap(conn -> conn.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES)))
+    dbClient.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES))
       .flatMapObservable(res -> {
         List<JsonArray> results = res.getResults();
         return Observable.from(results);
@@ -77,8 +76,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   @Override
   public WikiDatabaseService fetchPage(String name, Handler<AsyncResult<JsonObject>> resultHandler) {
-    getConnection()
-      .flatMap(conn -> conn.rxQueryWithParams(sqlQueries.get(SqlQuery.GET_PAGE), new JsonArray().add(name)))
+    dbClient.rxQueryWithParams(sqlQueries.get(SqlQuery.GET_PAGE), new JsonArray().add(name))
       .map(result -> {
         if (result.getNumRows() > 0) {
           JsonArray row = result.getResults().get(0);
@@ -96,9 +94,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   @Override
   public WikiDatabaseService fetchPageById(int id, Handler<AsyncResult<JsonObject>> resultHandler) {
-    Single<SQLConnection> connection = getConnection();
-    Single<ResultSet> resultSet = connection
-      .flatMap(conn -> conn.rxQueryWithParams(sqlQueries.get(SqlQuery.GET_PAGE_BY_ID), new JsonArray().add(id)));
+    Single<ResultSet> resultSet = dbClient.rxQueryWithParams(
+      sqlQueries.get(SqlQuery.GET_PAGE_BY_ID), new JsonArray().add(id));
     resultSet
       .map(result -> {
         if (result.getNumRows() > 0) {
@@ -118,8 +115,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   @Override
   public WikiDatabaseService createPage(String title, String markdown, Handler<AsyncResult<Void>> resultHandler) {
-    getConnection()
-      .flatMap(conn -> conn.rxUpdateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), new JsonArray().add(title).add(markdown)))
+    dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), new JsonArray().add(title).add(markdown))
       .map(res -> (Void) null)
       .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
@@ -127,8 +123,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   @Override
   public WikiDatabaseService savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
-    getConnection()
-      .flatMap(conn -> conn.rxUpdateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), new JsonArray().add(markdown).add(id)))
+    dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), new JsonArray().add(markdown).add(id))
       .map(res -> (Void) null)
       .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
@@ -136,11 +131,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   @Override
   public WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler) {
-    getConnection()
-      .flatMap(connection -> {
-        JsonArray data = new JsonArray().add(id);
-        return connection.rxUpdateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data);
-      })
+    JsonArray data = new JsonArray().add(id);
+    dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data)
       .map(res -> (Void) null)
       .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
@@ -148,8 +140,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
   @Override
   public WikiDatabaseService fetchAllPagesData(Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-    getConnection()
-      .flatMap(connection -> connection.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES_DATA)))
+    dbClient.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES_DATA))
       .map(ResultSet::getRows)
       .subscribe(RxHelper.toSubscriber(resultHandler));
     return this;
