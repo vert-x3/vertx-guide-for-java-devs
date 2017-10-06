@@ -61,7 +61,11 @@ include::src/main/java/io/vertx/guides/wiki/HttpServerVerticle.java[tags=rest]
 == The database verticle
 
 Connecting to a database using JDBC requires of course a driver and configuration, which we had hard-coded in the first iteration.
-While this verticle will turn them to configuration parameters, we will also go a step further by loading the SQL queries from a properties file.
+
+=== Configurable SQL queries
+
+While the verticle will turn the previously hard-coded values to configuration parameters, we will also go a step further by loading the SQL queries from a properties file.
+
 The queries will be loaded from a file passed as a configuration parameter or from a default resource if none is being provided.
 The advantage of this approach is that the verticle can adapt both to different JDBC drivers _and_ SQL dialects.
 
@@ -96,6 +100,8 @@ include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=start
 <2> Here is an example of using SQL queries.
 <3> The `consumer` method registers an event bus destination handler.
 
+=== Dispatching requests
+
 The event bus message handler is the `onMessage` method:
 
 [source,java,indent=0]
@@ -105,6 +111,32 @@ include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=onMes
 
 We defined a `ErrorCodes` enumeration for errors, which we use to report back to the message sender.
 To do so, the `fail` method of the `Message` class provides a convenient shortcut to reply with an error, and the original message sender gets a failed `AsyncResult`.
+
+=== Reducing the JDBC client boilerplate
+
+So far we have seen the _complete_ interaction to perform a SQL query:
+
+1. retrieve a connection,
+2. perform requests,
+3. release the connection.
+
+This leads to code where lots of error processing needs to happen for each asynchronous operation, as in:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=query-with-connection]
+----
+
+Starting from Vert.x 3.5.0, the JDBC client now supports _one-shot_ operations where a connection is being acquired to do a SQL operation, then released internally.
+The same code as above now reduces to:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/WikiDatabaseVerticle.java[tags=query-simple-oneshot]
+----
+
+This is very useful for cases where the connection is being acquired for a single operation.
+Performance-wise it is important to note that re-using a connection for chained SQL operations is better.
 
 The rest of the class consists of private methods called when `onMessage` dispatches incoming messages:
 
