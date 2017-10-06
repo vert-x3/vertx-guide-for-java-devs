@@ -1,4 +1,4 @@
-= Reactive programming with RxJava 
+= Reactive programming with RxJava
 
 TIP: The corresponding source code is in the `step-8` folder of the guide repository.
 
@@ -47,6 +47,34 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=rx-sequential
 ----
 <1> The `flatMap` operator applies the function to the result of `dbVerticleDeployment`. Here it schedules the deployment of the `HttpServerVerticle`.
 <2> Operations start when subscribing. On success or on error, the `MainVerticle` start future is either completed or failed.
+
+== Partially _"Rxifying"_ `HttpServerVerticle`
+
+If you follow the guide in sequence, editing the code as you go, your `HttpServerVerticle` class is still using the
+callback-based API. Before you can use the RxJava API to execute asynchronous operations _naturally_, i.e.
+*_concurrently_*, you need to refactor `HttpServerVerticle`.
+
+=== Import RxJava versions of Vert.x classes
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=rx-imports]
+----
+<1> Our `backupHandler()` method still uses `HttpResponse` class, so it must be imported. It turns out that the RxJava
+version of `HttpResponse` provided by Vert.x can serve as a drop-in replacement in this specific case.
+The _"Rxified"_ code in `step-8` folder of the guide repository does not import this class as the
+response type is inferred by the lambda expression.
+
+=== Use delegate on a _"Rxified"_ `vertx` instance
+
+To call a method expecting a `io.vertx.core.Vertx` instance when you have a `io.vertx.rxjava.core.Vertx` one, call
+the `getDelegate()` method. Verticle's `start()` method needs to be adjusted when creating an instance of
+`WikiDatabaseService`:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=rx-vertx-delegate]
+----
 
 == Executing authorization queries concurrently
 
