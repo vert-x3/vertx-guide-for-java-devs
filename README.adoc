@@ -11,6 +11,9 @@ ifdef::rendered-pdf-link[]
 NOTE: This document is also link:{rendered-pdf-link}[available as a PDF].
 endif::[]
 
+.Acknowledgements
+This document has received contributions from Arnaud Esteve and Marc Paquette.
+
 :imagesdir: intro
 include::intro/README.adoc[]
 
