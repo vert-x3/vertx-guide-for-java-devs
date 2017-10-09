@@ -22,9 +22,9 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import io.vertx.core.net.JksOptions;
+import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.auth.jwt.JWTOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
@@ -42,16 +42,11 @@ import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.client.WebClient;
 import io.vertx.rxjava.ext.web.client.HttpResponse; // <1>
 import io.vertx.rxjava.ext.web.codec.BodyCodec;
-import io.vertx.rxjava.ext.web.handler.AuthHandler;
-import io.vertx.rxjava.ext.web.handler.BodyHandler;
-import io.vertx.rxjava.ext.web.handler.CookieHandler;
-import io.vertx.rxjava.ext.web.handler.FormLoginHandler;
-import io.vertx.rxjava.ext.web.handler.JWTAuthHandler;
-import io.vertx.rxjava.ext.web.handler.RedirectAuthHandler;
-import io.vertx.rxjava.ext.web.handler.SessionHandler;
-import io.vertx.rxjava.ext.web.handler.UserSessionHandler;
+import io.vertx.rxjava.ext.web.handler.*;
 import io.vertx.rxjava.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava.ext.web.templ.FreeMarkerTemplateEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Single;
 // end::rx-imports[]
@@ -133,11 +128,11 @@ public class HttpServerVerticle extends AbstractVerticle {
         .end();
     });
 
-    JWTAuth jwtAuth = JWTAuth.create(vertx, new JsonObject()
-      .put("keyStore", new JsonObject()
-        .put("path", "keystore.jceks")
-        .put("type", "jceks")
-        .put("password", "secret")));
+    JWTAuth jwtAuth = JWTAuth.create(vertx, new JWTAuthOptions()
+      .setKeyStore(new KeyStoreOptions()
+        .setPath("keystore.jceks")
+        .setType("jceks")
+        .setPassword("secret")));
 
     Router apiRouter = Router.router(vertx);
 

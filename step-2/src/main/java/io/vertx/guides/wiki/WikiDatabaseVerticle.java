@@ -165,9 +165,8 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   }
   // end::onMessage[]
 
-  // tag::rest[]
-  private void fetchAllPages(Message<JsonObject> message) {
-
+  private void _fetchAllPages(Message<JsonObject> message) {
+    // tag::query-with-connection[]
     dbClient.getConnection(car -> {
       if (car.succeeded()) {
         SQLConnection connection = car.result();
@@ -189,105 +188,103 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
         reportQueryError(message, car.cause());
       }
     });
+    // end::query-with-connection[]
+
+    // tag::query-simple-oneshot[]
+    dbClient.query(sqlQueries.get(SqlQuery.ALL_PAGES), res -> {
+      if (res.succeeded()) {
+        List<String> pages = res.result()
+          .getResults()
+          .stream()
+          .map(json -> json.getString(0))
+          .sorted()
+          .collect(Collectors.toList());
+        message.reply(new JsonObject().put("pages", new JsonArray(pages)));
+      } else {
+        reportQueryError(message, res.cause());
+      }
+    });
+    // end::query-simple-oneshot[]
+  }
+
+  // tag::rest[]
+  private void fetchAllPages(Message<JsonObject> message) {
+    dbClient.query(sqlQueries.get(SqlQuery.ALL_PAGES), res -> {
+      if (res.succeeded()) {
+        List<String> pages = res.result()
+          .getResults()
+          .stream()
+          .map(json -> json.getString(0))
+          .sorted()
+          .collect(Collectors.toList());
+        message.reply(new JsonObject().put("pages", new JsonArray(pages)));
+      } else {
+        reportQueryError(message, res.cause());
+      }
+    });
   }
 
   private void fetchPage(Message<JsonObject> message) {
-
     String requestedPage = message.body().getString("page");
+    JsonArray params = new JsonArray().add(requestedPage);
 
-    dbClient.getConnection(car -> {
-      if (car.succeeded()) {
-        SQLConnection connection = car.result();
-        connection.queryWithParams(sqlQueries.get(SqlQuery.GET_PAGE), new JsonArray().add(requestedPage), fetch -> {
-          connection.close();
-          if (fetch.succeeded()) {
-            JsonObject response = new JsonObject();
-            ResultSet resultSet = fetch.result();
-            if (resultSet.getNumRows() == 0) {
-              response.put("found", false);
-            } else {
-              response.put("found", true);
-              JsonArray row = resultSet.getResults().get(0);
-              response.put("id", row.getInteger(0));
-              response.put("rawContent", row.getString(1));
-            }
-            message.reply(response);
-          } else {
-            reportQueryError(message, fetch.cause());
-          }
-        });
+    dbClient.queryWithParams(sqlQueries.get(SqlQuery.GET_PAGE), params, fetch -> {
+      if (fetch.succeeded()) {
+        JsonObject response = new JsonObject();
+        ResultSet resultSet = fetch.result();
+        if (resultSet.getNumRows() == 0) {
+          response.put("found", false);
+        } else {
+          response.put("found", true);
+          JsonArray row = resultSet.getResults().get(0);
+          response.put("id", row.getInteger(0));
+          response.put("rawContent", row.getString(1));
+        }
+        message.reply(response);
       } else {
-        reportQueryError(message, car.cause());
+        reportQueryError(message, fetch.cause());
       }
     });
-
   }
 
   private void createPage(Message<JsonObject> message) {
     JsonObject request = message.body();
+    JsonArray data = new JsonArray()
+      .add(request.getString("title"))
+      .add(request.getString("markdown"));
 
-    dbClient.getConnection(car -> {
-
-      if (car.succeeded()) {
-        SQLConnection connection = car.result();
-        JsonArray data = new JsonArray()
-          .add(request.getString("title"))
-          .add(request.getString("markdown"));
-
-        connection.updateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), data, res -> {
-          connection.close();
-          if (res.succeeded()) {
-            message.reply("ok");
-          } else {
-            reportQueryError(message, res.cause());
-          }
-        });
+    dbClient.updateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), data, res -> {
+      if (res.succeeded()) {
+        message.reply("ok");
       } else {
-        reportQueryError(message, car.cause());
+        reportQueryError(message, res.cause());
       }
     });
   }
 
   private void savePage(Message<JsonObject> message) {
     JsonObject request = message.body();
+    JsonArray data = new JsonArray()
+      .add(request.getString("markdown"))
+      .add(request.getString("id"));
 
-    dbClient.getConnection(car -> {
-
-      if (car.succeeded()) {
-        SQLConnection connection = car.result();
-        JsonArray data = new JsonArray()
-          .add(request.getString("markdown"))
-          .add(request.getString("id"));
-
-        connection.updateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), data, res -> {
-          connection.close();
-          if (res.succeeded()) {
-            message.reply("ok");
-          } else {
-            reportQueryError(message, res.cause());
-          }
-        });
+    dbClient.updateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), data, res -> {
+      if (res.succeeded()) {
+        message.reply("ok");
       } else {
-        reportQueryError(message, car.cause());
+        reportQueryError(message, res.cause());
       }
     });
   }
 
   private void deletePage(Message<JsonObject> message) {
-    dbClient.getConnection(car -> {
-      if (car.succeeded()) {
-        SQLConnection connection = car.result();
-        JsonArray data = new JsonArray().add(message.body().getString("id"));
-        connection.updateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data, res -> {
-          connection.close();
-          if (res.succeeded()) {
-            message.reply("ok");
-          } else {
-            reportQueryError(message, res.cause());
-          }
-        });
+    JsonArray data = new JsonArray().add(message.body().getString("id"));
+
+    dbClient.updateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data, res -> {
+      if (res.succeeded()) {
+        message.reply("ok");
       } else {
-        reportQueryError(message, car.cause());
+        reportQueryError(message, res.cause());
       }
     });
   }
