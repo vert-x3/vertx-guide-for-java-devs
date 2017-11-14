@@ -19,8 +19,8 @@ package io.vertx.guides.wiki;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.rxjava.core.AbstractVerticle;
-import rx.Single;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.reactivex.Single;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>

@@ -44,8 +44,8 @@ public interface WikiDatabaseService {
   }
 
   @GenIgnore
-  static io.vertx.guides.wiki.database.rxjava.WikiDatabaseService createProxy(Vertx vertx, String address) {
-    return new io.vertx.guides.wiki.database.rxjava.WikiDatabaseService(new WikiDatabaseServiceVertxEBProxy(vertx, address));
+  static io.vertx.guides.wiki.database.reactivex.WikiDatabaseService createProxy(Vertx vertx, String address) {
+    return new io.vertx.guides.wiki.database.reactivex.WikiDatabaseService(new WikiDatabaseServiceVertxEBProxy(vertx, address));
   }
 
   @Fluent
