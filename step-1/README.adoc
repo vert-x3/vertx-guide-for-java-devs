@@ -257,7 +257,7 @@ However, nothing forbids using https://github.com/vert-x3/vertx-awesome[more adv
 
 === Notes about logging
 
-The previous subsection introduced a logger, and we opted for the https://www.slf4j.org/[SFL4J library].
+The previous subsection introduced a logger, and we opted for the https://www.slf4j.org/[SLF4J library].
 Vert.x is also unopinionated on logging: you can choose any popular Java logging library.
 We recommend SLF4J since it is a popular logging abstraction and unification library in the Java ecosystem.
 
