@@ -194,7 +194,7 @@ This is equivalent to:
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=another-start]
 ----
 <1> `ar` is of type `AsyncResult<Void>`.
-`AsyncResult<T>` is used to pass the result of an asynchronous processing and may either yield a value of type `T` on success or a failure exception is the processing failed.
+`AsyncResult<T>` is used to pass the result of an asynchronous processing and may either yield a value of type `T` on success or a failure exception if the processing failed.
 
 === Database initialization
 
