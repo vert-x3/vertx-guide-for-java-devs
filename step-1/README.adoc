@@ -194,7 +194,7 @@ This is equivalent to:
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=another-start]
 ----
 <1> `ar` is of type `AsyncResult<Void>`.
-`AsyncResult<T>` is used to pass the result of an asynchronous processing and may either yield a value of type `T` on success or a failure exception is the processing failed.
+`AsyncResult<T>` is used to pass the result of an asynchronous processing and may either yield a value of type `T` on success or a failure exception if the processing failed.
 
 === Database initialization
 
@@ -252,7 +252,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=prepareDataba
 <8> Before checking whether the SQL query succeeded or not, we must release it by calling `close`, otherwise the JDBC client connection pool can eventually drain.
 <9> We complete the method _future_ object with a success.
 
-TIP: The SQL database modules supported by the Vert.x project do not currently offer anything beyond passing SQL queries (e.g., an object-relationnal mapper) as they focus on providing asynchronous access to databases.
+TIP: The SQL database modules supported by the Vert.x project do not currently offer anything beyond passing SQL queries (e.g., an object-relational mapper) as they focus on providing asynchronous access to databases.
 However, nothing forbids using https://github.com/vert-x3/vertx-awesome[more advanced modules from the community], and we especially recommend checking out projects like https://github.com/jklingsporn/vertx-jooq[this jOOq generator for Vert.x] or https://github.com/BraintagsGmbH/vertx-pojo-mapper[this POJO mapper].
 
 === Notes about logging
