@@ -15,13 +15,13 @@ This second iteration is about refactoring the code into independent and reusabl
 image::images/verticles-refactoring.png[Verticles refactoring]
 
 We will deploy 2 verticles to deal with HTTP requests, and 1 verticle for encapsulating persistence through the database.
-The 2 resulting verticles will not have direct references to each other as they will only agree on destination names in the event bus as well as message formats.
+The resulting verticles will not have direct references to each other as they will only agree on destination names in the event bus as well as message formats.
 This provides a simple yet effective decoupling.
 
 The messages sent on the event bus will be encoded in JSON.
 While Vert.x supports flexible serialization schemes on the event bus for demanding or highly-specific contexts, it is generally a wise choice to go with JSON data.
 Another advantage of using JSON is that it is a language-agnostic text format.
-As Vert.x is _polyglot_, JSON is ideal shall verticles written in different languages need to communicate via message passing.
+As Vert.x is _polyglot_, JSON is ideal should verticles written in different languages need to communicate via message passing.
 
 == The HTTP server verticle
 
@@ -42,12 +42,12 @@ Here is the `indexHandler` method code:
 ----
 include::src/main/java/io/vertx/guides/wiki/HttpServerVerticle.java[tags=indexHandler]
 ----
-<1> The `vertx` object gives access to the event bus, and we send a message to queue for the database vertice.
+<1> The `vertx` object gives access to the event bus, and we send a message to the queue for the database verticle.
 <2> Delivery options allow us to specify headers, payload codecs and timeouts.
 <3> Upon success a reply contains a payload.
 
 As we can see, an event bus message consists of a body, options, and it can optionally expect a reply.
-In the event that no response is expected there is a variant of the `send` method does not have a handler.
+In the event that no response is expected there is a variant of the `send` method that does not have a handler.
 
 We encode payloads as JSON objects, and we specify which action the database verticle should do through a message header called `action`.
 
