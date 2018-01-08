@@ -294,15 +294,15 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=startHttpServ
 ----
 <1> The `vertx` context object provides methods to create HTTP servers, clients, TCP/UDP servers and clients, etc.
 <2> The `Router` class comes from `vertx-web`: `io.vertx.ext.web.Router`.
-<3> Routes have their own handlers, and they can be defined by URL and/or by HTTP method. For short handlers a Java lambda is an option, but for more elaborated handlers it is a good idea to reference private methods instead. Note that URLs can be parametric: `/wiki/:page` will match a request like `/wiki/Hello`, in which case a `page` parameter will be available with value `Hello`.
-<4> This makes all HTTP POST requests got through a first handler, here `io.vertx.ext.web.handler.BodyHandler`. This handler automatically decodes the body from the HTTP requests (e.g., form submissions), which can then be manipulated as Vert.x buffer objects.
+<3> Routes have their own handlers, and they can be defined by URL and/or by HTTP method. For short handlers a Java lambda is an option, but for more elaborate handlers it is a good idea to reference private methods instead. Note that URLs can be parametric: `/wiki/:page` will match a request like `/wiki/Hello`, in which case a `page` parameter will be available with value `Hello`.
+<4> This makes all HTTP POST requests go through a first handler, here `io.vertx.ext.web.handler.BodyHandler`. This handler automatically decodes the body from the HTTP requests (e.g., form submissions), which can then be manipulated as Vert.x buffer objects.
 <5> The router object can be used as a HTTP server handler, which then dispatches to other handlers as defined above.
 <6> Starting a HTTP server is an asynchronous operation, so an `AsyncResult<HttpServer>` needs to be checked for success. By the way the `8080` parameter specifies the TCP port to be used by the server.
 
 == HTTP router handlers
 
 The HTTP router instance of the `startHttpServer` method points to different handlers based on URL patterns and HTTP methods.
-Each handlers deals with a HTTP request, performs a database query, and renders HTML from a FreeMarker template.
+Each handler deals with an HTTP request, performs a database query, and renders HTML from a FreeMarker template.
 
 === Index page handler
 
@@ -380,9 +380,9 @@ include::src/main/resources/templates/page.ftl[]
 
 The index page offers a field to create a new page, and its surrounding HTML form points to a URL that is being managed by this handler.
 The strategy isn't actually to create a new entry in the database, but simply to redirect to a wiki page URL with the name to create.
-Since the wiki page doesn't exist, the `pageRenderingHandler` method will use a default text for new pages, and a user can eventually create that page by editing then saving it.
+Since the wiki page doesn't exist, the `pageRenderingHandler` method will use a default text for new pages, and a user can eventually create that page by editing and then saving it.
 
-The handler is the `pageCreateHandler` method, and its implementation is a redirection through a HTTP 303 status code:
+The handler is the `pageCreateHandler` method, and its implementation is a redirection through an HTTP 303 status code:
 
 [source,java,indent=0]
 ----
@@ -399,7 +399,7 @@ This happens both when updating an existing page (issuing a SQL `update` query) 
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageUpdateHandler]
 ----
 <1> Form parameters sent through a HTTP POST request are available from the `RoutingContext` object. Note that without a `BodyHandler` within the `Router` configuration chain these values would not be available, and the form submission payload would need to be manually decoded from the HTTP POST request payload.
-<2> We rely on a form hidden field rendered in the `page.ftl` FreeMarker template to know if we are updating an existing page or saving a new page.
+<2> We rely on a hidden form field rendered in the `page.ftl` FreeMarker template to know if we are updating an existing page or saving a new page.
 <3> Again, preparing the SQL query with parameters uses a `JsonArray` to pass values.
 <4> The `updateWithParams` method is used for `insert` / `update` / `delete` SQL queries.
 <5> Upon success, we simply redirect to the page that has been edited.
@@ -421,7 +421,7 @@ To run it we first need to build it with Maven:
 
     $ mvn clean package
 
-Since the build produces a Jar will all required dependencies embedded (including Vert.x and a JDBC database), running the wiki is as simple as:
+Since the build produces a Jar with all required dependencies embedded (including Vert.x and a JDBC database), running the wiki is as simple as:
 
     $ java -jar target/wiki-step-1-1.1.0-fat.jar
 
