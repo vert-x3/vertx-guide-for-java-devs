@@ -18,12 +18,10 @@
 package io.vertx.guides.wiki.http;
 
 import com.github.rjeschke.txtmark.Processor;
-import io.reactivex.Single;
+import io.reactivex.Flowable;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
@@ -37,7 +35,8 @@ import io.vertx.reactivex.ext.web.handler.SessionHandler;
 import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
-import io.reactivex.Observable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
@@ -122,15 +121,13 @@ public class HttpServerVerticle extends AbstractVerticle {
     }
     // tag::publish-on-page-updated[]
     dbService.rxSavePage(id, page.getString("markdown"))
-      .subscribe(
-        () -> { // <1>
-          JsonObject event = new JsonObject()
-            .put("id", id) // <2>
-            .put("client", page.getString("client")); // <3>
-          vertx.eventBus().publish("page.saved", event); // <4>
-          apiResponse(context, 200, null, null);
-        },
-        t -> apiFailure(context, t));
+      .doOnComplete(() -> { // <1>
+        JsonObject event = new JsonObject()
+          .put("id", id) // <2>
+          .put("client", page.getString("client")); // <3>
+        vertx.eventBus().publish("page.saved", event); // <4>
+      })
+      .subscribe(() -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
     // end::publish-on-page-updated[]
   }
 
@@ -176,7 +173,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void apiRoot(RoutingContext context) {
     dbService.rxFetchAllPagesData()
-      .flatMapObservable(Observable::fromIterable)
+      .flatMapPublisher(Flowable::fromIterable)
       .map(obj -> new JsonObject()
         .put("id", obj.getInteger("ID"))
         .put("name", obj.getString("NAME")))

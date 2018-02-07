@@ -18,6 +18,9 @@
 package io.vertx.guides.wiki.http;
 
 import com.github.rjeschke.txtmark.Processor;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
@@ -47,8 +50,6 @@ import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import io.vertx.reactivex.ext.web.templ.FreeMarkerTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.reactivex.Observable;
-import io.reactivex.Single;
 // end::rx-imports[]
 
 import java.util.Arrays;
@@ -192,9 +193,9 @@ public class HttpServerVerticle extends AbstractVerticle {
       });
   }
 
-  private Single<Boolean> checkAuthorised(RoutingContext context, String authority) {
+  private Completable checkAuthorised(RoutingContext context, String authority) {
     return context.user().rxIsAuthorised("role:writer")
-      .flatMap(authorized -> authorized ? Single.just(Boolean.TRUE) : Single.error(new UnauthorizedThrowable(authority)));
+      .flatMapCompletable(authorized -> authorized ? Completable.complete() : Completable.error(new UnauthorizedThrowable(authority)));
   }
 
   private void apiDeletePage(RoutingContext context) {
@@ -266,7 +267,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void apiRoot(RoutingContext context) {
     dbService.rxFetchAllPagesData()
-      .flatMapObservable(Observable::fromIterable)
+      .flatMapPublisher(Flowable::fromIterable)
       .map(obj -> new JsonObject()
         .put("id", obj.getInteger("ID"))
         .put("name", obj.getString("NAME")))
@@ -361,14 +362,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     boolean pageCreation = "yes".equals(context.request().getParam("newPage"));
     String markdown = context.request().getParam("markdown");
     checkAuthorised(context, pageCreation ? "create" : "update")
-      .map(canCreateOrUpdate -> {
-        if (pageCreation) {
-          return dbService.rxCreatePage(title, markdown);
-        } else {
-          return dbService.rxSavePage(Integer.valueOf(context.request().getParam("id")), markdown);
-        }
-      })
-      .subscribe(v -> {
+      .andThen(pageCreation ? dbService.rxCreatePage(title, markdown) : dbService.rxSavePage(Integer.valueOf(context.request().getParam("id")), markdown))
+      .subscribe(() -> {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/wiki/" + title);
         context.response().end();
@@ -388,8 +383,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void pageDeletionHandler(RoutingContext context) {
     checkAuthorised(context, "delete")
-      .map(canDelete -> dbService.rxDeletePage(Integer.valueOf(context.request().getParam("id"))))
-      .subscribe(v -> {
+      .andThen(dbService.rxDeletePage(Integer.valueOf(context.request().getParam("id"))))
+      .subscribe(() -> {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/");
         context.response().end();
@@ -398,7 +393,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void backupHandler(RoutingContext context) {
     checkAuthorised(context, "role:writer")
-      .flatMap(v -> dbService.rxFetchAllPagesData())
+      .andThen(dbService.rxFetchAllPagesData())
       .map(pages -> {
         JsonObject filesObject = new JsonObject();
         pages.forEach(page -> {

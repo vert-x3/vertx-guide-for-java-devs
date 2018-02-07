@@ -17,19 +17,19 @@
 
 package io.vertx.guides.wiki.database;
 
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.ResultSet;
+import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.sql.SQLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.reactivex.Observable;
-import io.reactivex.Single;
 
 import java.util.HashMap;
 import java.util.List;
@@ -49,8 +49,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     this.sqlQueries = sqlQueries;
 
     getConnection()
-      .map(conn -> conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE)).subscribe())
-      .map(disposable -> this)
+      .flatMapCompletable(conn -> conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE)))
+      .andThen(Single.just(this))
       .subscribe(SingleHelper.toObserver(readyHandler));
   }
 
@@ -64,9 +64,9 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   @Override
   public WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) {
     dbClient.rxQuery(sqlQueries.get(SqlQuery.ALL_PAGES))
-      .flatMapObservable(res -> {
+      .flatMapPublisher(res -> {
         List<JsonArray> results = res.getResults();
-        return Observable.fromIterable(results);
+        return Flowable.fromIterable(results);
       })
       .map(json -> json.getString(0))
       .sorted()
@@ -117,20 +117,16 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   @Override
   public WikiDatabaseService createPage(String title, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), new JsonArray().add(title).add(markdown))
-      .subscribe(
-        res -> resultHandler.handle(Future.succeededFuture()),
-        err -> resultHandler.handle(Future.failedFuture(err))
-      );
+      .toCompletable()
+      .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }
 
   @Override
   public WikiDatabaseService savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), new JsonArray().add(markdown).add(id))
-      .subscribe(
-        res -> resultHandler.handle(Future.succeededFuture()),
-        err -> resultHandler.handle(Future.failedFuture(err))
-      );
+      .toCompletable()
+      .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }
 
@@ -138,10 +134,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   public WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler) {
     JsonArray data = new JsonArray().add(id);
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data)
-      .subscribe(
-        res -> resultHandler.handle(Future.succeededFuture()),
-        err -> resultHandler.handle(Future.failedFuture(err))
-      );
+      .toCompletable()
+      .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }
 
