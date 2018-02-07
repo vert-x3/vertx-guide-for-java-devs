@@ -8,20 +8,24 @@ However, it can become a bit tedious, especially when you combine several source
 
 This is exactly where RxJava shines, and Vert.x integrates with it seamlessly.
 
+NOTE: In this guide, RxJava 2.x is used, but Vert.x also works with RxJava 1.x.
+RxJava 2.x has been completely rewritten from scratch on top of the Reactive-Streams specification.
+Learn more in the https://github.com/ReactiveX/RxJava/wiki/What%27s-different-in-2.0[What's different in 2.0] wiki page.
+
 == Enabling the RxJava APIs
 
 In addition to the callback-based API, the Vert.x modules offer an _"Rxified"_ API.
-To enable it, start by adding the `vertx-rx-java` module to the Maven POM file:
+To enable it, start by adding the `vertx-rx-java2` module to the Maven POM file:
 
 [source,xml,indent=0]
 ----
-include::pom.xml[tags=vertx-rx-java]
+include::pom.xml[tags=vertx-rx-java2]
 ----
 
-Verticles then have to be modified so that they extend `io.vertx.rxjava.core.AbstractVerticle` instead of `io.vertx.core.AbstractVerticle`.
-How is this different? The former class extends the latter and exposes a `io.vertx.rxjava.core.Vertx` field.
+Verticles then have to be modified so that they extend `io.vertx.reactivex.core.AbstractVerticle` instead of `io.vertx.core.AbstractVerticle`.
+How is this different? The former class extends the latter and exposes a `io.vertx.reactivex.core.Vertx` field.
 
-`io.vertx.rxjava.core.Vertx` defines extra `rxSomething(...)` methods that are equivalent to their callback-based counterparts.
+`io.vertx.reactivex.core.Vertx` defines extra `rxSomething(...)` methods that are equivalent to their callback-based counterparts.
 
 Let's take a look at the `MainVerticle` to get a better idea of how it works in practice:
 
@@ -67,7 +71,7 @@ response type is inferred by the lambda expression.
 
 === Use delegate on a _"Rxified"_ `vertx` instance
 
-To call a method expecting a `io.vertx.core.Vertx` instance when you have a `io.vertx.rxjava.core.Vertx` one, call
+To call a method expecting a `io.vertx.core.Vertx` instance when you have a `io.vertx.reactivex.core.Vertx` one, call
 the `getDelegate()` method. Verticle's `start()` method needs to be adjusted when creating an instance of
 `WikiDatabaseService`:
 
@@ -82,7 +86,7 @@ In the previous example, we saw how to use RxJava operators and the Rxified Vert
 But sometimes this guarantee is not required, or you simply want them to run concurrently for performance reasons.
 
 The JWT token generation process in the `HttpServerVerticle` is a good example of such a situation.
-To create a token, we need all authorization query results to complete, but queries are independent from each other:
+To create a token, we need all authorization queries to complete, but queries are independent from each other:
 
 [source,java,indent=0]
 ----
@@ -91,52 +95,67 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=rx
 <1> Three `Single` objects are created, representing the different authorization queries.
 <2> When the three operations complete successfully, the `zip` operator callback is invoked with the results.
 
-== Working with database connections
+== Querying the database
 
-To acquire a database connection from the pool, all you have to do is calling `rxGetConnection` on the `JDBCClient`:
+=== Direct queries
+
+Very often, a single database query is needed to prepare a response to the user.
+For such simple cases, the `JDBCClient` provides `rxQueryXXX` and `rxUpdateXXX` methods:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-query-with-params]
+----
+
+=== Working with a database connection
+
+When direct queries do not fit (e.g. when multiple queries must participate in the same transaction), you can acquire a database connection from the pool.
+All you have to do is calling `rxGetConnection` on the `JDBCClient`:
 
 [source,java,indent=0]
 ----
 Single<SQLConnection> connection = dbClient.rxGetConnection();
 ----
 
-The method returns a `Single<Connection>` which you can easily transform with `flatMap` to execute SQL queries:
+The method returns a `Single<Connection>` which you can easily transform with `flatMapXXX` to execute SQL queries:
 
 [source,java,indent=0]
 ----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-execute-query-with-params]
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-flatmap-connection]
 ----
 
 But how can we release the connection if the `SQLConnection` reference is no longer reachable?
-A simple and convenient way to do this is to invoke `close` when the `Single<SQLConnection>` is unsubscribed:
+A simple and convenient way to do this is to invoke `close` in a `doFinally` callback:
 
 [source,java,indent=0]
 ----
 include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-get-connection]
 ----
 <1> After the connection is acquired we wrap it into a `Single`
-<2> The `Single` is modified to invoke `close` when unsubscribed
+<2> The `Single` is modified to invoke `close` in a `doFinally` callback
 
-Now we shall use `getConnection` anytime we need to execute SQL queries in our database verticle.
+Now we shall use `getConnection` anytime we need to work with a database connection.
 
 == Bridging the gap between callbacks and RxJava
 
 At times, you may have to mix your RxJava code with a callback-based API.
 For example, service proxy interfaces can only be defined with callbacks, but the implementation uses the Vert.x Rxified API.
 
-In this case, the `io.vertx.rx.java.RxHelper` class can adapt a `Handler<AsyncResult<T>>` to an RxJava `Subscriber<T>`:
+In this case, the `io.vertx.reactivex.SingleHelper.toObserver` class can adapt a `Handler<AsyncResult<T>>` to an RxJava `SingleObserver<T>`:
 
 [source,java,indent=0]
 ----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rxhelper-to-subscriber]
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-handler-to-observer]
 ----
 <1> `fetchAllPagesData` is an asynchronous service proxy operation, defined with a `Handler<AsyncResult<List<JsonObject>>>` callback.
-<2> The `toSubscriber` method adapts the `resultHandler` to a `Subscriber<List<JsonObject>>`, so that the handler is invoked when the list of rows is emitted.
+<2> The `toObserver` method adapts the `resultHandler` to a `SingleObserver<List<JsonObject>>`, so that the handler is invoked when the list of rows is emitted.
+
+NOTE: `io.vertx.reactivex.CompletableHelper` and `io.vertx.reactivex.MaybeHelper` also provide adapters for `Completable` and `Maybe`.
 
 == Data flows
 
 RxJava is not only great at combining different sources of events, it is also very helpful with data flows.
-Unlike a Vert.x or JDK future, an `Observable` emits a stream of events, not just a single one.
+Unlike a Vert.x or JDK future, a `Flowable` emits a stream of events, not just a single one.
 And it comes with an extensive set of data manipulation operators.
 
 We can use a few of them to refactor the `fetchAllPages` database verticle method:
@@ -145,8 +164,8 @@ We can use a few of them to refactor the `fetchAllPages` database verticle metho
 ----
 include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-data-flow]
 ----
-<1> With `flatMapObservable` we will create an `Observable` from the item emitted by the `Single<Result>`.
-<2> `from` converts the database `results` iterable into an `Observable` emitting the database row items.
+<1> With `flatMapPublisher` we will create a `Flowable` from the item emitted by the `Single<Result>`.
+<2> `fromIterable` converts the database results `Iterable` into a `Flowable` emitting the database row items.
 <3> Since we only need the page name we can `map` each `JsonObject` row to the first column.
 <4> The client expects the data to be `sorted` in alphabetical order.
 <5> The event bus service reply consists in a single `JsonArray`. `collect` creates a new one with `JsonArray::new` and later adds items as they are emitted with `JsonArray::add`.

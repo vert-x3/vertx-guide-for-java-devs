@@ -50,12 +50,12 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
     </dependency>
-    <!-- tag::vertx-rx-java[] -->
+    <!-- tag::vertx-rx-java2[] -->
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-rx-java</artifactId>
+      <artifactId>vertx-rx-java2</artifactId>
     </dependency>
-    <!-- end::vertx-rx-java[] -->
+    <!-- end::vertx-rx-java2[] -->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-service-proxy</artifactId>

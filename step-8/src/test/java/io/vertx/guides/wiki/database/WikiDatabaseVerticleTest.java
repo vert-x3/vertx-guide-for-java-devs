@@ -23,11 +23,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import io.vertx.guides.wiki.database.rxjava.WikiDatabaseService;
 
 
 /**

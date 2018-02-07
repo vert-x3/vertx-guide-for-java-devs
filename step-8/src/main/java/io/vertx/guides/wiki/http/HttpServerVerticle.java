@@ -18,6 +18,9 @@
 package io.vertx.guides.wiki.http;
 
 import com.github.rjeschke.txtmark.Processor;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
@@ -29,26 +32,24 @@ import io.vertx.ext.auth.jwt.JWTOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
 import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.guides.wiki.database.rxjava.WikiDatabaseService;
+import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
 // tag::rx-imports[]
-import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.core.http.HttpServer;
-import io.vertx.rxjava.ext.auth.AuthProvider;
-import io.vertx.rxjava.ext.auth.User;
-import io.vertx.rxjava.ext.auth.jwt.JWTAuth;
-import io.vertx.rxjava.ext.auth.shiro.ShiroAuth;
-import io.vertx.rxjava.ext.web.Router;
-import io.vertx.rxjava.ext.web.RoutingContext;
-import io.vertx.rxjava.ext.web.client.WebClient;
-import io.vertx.rxjava.ext.web.client.HttpResponse; // <1>
-import io.vertx.rxjava.ext.web.codec.BodyCodec;
-import io.vertx.rxjava.ext.web.handler.*;
-import io.vertx.rxjava.ext.web.sstore.LocalSessionStore;
-import io.vertx.rxjava.ext.web.templ.FreeMarkerTemplateEngine;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.http.HttpServer;
+import io.vertx.reactivex.ext.auth.AuthProvider;
+import io.vertx.reactivex.ext.auth.User;
+import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
+import io.vertx.reactivex.ext.auth.shiro.ShiroAuth;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.reactivex.ext.web.client.HttpResponse; // <1>
+import io.vertx.reactivex.ext.web.codec.BodyCodec;
+import io.vertx.reactivex.ext.web.handler.*;
+import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
+import io.vertx.reactivex.ext.web.templ.FreeMarkerTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Observable;
-import rx.Single;
 // end::rx-imports[]
 
 import java.util.Arrays;
@@ -192,16 +193,16 @@ public class HttpServerVerticle extends AbstractVerticle {
       });
   }
 
-  private Single<Void> checkAuthorised(RoutingContext context, String authority) {
+  private Completable checkAuthorised(RoutingContext context, String authority) {
     return context.user().rxIsAuthorised("role:writer")
-      .flatMap(authorized -> authorized ? Single.<Void>just(null) : Single.error(new UnauthorizedThrowable(authority)));
+      .flatMapCompletable(authorized -> authorized ? Completable.complete() : Completable.error(new UnauthorizedThrowable(authority)));
   }
 
   private void apiDeletePage(RoutingContext context) {
     if (context.user().principal().getBoolean("canDelete", false)) {
       int id = Integer.valueOf(context.request().getParam("id"));
       dbService.rxDeletePage(id)
-        .subscribe(v -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
+        .subscribe(() -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
     } else {
       context.fail(401);
     }
@@ -215,7 +216,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         return;
       }
       dbService.rxSavePage(id, page.getString("markdown"))
-        .subscribe(v -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
+        .subscribe(() -> apiResponse(context, 200, null, null), t -> apiFailure(context, t));
     } else {
       context.fail(401);
     }
@@ -241,7 +242,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         return;
       }
       dbService.rxCreatePage(page.getString("name"), page.getString("markdown"))
-        .subscribe(v -> apiResponse(context, 201, null, null), t -> apiFailure(context, t));
+        .subscribe(() -> apiResponse(context, 201, null, null), t -> apiFailure(context, t));
     } else {
       context.fail(401);
     }
@@ -266,7 +267,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void apiRoot(RoutingContext context) {
     dbService.rxFetchAllPagesData()
-      .flatMapObservable(Observable::from)
+      .flatMapPublisher(Flowable::fromIterable)
       .map(obj -> new JsonObject()
         .put("id", obj.getInteger("ID"))
         .put("name", obj.getString("NAME")))
@@ -361,14 +362,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     boolean pageCreation = "yes".equals(context.request().getParam("newPage"));
     String markdown = context.request().getParam("markdown");
     checkAuthorised(context, pageCreation ? "create" : "update")
-      .flatMap(v -> {
-        if (pageCreation) {
-          return dbService.rxCreatePage(title, markdown);
-        } else {
-          return dbService.rxSavePage(Integer.valueOf(context.request().getParam("id")), markdown);
-        }
-      })
-      .subscribe(v -> {
+      .andThen(pageCreation ? dbService.rxCreatePage(title, markdown) : dbService.rxSavePage(Integer.valueOf(context.request().getParam("id")), markdown))
+      .subscribe(() -> {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/wiki/" + title);
         context.response().end();
@@ -388,8 +383,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void pageDeletionHandler(RoutingContext context) {
     checkAuthorised(context, "delete")
-      .flatMap(canDelete -> dbService.rxDeletePage(Integer.valueOf(context.request().getParam("id"))))
-      .subscribe(v -> {
+      .andThen(dbService.rxDeletePage(Integer.valueOf(context.request().getParam("id"))))
+      .subscribe(() -> {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/");
         context.response().end();
@@ -398,7 +393,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void backupHandler(RoutingContext context) {
     checkAuthorised(context, "role:writer")
-      .flatMap(v -> dbService.rxFetchAllPagesData())
+      .andThen(dbService.rxFetchAllPagesData())
       .map(pages -> {
         JsonObject filesObject = new JsonObject();
         pages.forEach(page -> {
