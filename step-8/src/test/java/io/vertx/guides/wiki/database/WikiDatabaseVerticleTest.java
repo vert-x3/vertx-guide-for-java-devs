@@ -27,7 +27,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import io.vertx.guides.wiki.database.rxjava.WikiDatabaseService;
+import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
 
 
 /**

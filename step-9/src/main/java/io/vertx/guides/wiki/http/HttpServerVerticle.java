@@ -23,18 +23,18 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.vertx.guides.wiki.database.rxjava.WikiDatabaseService;
-import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.core.http.HttpServer;
-import io.vertx.rxjava.ext.web.Router;
-import io.vertx.rxjava.ext.web.RoutingContext;
-import io.vertx.rxjava.ext.web.handler.BodyHandler;
-import io.vertx.rxjava.ext.web.handler.CookieHandler;
-import io.vertx.rxjava.ext.web.handler.SessionHandler;
-import io.vertx.rxjava.ext.web.handler.StaticHandler;
-import io.vertx.rxjava.ext.web.sstore.LocalSessionStore;
-import io.vertx.rxjava.ext.web.templ.FreeMarkerTemplateEngine;
-import rx.Observable;
+import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.http.HttpServer;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.CookieHandler;
+import io.vertx.reactivex.ext.web.handler.SessionHandler;
+import io.vertx.reactivex.ext.web.handler.StaticHandler;
+import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
+import io.vertx.reactivex.ext.web.templ.FreeMarkerTemplateEngine;
+import io.reactivex.Observable;
 
 import java.util.Arrays;
 
@@ -105,7 +105,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   private void apiDeletePage(RoutingContext context) {
     int id = Integer.valueOf(context.request().getParam("id"));
     dbService.rxDeletePage(id).subscribe(
-      v -> apiResponse(context, 200, null, null),
+      () -> apiResponse(context, 200, null, null),
       t -> apiFailure(context, t));
   }
 
@@ -117,7 +117,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       return;
     }
     dbService.rxSavePage(id, page.getString("markdown")).subscribe(
-      v -> apiResponse(context, 200, null, null),
+      () -> apiResponse(context, 200, null, null),
       t -> apiFailure(context, t));
   }
   // end::apiUpdatePage[]
@@ -141,7 +141,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       return;
     }
     dbService.rxCreatePage(page.getString("name"), page.getString("markdown")).subscribe(
-      v -> apiResponse(context, 201, null, null),
+      () -> apiResponse(context, 201, null, null),
       t -> apiFailure(context, t));
   }
 
@@ -164,7 +164,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void apiRoot(RoutingContext context) {
     dbService.rxFetchAllPagesData()
-      .flatMapObservable(Observable::from)
+      .flatMapObservable(Observable::fromIterable)
       .map(obj -> new JsonObject()
         .put("id", obj.getInteger("ID"))
         .put("name", obj.getString("NAME")))
