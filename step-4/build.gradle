@@ -1,52 +1,30 @@
-buildscript {
-  repositories {
-    maven {
-      url "https://plugins.gradle.org/m2/"
-    }
-  }
-  dependencies {
-    classpath "gradle.plugin.io.vertx:vertx-gradle-plugin:0.0.8"
-  }
+plugins {
+  id 'io.vertx.vertx-plugin' version '0.0.8'
 }
 
-
-apply plugin: 'java'
-
-group = 'io.vertx'
-version = '1.3.0-SNAPSHOT'
-
-description = """"""
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-tasks.withType(JavaCompile) {
-  options.encoding = 'UTF-8'
-}
-
-
+description = "Service proxy generation example"
 
 repositories {
   jcenter()
 }
 
-ext {
-  vertVersion = '3.5.1'
-}
 
 dependencies {
-  compile "io.vertx:vertx-core:$vertVersion"
-  compile "io.vertx:vertx-jdbc-client:$vertVersion"
-  compile "io.vertx:vertx-service-proxy:$vertVersion"
-  compile "io.vertx:vertx-codegen:$vertVersion"
-  compile "io.vertx:vertx-web:$vertVersion"
-  compile "io.vertx:vertx-web-client:$vertVersion"
-  compile "io.vertx:vertx-web-templ-freemarker:$vertVersion"
+  compile "io.vertx:vertx-jdbc-client"
+  compile "io.vertx:vertx-service-proxy"
+  compile "io.vertx:vertx-codegen"
+  compile "io.vertx:vertx-web"
+  compile "io.vertx:vertx-web-client"
+  compile "io.vertx:vertx-web-templ-freemarker"
   compile "com.github.rjeschke:txtmark:0.13"
   compile "ch.qos.logback:logback-classic:1.2.3"
   compile "org.hsqldb:hsqldb:2.3.4"
   testCompile 'junit:junit:4.12'
-  testCompile "io.vertx:vertx-unit:$vertVersion"
+  testCompile "io.vertx:vertx-unit"
+}
+
+vertx {
+  mainVerticle = 'io.vertx.guides.wiki.MainVerticle'
 }
 
 
