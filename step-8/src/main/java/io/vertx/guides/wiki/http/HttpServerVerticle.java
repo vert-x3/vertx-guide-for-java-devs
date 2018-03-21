@@ -28,9 +28,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
-import io.vertx.ext.auth.jwt.JWTOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
+import io.vertx.ext.jwt.JWTOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
 // tag::rx-imports[]
@@ -148,9 +148,9 @@ public class HttpServerVerticle extends AbstractVerticle {
       // tag::rx-concurrent-composition[]
 
       auth.rxAuthenticate(creds).flatMap(user -> {
-        Single<Boolean> create = user.rxIsAuthorised("create"); // <1>
-        Single<Boolean> delete = user.rxIsAuthorised("delete");
-        Single<Boolean> update = user.rxIsAuthorised("update");
+        Single<Boolean> create = user.rxIsAuthorized("create"); // <1>
+        Single<Boolean> delete = user.rxIsAuthorized("delete");
+        Single<Boolean> update = user.rxIsAuthorized("update");
 
         return Single.zip(create, delete, update, (canCreate, canDelete, canUpdate) -> { // <2>
           return jwtAuth.generateToken(
@@ -194,7 +194,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   }
 
   private Completable checkAuthorised(RoutingContext context, String authority) {
-    return context.user().rxIsAuthorised("role:writer")
+    return context.user().rxIsAuthorized("role:writer")
       .flatMapCompletable(authorized -> authorized ? Completable.complete() : Completable.error(new UnauthorizedThrowable(authority)));
   }
 
@@ -296,7 +296,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   }
 
   private void indexHandler(RoutingContext context) {
-    context.user().rxIsAuthorised("create")
+    context.user().rxIsAuthorized("create")
       .flatMap(canCreatePage -> {
         context.put("canCreatePage", canCreatePage);
         return dbService.rxFetchAllPages();
@@ -315,10 +315,10 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void pageRenderingHandler(RoutingContext context) {
     User user = context.user();
-    user.rxIsAuthorised("update")
+    user.rxIsAuthorized("update")
       .flatMap(canSavePage -> {
         context.put("canSavePage", canSavePage);
-        return user.rxIsAuthorised("delete");
+        return user.rxIsAuthorized("delete");
       })
       .flatMap(canDeletePage -> {
         context.put("canDeletePage", canDeletePage);
