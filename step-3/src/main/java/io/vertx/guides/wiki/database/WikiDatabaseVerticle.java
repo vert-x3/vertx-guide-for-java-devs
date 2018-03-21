@@ -21,7 +21,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.serviceproxy.ProxyHelper;
+import io.vertx.serviceproxy.ServiceBinder;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,7 +53,10 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
 
     WikiDatabaseService.create(dbClient, sqlQueries, ready -> {
       if (ready.succeeded()) {
-        ProxyHelper.registerService(WikiDatabaseService.class, vertx, ready.result(), CONFIG_WIKIDB_QUEUE); // <1>
+        ServiceBinder binder = new ServiceBinder(vertx);
+        binder
+          .setAddress(CONFIG_WIKIDB_QUEUE)
+          .register(WikiDatabaseService.class, ready.result()); // <1>
         startFuture.complete();
       } else {
         startFuture.fail(ready.cause());

@@ -25,13 +25,15 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.jwt.JWTOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.jwt.JWTOptions;
 import io.vertx.ext.auth.shiro.ShiroAuth;
 import io.vertx.ext.auth.shiro.ShiroAuthOptions;
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
@@ -141,11 +143,11 @@ public class HttpServerVerticle extends AbstractVerticle {
     // tag::jwtAuth[]
     Router apiRouter = Router.router(vertx);
 
-    JWTAuth jwtAuth = JWTAuth.create(vertx, new JsonObject()
-      .put("keyStore", new JsonObject()
-        .put("path", "keystore.jceks")
-        .put("type", "jceks")
-        .put("password", "secret")));
+    JWTAuth jwtAuth = JWTAuth.create(vertx, new JWTAuthOptions()
+      .setKeyStore(new KeyStoreOptions()
+        .setPath("keystore.jceks")
+        .setType("jceks")
+        .setPassword("secret")));
 
     apiRouter.route().handler(JWTAuthHandler.create(jwtAuth, "/api/token"));
     // end::jwtAuth[]
@@ -160,9 +162,9 @@ public class HttpServerVerticle extends AbstractVerticle {
 
         if (authResult.succeeded()) {
           User user = authResult.result();
-          user.isAuthorised("create", canCreate -> {  // <2>
-            user.isAuthorised("delete", canDelete -> {
-              user.isAuthorised("update", canUpdate -> {
+          user.isAuthorized("create", canCreate -> {  // <2>
+            user.isAuthorized("delete", canDelete -> {
+              user.isAuthorized("update", canUpdate -> {
 
                 String token = jwtAuth.generateToken( // <3>
                   new JsonObject()
@@ -348,7 +350,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   // tag::indexHandler[]
   private void indexHandler(RoutingContext context) {
-    context.user().isAuthorised("create", res -> {  // <1>
+    context.user().isAuthorized("create", res -> {  // <1>
       boolean canCreatePage = res.succeeded() && res.result();  // <2>
       dbService.fetchAllPages(reply -> {
         if (reply.succeeded()) {
@@ -373,9 +375,9 @@ public class HttpServerVerticle extends AbstractVerticle {
   // end::indexHandler[]
 
   private void pageRenderingHandler(RoutingContext context) {
-    context.user().isAuthorised("update", updateResponse -> {
+    context.user().isAuthorized("update", updateResponse -> {
       boolean canSavePage = updateResponse.succeeded() && updateResponse.result();
-      context.user().isAuthorised("delete", deleteResponse -> {
+      context.user().isAuthorized("delete", deleteResponse -> {
         boolean canDeletePage = deleteResponse.succeeded() && deleteResponse.result();
 
         String requestedPage = context.request().getParam("page");
@@ -429,7 +431,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void pageUpdateHandler(RoutingContext context) {
     boolean pageCreation = "yes".equals(context.request().getParam("newPage"));
-    context.user().isAuthorised(pageCreation ? "create" : "update", res -> {
+    context.user().isAuthorized(pageCreation ? "create" : "update", res -> {
       if (res.succeeded() && res.result()) {
 
         String title = context.request().getParam("title");
@@ -470,7 +472,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   // tag::pageDeletionHandler[]
   private void pageDeletionHandler(RoutingContext context) {
-    context.user().isAuthorised("delete", res -> {
+    context.user().isAuthorized("delete", res -> {
       if (res.succeeded() && res.result()) {
 
         // Original code:
@@ -492,7 +494,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   // end::pageDeletionHandler[]
 
   private void backupHandler(RoutingContext context) {
-    context.user().isAuthorised("role:writer", res -> {
+    context.user().isAuthorized("role:writer", res -> {
       if (res.succeeded() && res.result()) {
 
         dbService.fetchAllPagesData(reply -> {
