@@ -495,56 +495,62 @@ public class HttpServerVerticle extends AbstractVerticle {
   // end::pageDeletionHandler[]
 
   private void backupHandler(RoutingContext context) {
-    dbService.fetchAllPagesData(reply -> {
-      if (reply.succeeded()) {
+    context.user().isAuthorized("role:writer", res -> {
+      if (res.succeeded() && res.result()) {
+        dbService.fetchAllPagesData(reply -> {
+          if (reply.succeeded()) {
 
-        JsonArray filesObject = new JsonArray();
-        JsonObject payload = new JsonObject() // <1>
-          .put("files", filesObject)
-          .put("language", "plaintext")
-          .put("title", "vertx-wiki-backup")
-          .put("public", true);
+            JsonArray filesObject = new JsonArray();
+            JsonObject payload = new JsonObject() // <1>
+              .put("files", filesObject)
+              .put("language", "plaintext")
+              .put("title", "vertx-wiki-backup")
+              .put("public", true);
 
-        reply
-          .result()
-          .forEach(page -> {
-            JsonObject fileObject = new JsonObject(); // <2>
-            fileObject.put("name", page.getString("NAME"));
-            fileObject.put("content", page.getString("CONTENT"));
-            filesObject.add(fileObject);
-          });
+            reply
+              .result()
+              .forEach(page -> {
+                JsonObject fileObject = new JsonObject(); // <2>
+                fileObject.put("name", page.getString("NAME"));
+                fileObject.put("content", page.getString("CONTENT"));
+                filesObject.add(fileObject);
+              });
 
-        webClient.post(443, "snippets.glot.io", "/snippets") // <3>
-          .putHeader("Content-Type", "application/json")
-          .as(BodyCodec.jsonObject()) // <4>
-          .sendJsonObject(payload, ar -> {  // <5>
-            if (ar.succeeded()) {
-              HttpResponse<JsonObject> response = ar.result();
-              if (response.statusCode() == 200) {
-                String url = "https://glot.io/snippets/" + response.body().getString("id");
-                context.put("backup_gist_url", url);  // <6>
-                indexHandler(context);
-              } else {
-                StringBuilder message = new StringBuilder()
-                  .append("Could not backup the wiki: ")
-                  .append(response.statusMessage());
-                JsonObject body = response.body();
-                if (body != null) {
-                  message.append(System.getProperty("line.separator"))
-                    .append(body.encodePrettily());
+            webClient.post(443, "snippets.glot.io", "/snippets") // <3>
+              .putHeader("Content-Type", "application/json")
+              .as(BodyCodec.jsonObject()) // <4>
+              .sendJsonObject(payload, ar -> {  // <5>
+                if (ar.succeeded()) {
+                  HttpResponse<JsonObject> response = ar.result();
+                  if (response.statusCode() == 200) {
+                    String url = "https://glot.io/snippets/" + response.body().getString("id");
+                    context.put("backup_gist_url", url);  // <6>
+                    indexHandler(context);
+                  } else {
+                    StringBuilder message = new StringBuilder()
+                      .append("Could not backup the wiki: ")
+                      .append(response.statusMessage());
+                    JsonObject body = response.body();
+                    if (body != null) {
+                      message.append(System.getProperty("line.separator"))
+                        .append(body.encodePrettily());
+                    }
+                    LOGGER.error(message.toString());
+                    context.fail(502);
+                  }
+                } else {
+                  Throwable err = ar.cause();
+                  LOGGER.error("HTTP Client error", err);
+                  context.fail(err);
                 }
-                LOGGER.error(message.toString());
-                context.fail(502);
-              }
-            } else {
-              Throwable err = ar.cause();
-              LOGGER.error("HTTP Client error", err);
-              context.fail(err);
-            }
-          });
+              });
 
+          } else {
+            context.fail(reply.cause());
+          }
+        });
       } else {
-        context.fail(reply.cause());
+        context.response().setStatusCode(403).end();
       }
     });
   }
