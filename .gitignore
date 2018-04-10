@@ -4,7 +4,6 @@
 hs_err_pid*
 target/
 **/src/main/generated/
-.mvn/
 .idea/
 db/
 *.iws
