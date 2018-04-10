@@ -395,26 +395,30 @@ public class HttpServerVerticle extends AbstractVerticle {
     checkAuthorised(context, "role:writer")
       .andThen(dbService.rxFetchAllPagesData())
       .map(pages -> {
-        JsonObject filesObject = new JsonObject();
+        JsonArray filesObject = new JsonArray();
+        JsonObject payload = new JsonObject()
+          .put("files", filesObject)
+          .put("language", "plaintext")
+          .put("title", "vertx-wiki-backup")
+          .put("public", true);
         pages.forEach(page -> {
           JsonObject fileObject = new JsonObject();
-          filesObject.put(page.getString("NAME"), fileObject);
+          fileObject.put("name", page.getString("NAME"));
           fileObject.put("content", page.getString("CONTENT"));
+          filesObject.add(fileObject);
         });
-        return new JsonObject()
-          .put("files", filesObject)
-          .put("description", "A wiki backup")
-          .put("public", true);
+        return payload;
       })
       .flatMap(body -> webClient
-        .post(443, "api.github.com", "/gists")
+        .post(443, "snippets.glot.io", "/snippets")
         .putHeader("User-Agent", "vert-x3")
-        .putHeader("Accept", "application/vnd.github.v3+json")
         .putHeader("Content-Type", "application/json")
-        .as(BodyCodec.jsonObject()).rxSendJsonObject(body))
+        .as(BodyCodec.jsonObject())
+        .rxSendJsonObject(body))
       .subscribe(response -> {
-        if (response.statusCode() == 201) {
-          context.put("backup_gist_url", response.body().getString("html_url"));
+        if (response.statusCode() == 200) {
+          String url = "https://glot.io/snippets/" + response.body().getString("id");
+          context.put("backup_gist_url", url);
           indexHandler(context);
         } else {
           StringBuilder message = new StringBuilder()
