@@ -3,6 +3,14 @@ Julien Ponge <julien.ponge@insa-lyon.fr> ; Thomas Segismont <tsegismo@redhat.com
 v1.3.0-SNAPSHOT, TBR
 :doctype: book
 
+ifdef::env-github[]
+//
+image:https://travis-ci.org/vert-x3/vertx-guide-for-java-devs.svg?branch=master["Build Status (Linux)", link="https://travis-ci.org/vert-x3/vertx-guide-for-java-devs"]
+//
+image:https://ci.appveyor.com/api/projects/status/sps4csqk3e5v4gfe/branch/master?svg=true["Build Status (Windows)", link="https://ci.appveyor.com/project/jponge/vertx-guide-for-java-devs/branch/master"]
+//
+endif::[]
+
 :leveloffset: +1
 
 NOTE: You can read the latest published version of the guide at http://vertx.io/docs/guide-for-java-devs/
