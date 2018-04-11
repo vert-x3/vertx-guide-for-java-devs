@@ -23,6 +23,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -194,29 +195,31 @@ public class HttpServerVerticle extends AbstractVerticle {
     dbService.fetchAllPagesData(reply -> {
       if (reply.succeeded()) {
 
-        JsonObject filesObject = new JsonObject();
-        JsonObject gistPayload = new JsonObject() // <1>
+        JsonArray filesObject = new JsonArray();
+        JsonObject payload = new JsonObject() // <1>
           .put("files", filesObject)
-          .put("description", "A wiki backup")
+          .put("language", "plaintext")
+          .put("title", "vertx-wiki-backup")
           .put("public", true);
 
         reply
           .result()
           .forEach(page -> {
             JsonObject fileObject = new JsonObject(); // <2>
-            filesObject.put(page.getString("NAME"), fileObject);
+            fileObject.put("name", page.getString("NAME"));
             fileObject.put("content", page.getString("CONTENT"));
+            filesObject.add(fileObject);
           });
 
-        webClient.post(443, "api.github.com", "/gists") // <3>
-          .putHeader("Accept", "application/vnd.github.v3+json") // <4>
+        webClient.post(443, "snippets.glot.io", "/snippets") // <3>
           .putHeader("Content-Type", "application/json")
-          .as(BodyCodec.jsonObject()) // <5>
-          .sendJsonObject(gistPayload, ar -> {  // <6>
+          .as(BodyCodec.jsonObject()) // <4>
+          .sendJsonObject(payload, ar -> {  // <5>
             if (ar.succeeded()) {
               HttpResponse<JsonObject> response = ar.result();
-              if (response.statusCode() == 201) {
-                context.put("backup_gist_url", response.body().getString("html_url"));  // <7>
+              if (response.statusCode() == 200) {
+                String url = "https://glot.io/snippets/" + response.body().getString("id");
+                context.put("backup_gist_url", url);  // <6>
                 indexHandler(context);
               } else {
                 StringBuilder message = new StringBuilder()

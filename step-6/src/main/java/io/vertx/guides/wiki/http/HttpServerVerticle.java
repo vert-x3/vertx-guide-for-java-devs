@@ -23,6 +23,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -345,49 +346,51 @@ public class HttpServerVerticle extends AbstractVerticle {
     dbService.fetchAllPagesData(reply -> {
       if (reply.succeeded()) {
 
-        JsonObject filesObject = new JsonObject();
-        JsonObject gistPayload = new JsonObject()
+        JsonArray filesObject = new JsonArray();
+        JsonObject payload = new JsonObject() // <1>
           .put("files", filesObject)
-          .put("description", "A wiki backup")
+          .put("language", "plaintext")
+          .put("title", "vertx-wiki-backup")
           .put("public", true);
 
         reply
           .result()
           .forEach(page -> {
-            JsonObject fileObject = new JsonObject();
-            filesObject.put(page.getString("NAME"), fileObject);
+            JsonObject fileObject = new JsonObject(); // <2>
+            fileObject.put("name", page.getString("NAME"));
             fileObject.put("content", page.getString("CONTENT"));
+            filesObject.add(fileObject);
           });
 
-        webClient.post(443, "api.github.com", "/gists")
-          .putHeader("User-Agent", "vert-x3")
-          .putHeader("Accept", "application/vnd.github.v3+json")
+        webClient.post(443, "snippets.glot.io", "/snippets") // <3>
           .putHeader("Content-Type", "application/json")
-          .as(BodyCodec.jsonObject())
-          .sendJsonObject(gistPayload, ar -> {
-          if (ar.succeeded()) {
-            HttpResponse<JsonObject> response = ar.result();
-            if (response.statusCode() == 201) {
-              context.put("backup_gist_url", response.body().getString("html_url"));
-              indexHandler(context);
-            } else {
-              StringBuilder message = new StringBuilder()
-                .append("Could not backup the wiki: ")
-                .append(response.statusMessage());
-              JsonObject body = response.body();
-              if (body != null) {
-                message.append(System.getProperty("line.separator"))
-                  .append(body.encodePrettily());
+          .as(BodyCodec.jsonObject()) // <4>
+          .sendJsonObject(payload, ar -> {  // <5>
+            if (ar.succeeded()) {
+              HttpResponse<JsonObject> response = ar.result();
+              if (response.statusCode() == 200) {
+                String url = "https://glot.io/snippets/" + response.body().getString("id");
+                context.put("backup_gist_url", url);  // <6>
+                indexHandler(context);
+              } else {
+                StringBuilder message = new StringBuilder()
+                  .append("Could not backup the wiki: ")
+                  .append(response.statusMessage());
+                JsonObject body = response.body();
+                if (body != null) {
+                  message.append(System.getProperty("line.separator"))
+                    .append(body.encodePrettily());
+                }
+                LOGGER.error(message.toString());
+                context.fail(502);
               }
-              LOGGER.error(message.toString());
-              context.fail(502);
+            } else {
+              Throwable err = ar.cause();
+              LOGGER.error("HTTP Client error", err);
+              context.fail(err);
             }
-          } else {
-            Throwable err = ar.cause();
-            LOGGER.error("HTTP Client error", err);
-            context.fail(err);
-          }
-        });
+          });
+
       } else {
         context.fail(reply.cause());
       }
