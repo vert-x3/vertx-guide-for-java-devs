@@ -365,7 +365,7 @@ The `pageRenderingHandler` method code is the following:
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageRenderingHandler]
 ----
-<1> URL parameters (`/wiki/:name` here) can be accessed through the context request object.
+<1> URL parameters (`/wiki/:page` here) can be accessed through the context request object.
 <2> Passing argument values to SQL queries is done using a `JsonArray`, with the elements in order of the `?` symbols in the SQL query.
 <3> The `Processor` class comes from the _txtmark_ Markdown rendering library that we use.
 
