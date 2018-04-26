@@ -196,6 +196,9 @@ We leave adding user registration and management as an exercice left to the read
 |/
 |===
 
+The `vertx-auth-jdbc` prescribes a default database schema with 3 tables: 1 for users (with salted passwords), 1 for role permissions, and 1 to map users to roles.
+That schema can be changed and configured, but in many cases sticking to the default is a very good option.
+
 To do that, we are going to deploy a verticle whose sole role is performing the initialisation work:
 
 [source,java,indent=0]
