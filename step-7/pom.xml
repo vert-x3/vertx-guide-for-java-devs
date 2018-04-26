@@ -87,12 +87,12 @@
       <version>2.3.4</version>
     </dependency>
 
-    <!-- tag::shiro[] -->
+    <!--tag::jdbc-auth[] -->
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-auth-shiro</artifactId>
+      <artifactId>vertx-auth-jdbc</artifactId>
     </dependency>
-    <!-- end::shiro[] -->
+    <!--end::jdbc-auth[] -->
 
     <!-- tag::jwt[] -->
     <dependency>
