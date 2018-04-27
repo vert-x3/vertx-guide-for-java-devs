@@ -95,7 +95,7 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-auth-shiro</artifactId>
+      <artifactId>vertx-auth-jdbc</artifactId>
     </dependency>
 
     <dependency>
