@@ -19,8 +19,11 @@
 package io.vertx.guides.wiki.http;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,38 +80,48 @@ public class AuthInitializerVerticle extends AbstractVerticle {
     dbClient.getConnection(car -> {
       if (car.succeeded()) {
         SQLConnection connection = car.result();
-        connection.batch(schemaCreation, b1 -> {
-          if (b1.succeeded()) {
-            connection.query("select count(*) from user;", q -> {
-              if (q.succeeded()) {
-                if (q.result().getResults().get(0).getInteger(0) == 0) {
-                  logger.info("Need to insert data");
-                  connection.batch(dataInit, b2 -> {
-                    if (b2.succeeded()) {
-                      logger.info("Successfully inserted data");
-                    } else {
-                      logger.error("Could not insert data", b2.cause());
-                    }
-                    connection.close();
-                  });
-                } else {
-                  logger.info("No need to insert data");
-                  connection.close();
-                }
-              } else {
-                connection.close();
-                logger.error("Could not check the number of users in the database", q.cause());
-              }
-            });
-          } else {
-            connection.close();
-            logger.error("Schema creation failed", b1.cause());
-          }
-        });
+        connection.batch(schemaCreation, ar -> schemaCreationHandler(dataInit, connection, ar));
       } else {
         logger.error("Cannot obtain a database connection", car.cause());
       }
     });
+  }
+
+  private void schemaCreationHandler(List<String> dataInit, SQLConnection connection, AsyncResult<List<Integer>> ar) {
+    if (ar.succeeded()) {
+      connection.query("select count(*) from user;", testQueryHandler(dataInit, connection));
+    } else {
+      connection.close();
+      logger.error("Schema creation failed", ar.cause());
+    }
+  }
+
+  private Handler<AsyncResult<ResultSet>> testQueryHandler(List<String> dataInit, SQLConnection connection) {
+    return ar -> {
+      if (ar.succeeded()) {
+        if (ar.result().getResults().get(0).getInteger(0) == 0) {
+          logger.info("Need to insert data");
+          connection.batch(dataInit, batchInsertHandler(connection));
+        } else {
+          logger.info("No need to insert data");
+          connection.close();
+        }
+      } else {
+        connection.close();
+        logger.error("Could not check the number of users in the database", ar.cause());
+      }
+    };
+  }
+
+  private Handler<AsyncResult<List<Integer>>> batchInsertHandler(SQLConnection connection) {
+    return ar -> {
+      if (ar.succeeded()) {
+        logger.info("Successfully inserted data");
+      } else {
+        logger.error("Could not insert data", ar.cause());
+      }
+      connection.close();
+    };
   }
 }
 // end::code[]
