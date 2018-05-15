@@ -205,6 +205,8 @@ To do that, we are going to deploy a verticle whose sole role is performing the 
 ----
 include::src/main/java/io/vertx/guides/wiki/http/AuthInitializerVerticle.java[tags=code]
 ----
+<1> The hashed values can be generated using `auth.computeHash(password, salt)` where `auth` is a `JDBCAuth` instance.
+    Salt values can also be generated using `auth.generateSalt()`.
 
 This impacts the `MainVerticle` class, as we now deploy it first:
 
