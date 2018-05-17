@@ -28,33 +28,31 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
-import io.vertx.ext.auth.shiro.ShiroAuthOptions;
-import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
 import io.vertx.ext.jwt.JWTOptions;
 import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
 // tag::rx-imports[]
+import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.http.HttpServer;
-import io.vertx.reactivex.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.auth.User;
+import io.vertx.reactivex.ext.auth.jdbc.JDBCAuth;
 import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
-import io.vertx.reactivex.ext.auth.shiro.ShiroAuth;
+import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import io.vertx.reactivex.ext.web.client.HttpResponse; // <1>
 import io.vertx.reactivex.ext.web.codec.BodyCodec;
 import io.vertx.reactivex.ext.web.handler.*;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import io.vertx.reactivex.ext.web.templ.FreeMarkerTemplateEngine;
+// end::rx-imports[]
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-// end::rx-imports[]
 
 import java.util.Arrays;
 import java.util.Date;
 
+import static io.vertx.guides.wiki.DatabaseConstants.*;
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
@@ -94,10 +92,12 @@ public class HttpServerVerticle extends AbstractVerticle {
         .setPath("server-keystore.jks")
         .setPassword("secret")));
 
-    AuthProvider auth = ShiroAuth.create(vertx, new ShiroAuthOptions()
-      .setType(ShiroAuthRealmType.PROPERTIES)
-      .setConfig(new JsonObject()
-        .put("properties_path", "classpath:wiki-users.properties")));
+    JDBCClient dbClient = JDBCClient.createShared(vertx, new JsonObject()
+      .put("url", config().getString(CONFIG_WIKIDB_JDBC_URL, DEFAULT_WIKIDB_JDBC_URL))
+      .put("driver_class", config().getString(CONFIG_WIKIDB_JDBC_DRIVER_CLASS, DEFAULT_WIKIDB_JDBC_DRIVER_CLASS))
+      .put("max_pool_size", config().getInteger(CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, DEFAULT_JDBC_MAX_POOL_SIZE)));
+
+    JDBCAuth auth = JDBCAuth.create(vertx, dbClient);
 
     Router router = Router.router(vertx);
 

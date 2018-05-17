@@ -26,40 +26,33 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jdbc.JDBCAuth;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.jwt.JWTOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import io.vertx.core.net.JksOptions;
-import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.shiro.ShiroAuth;
-import io.vertx.ext.auth.shiro.ShiroAuthOptions;
-import io.vertx.ext.auth.shiro.ShiroAuthRealmType;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.codec.BodyCodec;
-import io.vertx.ext.web.handler.AuthHandler;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.CookieHandler;
-import io.vertx.ext.web.handler.FormLoginHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
-import io.vertx.ext.web.handler.RedirectAuthHandler;
-import io.vertx.ext.web.handler.SessionHandler;
-import io.vertx.ext.web.handler.UserSessionHandler;
+import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.templ.FreeMarkerTemplateEngine;
 import io.vertx.guides.wiki.database.WikiDatabaseService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static io.vertx.guides.wiki.DatabaseConstants.*;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
@@ -100,14 +93,16 @@ public class HttpServerVerticle extends AbstractVerticle {
         .setPassword("secret")));
     // end::https-server[]
 
-    // tag::shiro-auth[]
-    AuthProvider auth = ShiroAuth.create(vertx, new ShiroAuthOptions()
-      .setType(ShiroAuthRealmType.PROPERTIES)
-      .setConfig(new JsonObject()
-        .put("properties_path", "classpath:wiki-users.properties")));
-    // end::shiro-auth[]
+    // tag::jdbc-auth[]
+    JDBCClient dbClient = JDBCClient.createShared(vertx, new JsonObject()
+      .put("url", config().getString(CONFIG_WIKIDB_JDBC_URL, DEFAULT_WIKIDB_JDBC_URL))
+      .put("driver_class", config().getString(CONFIG_WIKIDB_JDBC_DRIVER_CLASS, DEFAULT_WIKIDB_JDBC_DRIVER_CLASS))
+      .put("max_pool_size", config().getInteger(CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, DEFAULT_JDBC_MAX_POOL_SIZE)));
 
-    // tag::shiro-routes[]
+    JDBCAuth auth = JDBCAuth.create(vertx, dbClient);
+    // end::jdbc-auth[]
+
+    // tag::auth-routes[]
     Router router = Router.router(vertx);
 
     router.route().handler(CookieHandler.create());
@@ -126,9 +121,9 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/action/create").handler(this::pageCreateHandler);
     router.get("/action/backup").handler(this::backupHandler);
     router.post("/action/delete").handler(this::pageDeletionHandler);
-    // end::shiro-routes[]
+    // end::auth-routes[]
 
-    // tag::shiro-login[]
+    // tag::auth-login[]
     router.get("/login").handler(this::loginHandler);
     router.post("/login-auth").handler(FormLoginHandler.create(auth));  // <1>
 
@@ -139,7 +134,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         .putHeader("Location", "/")
         .end();
     });
-    // end::shiro-login[]
+    // end::auth-login[]
 
     // tag::jwtAuth[]
     Router apiRouter = Router.router(vertx);

@@ -45,7 +45,8 @@ public class MainVerticle extends AbstractVerticle {
 
         return httpVerticleDeployment;
       })
-      .subscribe(id -> startFuture.complete(), startFuture::fail); // <2>
+      .flatMap(id -> vertx.rxDeployVerticle("io.vertx.guides.wiki.http.AuthInitializerVerticle")) // <2>
+      .subscribe(id -> startFuture.complete(), startFuture::fail); // <3>
     // end::rx-sequential-composition[]
   }
 }

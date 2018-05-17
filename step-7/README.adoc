@@ -46,10 +46,9 @@ include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=test-https]
 == Access control and authentication
 
 Vert.x provides a wide range of options for doing authentication and authorization.
-The officially supported modules cover JDBC, MongoDB, https://shiro.apache.org/[Apache Shiro], OAuth2 with well-known providers and JWT (JSON web tokens).
+The officially supported modules cover JDBC, MongoDB, Apache Shiro, `htdigest` files, OAuth2 with well-known providers and JWT (JSON web tokens).
 
-While the next section will cover JWT, this one focuses on using Apache Shiro which is especially interesting when authentication must be backed by a LDAP or Active Directory server.
-In our case we will simply store the credentials in a properties file to keep things simple, but the API usage against a LDAP server remains the same.
+While the next section will cover JWT, this one focuses on using JDBC-based authentication, reusing the wiki database.
 
 The goal is to require users to authenticate for using the wiki, and have role-based permissions:
 
@@ -58,39 +57,47 @@ The goal is to require users to authenticate for using the wiki, and have role-b
 * having an _editor_ role allows creating, editing and deleting pages,
 * having an _admin_ role is equivalent to having all possible roles.
 
-WARNING: The Vert.x Shiro integration has some issues due to the inner workings of Apache Shiro. Some parts are blocking which can hinder performance, and some data is stored using thread local state. You should not try abusing the exposed internal state APIs either.
+=== Refactoring the JDBC configuration
 
-=== Adding Apache Shiro authentication to routes
+In the previous steps, only the database verticle and service where aware of the JDBC configuration.
+Now the HTTP service vertice also needs to share the same JDBC access.
 
-The first step is to add the `vertx-auth-shiro` module to the Maven dependencies list:
+To do that we extract configuration parameters and default values to an interface:
+
+[source,java]
+----
+include::src/main/java/io/vertx/guides/wiki/DatabaseConstants.java[tags=code]
+----
+
+Now in `WikiDatabaseVerticle` we use these constants as follows:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseVerticle.java[tags=use-common-config]
+----
+
+
+=== Adding JDBC authentication to routes
+
+The first step is to add the `vertx-auth-jdbc` module to the Maven dependencies list:
 
 [source,xml,indent=0]
 ----
-include::pom.xml[tags=shiro]
+include::pom.xml[tags=jdbc-auth]
 ----
 
-The properties file definition that we use is the following, located in `src/main/resources/wiki-users.properties`:
-
-[source,index=0]
-----
-include::src/main/resources/wiki-users.properties[tags=props]
-----
-
-A `user`-prefixed entry is a user account, where the first value entry is the password possibly followed by roles.
-In this example user `bar` has password `baz`, is a `writer`, and a `writer` has `update` permission.
-
-Back to the `HttpServerVerticle` class code, we create an authentication provider using Apache Shiro:
+Back to the `HttpServerVerticle` class code, we create an authentication provider:
 
 [source,java,indent=0]
 ----
-include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=shiro-auth]
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=jdbc-auth]
 ----
 
-The `ShiroAuth` object instance is then used to deal with server-side user sessions:
+The `JDBCAuth` object instance is then used to deal with server-side user sessions:
 
 [source,java,indent=0]
 ----
-include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=shiro-routes]
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=auth-routes]
 ----
 <1> We install a user session handler for all routes.
 <2> This automatically redirects requests to `/login` when there is no user session for the request.
@@ -100,7 +107,7 @@ Finally, we need to create 3 routes for displaying a login form, handling login 
 
 [source,java,indent=0]
 ----
-include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=shiro-login]
+include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=auth-login]
 ----
 <1> `FormLoginHandler` is a helper for processing login submission requests. By default it expects the HTTP POST request to have: `username` as the login, `password` as the password, and `return_url` as the URL to redirect to upon success.
 <2> Logging out a user is a simple as clearing it from the current `RoutingContext`.
@@ -164,6 +171,58 @@ Here is how to protect page deletions by wrapping the `pageDeletionHandler` code
 include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=pageDeletionHandler]
 ----
 
+=== Populating the database with user and role data
+
+A last step is required for assembling all pieces of our authentication puzzle.
+We leave adding user registration and management as an exercice left to the reader, and instead we add some code to ensure that the database is being populated with some roles and accounts:
+
+|===
+|Login |Password |Roles
+
+|root
+|admin
+|admin (create, delete, update)
+
+|foo
+|bar
+|editor (create, delete, update), writer (update)
+
+|bar
+|baz
+|writer (update)
+
+|baz
+|baz
+|/
+|===
+
+The `vertx-auth-jdbc` prescribes a default database schema with 3 tables: 1 for users (with salted passwords), 1 for role permissions, and 1 to map users to roles.
+That schema can be changed and configured, but in many cases sticking to the default is a very good option.
+
+To do that, we are going to deploy a verticle whose sole role is performing the initialisation work:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/http/AuthInitializerVerticle.java[tags=code]
+----
+<1> The hashed values can be generated using `auth.computeHash(password, salt)` where `auth` is a `JDBCAuth` instance.
+    Salt values can also be generated using `auth.generateSalt()`.
+
+This impacts the `MainVerticle` class, as we now deploy it first:
+
+[source,java,indent=0]
+----
+include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=code]
+----
+
+Finally, we also need to update the `ApiTest` class to setup the in-memory database for both the authentication and wiki storage:
+
+[source,java,indent=0]
+----
+include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=prepare-db]
+----
+
+
 == Authenticating web API requests with JWT
 
 https://jwt.io/[JSON Web Tokens] (https://tools.ietf.org/html/rfc7519[RFC 7519]) is a standard for issuing JSON-encoded tokens containing _claims_, typically identifying a user and permissions, although claims can be just about anything.
@@ -204,7 +263,7 @@ Indeed, this URL is being used to generate new JWT tokens:
 ----
 include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=issue-jwt]
 ----
-<1> We expect login and password information to have been passed through HTTP request headers, and we authenticate using the Apache Shiro authentication provider of the previous section.
+<1> We expect login and password information to have been passed through HTTP request headers, and we authenticate using the authentication provider of the previous section.
 <2> Upon success we can query for roles.
 <3> We generate a token with `username`, `canCreate`, `canDelete` and `canUpdate` claims.
 

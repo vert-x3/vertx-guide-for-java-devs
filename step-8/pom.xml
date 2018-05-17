@@ -27,7 +27,7 @@
   <version>1.3.0-SNAPSHOT</version>
 
   <properties>
-    <vertx.version>3.5.1</vertx.version>
+    <vertx.version>3.5.2.CR1</vertx.version>
     <main.verticle>io.vertx.guides.wiki.MainVerticle</main.verticle>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -95,7 +95,7 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-auth-shiro</artifactId>
+      <artifactId>vertx-auth-jdbc</artifactId>
     </dependency>
 
     <dependency>

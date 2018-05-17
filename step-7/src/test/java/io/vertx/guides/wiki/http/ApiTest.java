@@ -53,11 +53,17 @@ public class ApiTest {
   public void prepare(TestContext context) {
     vertx = Vertx.vertx();
 
+    // tag::prepare-db[]
     JsonObject dbConf = new JsonObject()
       .put(WikiDatabaseVerticle.CONFIG_WIKIDB_JDBC_URL, "jdbc:hsqldb:mem:testdb;shutdown=true")
       .put(WikiDatabaseVerticle.CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, 4);
+
+    vertx.deployVerticle(new AuthInitializerVerticle(),
+      new DeploymentOptions().setConfig(dbConf), context.asyncAssertSuccess());
+
     vertx.deployVerticle(new WikiDatabaseVerticle(),
       new DeploymentOptions().setConfig(dbConf), context.asyncAssertSuccess());
+    // end::prepare-db[]
 
     vertx.deployVerticle(new HttpServerVerticle(), context.asyncAssertSuccess());
 
@@ -92,8 +98,8 @@ public class ApiTest {
           context.fail(ar.cause());
         }
       });
-      // (...)
-  // end::fetch-token[]
+    // (...)
+    // end::fetch-token[]
 
     JsonObject page = new JsonObject()
       .put("name", "Sample")
