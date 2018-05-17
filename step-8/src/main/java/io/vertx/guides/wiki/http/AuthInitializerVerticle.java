@@ -22,7 +22,6 @@ import io.reactivex.Completable;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
-import io.vertx.reactivex.ext.sql.SQLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,20 +33,6 @@ import static io.vertx.guides.wiki.DatabaseConstants.*;
 public class AuthInitializerVerticle extends AbstractVerticle {
 
   private final Logger logger = LoggerFactory.getLogger(AuthInitializerVerticle.class);
-
-  private static class ConnectionAndValue<T> {
-    final SQLConnection connection;
-    final T value;
-
-    private ConnectionAndValue(SQLConnection connection, T value) {
-      this.connection = connection;
-      this.value = value;
-    }
-
-    static <T> ConnectionAndValue<T> of(SQLConnection connection, T value) {
-      return new ConnectionAndValue<>(connection, value);
-    }
-  }
 
   @Override
   public void start() throws Exception {
