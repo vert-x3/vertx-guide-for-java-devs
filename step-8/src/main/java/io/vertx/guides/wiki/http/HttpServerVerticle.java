@@ -194,7 +194,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   }
 
   private Completable checkAuthorised(RoutingContext context, String authority) {
-    return context.user().rxIsAuthorized("role:writer")
+    return context.user().rxIsAuthorized(authority)
       .flatMapCompletable(authorized -> authorized ? Completable.complete() : Completable.error(new UnauthorizedThrowable(authority)));
   }
 
