@@ -325,7 +325,7 @@ Sending a JWT token along with a request is done using a `Authorization` HTTP re
 Here is how to fix the API request above by passing the JWT token that had been issued to us:
 
 ----
-$ http --verbose --verify no GET https://localhost:8080/api/pages 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InJvb3QiLCJjYW5DcmVhdGUiOnRydWUsImNhbkRlbGV0ZSI6dHJ1ZSwiY2FuVXBkYXRlIjp0cnVlLCJpYXQiOjE0ODk0NDE1OTAsImlzcyI6IlZlcnQueCIsInN1YiI6Ildpa2kgQVBJIn0=.RmtJb81QKVUFreXL-ajZ8ktLGasoKEqG8GSQncRWrN8='
+$ http --verbose --verify no GET https://localhost:8080/api/pages Authorization:'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InJvb3QiLCJjYW5DcmVhdGUiOnRydWUsImNhbkRlbGV0ZSI6dHJ1ZSwiY2FuVXBkYXRlIjp0cnVlLCJpYXQiOjE0ODk0NDE1OTAsImlzcyI6IlZlcnQueCIsInN1YiI6Ildpa2kgQVBJIn0=.RmtJb81QKVUFreXL-ajZ8ktLGasoKEqG8GSQncRWrN8='
 GET /api/pages HTTP/1.1
 Accept: */*
 Accept-Encoding: gzip, deflate
