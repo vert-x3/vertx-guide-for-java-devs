@@ -66,7 +66,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   }
 
   @Override
-  public WikiDatabaseService fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) {
+  public void fetchAllPages(Handler<AsyncResult<JsonArray>> resultHandler) {
     dbClient.query(sqlQueries.get(SqlQuery.ALL_PAGES), res -> {
       if (res.succeeded()) {
         JsonArray pages = new JsonArray(res.result()
@@ -81,11 +81,10 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
         resultHandler.handle(Future.failedFuture(res.cause()));
       }
     });
-    return this;
   }
 
   @Override
-  public WikiDatabaseService fetchPage(String name, Handler<AsyncResult<JsonObject>> resultHandler) {
+  public void fetchPage(String name, Handler<AsyncResult<JsonObject>> resultHandler) {
     dbClient.queryWithParams(sqlQueries.get(SqlQuery.GET_PAGE), new JsonArray().add(name), fetch -> {
       if (fetch.succeeded()) {
         JsonObject response = new JsonObject();
@@ -104,11 +103,10 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
         resultHandler.handle(Future.failedFuture(fetch.cause()));
       }
     });
-    return this;
   }
 
   @Override
-  public WikiDatabaseService createPage(String title, String markdown, Handler<AsyncResult<Void>> resultHandler) {
+  public void createPage(String title, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     JsonArray data = new JsonArray().add(title).add(markdown);
     dbClient.updateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), data, res -> {
       if (res.succeeded()) {
@@ -118,11 +116,10 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
         resultHandler.handle(Future.failedFuture(res.cause()));
       }
     });
-    return this;
   }
 
   @Override
-  public WikiDatabaseService savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
+  public void savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     JsonArray data = new JsonArray().add(markdown).add(id);
     dbClient.updateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), data, res -> {
       if (res.succeeded()) {
@@ -132,11 +129,10 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
         resultHandler.handle(Future.failedFuture(res.cause()));
       }
     });
-    return this;
   }
 
   @Override
-  public WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler) {
+  public void deletePage(int id, Handler<AsyncResult<Void>> resultHandler) {
     JsonArray data = new JsonArray().add(id);
     dbClient.updateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data, res -> {
       if (res.succeeded()) {
@@ -146,7 +142,6 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
         resultHandler.handle(Future.failedFuture(res.cause()));
       }
     });
-    return this;
   }
 }
 // end::implementation[]
