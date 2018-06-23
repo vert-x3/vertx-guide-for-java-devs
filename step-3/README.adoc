@@ -78,9 +78,8 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[ta
 ----
 
 1. The `ProxyGen` annotation is used to trigger the code generation of a proxy for clients of that service.
-2. The `Fluent` annotation is optional, but allows _fluent_ interfaces where operations can be chained by returning the service instance. This is mostly useful for the code generator when the service shall be consumed from other JVM languages.
-3. Parameter types need to be strings, Java primitive types, JSON objects or arrays, any enumeration type or a `java.util` collection (`List` / `Set` / `Map`) of the previous types. The only way to support arbitrary Java classes is to have them as Vert.x data objects, annotated with `@DataObject`. The last opportunity to pass other types is service reference types.
-4. Since services provide asynchronous results, the last argument of a service method needs to be a `Handler<AsyncResult<T>>` where `T` is any of the types suitable for code generation as described above.
+2. Parameter types need to be strings, Java primitive types, JSON objects or arrays, any enumeration type or a `java.util` collection (`List` / `Set` / `Map`) of the previous types. The only way to support arbitrary Java classes is to have them as Vert.x data objects, annotated with `@DataObject`. The last opportunity to pass other types is service reference types.
+3. Since services provide asynchronous results, the last argument of a service method needs to be a `Handler<AsyncResult<T>>` where `T` is any of the types suitable for code generation as described above.
 
 It is a good practice that service interfaces provide static methods to create instances of both the actual service implementation and proxy for client code over the event bus.
 
