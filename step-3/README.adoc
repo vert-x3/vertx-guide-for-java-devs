@@ -6,7 +6,7 @@ The previous refactoring was a big step forward compared to our initial implemen
 We also saw that we could deploy several instances of a given verticle to better cope with load and to better leverage CPU cores.
 
 In this section we see how to design and use Vert.x services.
-The main advantage of a service is that it defines an interface for doing certain operations that a verticle exposes.
+The main advantage of a service is that it defines an interface for doing certain operations that a verticle exposes - further improving the decoupling of code we started in step 2.
 We also leverage code generation for all the event bus messaging plumbing, instead of crafting it ourselves like we did in the previous section.
 
 We are also going to refactor the code into different Java packages:
