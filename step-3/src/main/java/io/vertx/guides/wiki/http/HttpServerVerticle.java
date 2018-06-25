@@ -31,6 +31,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.templ.FreeMarkerTemplateEngine;
 import io.vertx.guides.wiki.database.WikiDatabaseService;
+import io.vertx.guides.wiki.database.WikiDatabaseServiceFactory;
 
 import java.util.Date;
 
@@ -58,7 +59,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   public void start(Future<Void> startFuture) throws Exception {
 
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue"); // <1>
-    dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
+    dbService = WikiDatabaseServiceFactory.createProxy(vertx, wikiDbQueue);
 
     HttpServer server = vertx.createHttpServer();
     // (...)

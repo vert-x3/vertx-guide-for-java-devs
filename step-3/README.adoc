@@ -6,7 +6,7 @@ The previous refactoring was a big step forward compared to our initial implemen
 We also saw that we could deploy several instances of a given verticle to better cope with load and to better leverage CPU cores.
 
 In this section we see how to design and use Vert.x services.
-The main advantage of a service is that it defines an interface for doing certain operations that a verticle exposes.
+The main advantage of a service is that it defines an interface for doing certain operations that a verticle exposes - further improving the decoupling of code we started in step 2.
 We also leverage code generation for all the event bus messaging plumbing, instead of crafting it ourselves like we did in the previous section.
 
 We are also going to refactor the code into different Java packages:
@@ -82,13 +82,13 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[ta
 3. Parameter types need to be strings, Java primitive types, JSON objects or arrays, any enumeration type or a `java.util` collection (`List` / `Set` / `Map`) of the previous types. The only way to support arbitrary Java classes is to have them as Vert.x data objects, annotated with `@DataObject`. The last opportunity to pass other types is service reference types.
 4. Since services provide asynchronous results, the last argument of a service method needs to be a `Handler<AsyncResult<T>>` where `T` is any of the types suitable for code generation as described above.
 
-It is a good practice that service interfaces provide static methods to create instances of both the actual service implementation and proxy for client code over the event bus.
+It is a good practice to use a Factory to create instances of both the actual service implementation and proxy for client code over the event bus. This would allow swapping the actual implementation in the future without needing to modify the client code.
 
 We define `create` as simply delegating to the implementation class and its constructor:
 
 [source,java,indent=0]
 ----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[tags=create]
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceFactory.java[tags=create]
 ----
 
 The Vert.x code generator creates the proxy class and names it by suffixing with `VertxEBProxy`.
@@ -96,7 +96,7 @@ Constructors of these proxy classes need a reference to the Vert.x context as we
 
 [source,java,indent=0]
 ----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseService.java[tags=proxy]
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceFactory.java[tags=proxy]
 ----
 
 NOTE: The `SqlQuery` and `ErrorCodes` enumeration types that were inner classes in the previous iteration have been extracted to package-protected types, see `SqlQuery.java` and `ErrorCodes.java`.
