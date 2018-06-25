@@ -51,7 +51,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
       .put("driver_class", config().getString(CONFIG_WIKIDB_JDBC_DRIVER_CLASS, "org.hsqldb.jdbcDriver"))
       .put("max_pool_size", config().getInteger(CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, 30)));
 
-    WikiDatabaseService.create(dbClient, sqlQueries, ready -> {
+    WikiDatabaseServiceFactory.create(dbClient, sqlQueries, ready -> {
       if (ready.succeeded()) {
         ServiceBinder binder = new ServiceBinder(vertx);
         binder
