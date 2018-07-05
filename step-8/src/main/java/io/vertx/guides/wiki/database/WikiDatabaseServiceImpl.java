@@ -27,7 +27,7 @@ import io.vertx.ext.sql.ResultSet;
 import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
-import io.vertx.reactivex.ext.sql.SQLConnection;
+import io.vertx.reactivex.ext.sql.SQLClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,23 +48,14 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     this.dbClient = new JDBCClient(dbClient);
     this.sqlQueries = sqlQueries;
 
-    Single<SQLConnection> connection = getConnection();
-    // tag::rx-flatmap-connection[]
-    connection
-      .flatMapCompletable(conn -> conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE)))
-      // end::rx-flatmap-connection[]
-      .andThen(Single.just(this))
+    // tag::using-connection-helper[]
+    SQLClientHelper.usingConnectionSingle(this.dbClient, conn -> { // <1>
+      return conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE)) // <2>
+        .andThen(Single.just(this));
+    })
+      // end::using-connection-helper[]
       .subscribe(SingleHelper.toObserver(readyHandler));
   }
-
-  // tag::rx-get-connection[]
-  private Single<SQLConnection> getConnection() {
-    return dbClient.rxGetConnection().flatMap(conn -> {
-      Single<SQLConnection> connectionSingle = Single.just(conn); // <1>
-      return connectionSingle.doFinally(conn::close); // <2>
-    });
-  }
-  // end::rx-get-connection[]
 
   @Override
   // tag::rx-data-flow[]

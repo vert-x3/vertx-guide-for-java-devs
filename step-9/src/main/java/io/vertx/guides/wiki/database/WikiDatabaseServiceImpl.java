@@ -27,7 +27,7 @@ import io.vertx.ext.sql.ResultSet;
 import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
-import io.vertx.reactivex.ext.sql.SQLConnection;
+import io.vertx.reactivex.ext.sql.SQLClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,17 +48,10 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     this.dbClient = new JDBCClient(dbClient);
     this.sqlQueries = sqlQueries;
 
-    getConnection()
-      .flatMapCompletable(conn -> conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE)))
-      .andThen(Single.just(this))
-      .subscribe(SingleHelper.toObserver(readyHandler));
-  }
-
-  private Single<SQLConnection> getConnection() {
-    return dbClient.rxGetConnection().flatMap(conn -> {
-      Single<SQLConnection> connectionSingle = Single.just(conn);
-      return connectionSingle.doFinally(conn::close);
-    });
+    SQLClientHelper.usingConnectionSingle(this.dbClient, conn -> {
+      return conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE))
+        .andThen(Single.just(this));
+    }).subscribe(SingleHelper.toObserver(readyHandler));
   }
 
   @Override

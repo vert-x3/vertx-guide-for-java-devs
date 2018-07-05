@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-// tag::code[]
 package io.vertx.guides.wiki.http;
 
 import io.reactivex.Completable;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
+import io.vertx.reactivex.ext.sql.SQLClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,23 +73,22 @@ public class AuthInitializerVerticle extends AbstractVerticle {
       .put("driver_class", config().getString(CONFIG_WIKIDB_JDBC_DRIVER_CLASS, DEFAULT_WIKIDB_JDBC_DRIVER_CLASS))
       .put("max_pool_size", config().getInteger(CONFIG_WIKIDB_JDBC_MAX_POOL_SIZE, DEFAULT_JDBC_MAX_POOL_SIZE)));
 
-    dbClient.rxGetConnection().flatMapCompletable(connection -> connection
-      .rxBatch(schemaCreation)
-      .flatMap(rs -> connection.rxQuery("select count(*) from user;"))
-      .flatMapCompletable(rs -> {
-        if (rs.getResults().get(0).getInteger(0) == 0) {
-          logger.info("Need to insert data");
-          return connection
-            .rxBatch(dataInit)
-            .toCompletable();
-        } else {
-          logger.info("No need to insert data");
-          return Completable.complete();
-        }
-      }).doFinally(connection::close)
+    SQLClientHelper.usingConnectionCompletable(dbClient, connection ->
+      connection.rxBatch(schemaCreation)
+        .flatMap(rs -> connection.rxQuery("select count(*) from user;"))
+        .flatMapCompletable(rs -> {
+          if (rs.getResults().get(0).getInteger(0) == 0) {
+            logger.info("Need to insert data");
+            return connection
+              .rxBatch(dataInit)
+              .toCompletable();
+          } else {
+            logger.info("No need to insert data");
+            return Completable.complete();
+          }
+        })
     ).subscribe(
       () -> logger.info("Authentication database prepared"),
       t -> logger.error("Could not prepare the authentication database", t));
   }
 }
-// end::code[]
