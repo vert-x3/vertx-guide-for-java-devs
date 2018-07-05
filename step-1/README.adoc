@@ -48,7 +48,7 @@ To generate a similar project as by cloning the Git starter repository:
 
     mkdir vertx-wiki
     cd vertx-wiki
-    mvn io.fabric8:vertx-maven-plugin:1.0.13:setup -DvertxVersion=3.5.2
+    mvn io.fabric8:vertx-maven-plugin:1.0.13:setup -DvertxVersion=3.6.0-SNAPSHOT
     git init
 
 ====

@@ -44,7 +44,7 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.reactivex.ext.web.codec.BodyCodec;
 import io.vertx.reactivex.ext.web.handler.*;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
-import io.vertx.reactivex.ext.web.templ.FreeMarkerTemplateEngine;
+import io.vertx.reactivex.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
 // end::rx-imports[]
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +53,7 @@ import java.util.Arrays;
 import java.util.Date;
 
 import static io.vertx.guides.wiki.DatabaseConstants.*;
+
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
