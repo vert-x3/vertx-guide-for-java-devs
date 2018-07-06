@@ -106,7 +106,7 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.jav
 
 === Working with a database connection
 
-When direct queries do not fit (e.g. when using session variables/temporary tables), you can generate a reactive flow from a single `SQLConnection`:
+When direct queries do not fit (e.g. when creating then querying a temporary table), you can generate a reactive flow from a single `SQLConnection`:
 
 [source,java,indent=0]
 ----
