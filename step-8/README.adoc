@@ -106,32 +106,18 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.jav
 
 === Working with a database connection
 
-When direct queries do not fit (e.g. when multiple queries must participate in the same transaction), you can acquire a database connection from the pool.
-All you have to do is calling `rxGetConnection` on the `JDBCClient`:
+When direct queries do not fit (e.g. when creating then querying a temporary table), you can generate a reactive flow from a single `SQLConnection`:
 
 [source,java,indent=0]
 ----
-Single<SQLConnection> connection = dbClient.rxGetConnection();
+include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=using-connection-helper]
 ----
+<1> borrows a connection from the pool and provides it in a callback.
+<2> returns a `Single` generated from execution of queries and transformation of results.
 
-The method returns a `Single<Connection>` which you can easily transform with `flatMapXXX` to execute SQL queries:
+You may execute any number of queries and transform results with RxJava operators.
 
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-flatmap-connection]
-----
-
-But how can we release the connection if the `SQLConnection` reference is no longer reachable?
-A simple and convenient way to do this is to invoke `close` in a `doFinally` callback:
-
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=rx-get-connection]
-----
-<1> After the connection is acquired we wrap it into a `Single`
-<2> The `Single` is modified to invoke `close` in a `doFinally` callback
-
-Now we shall use `getConnection` anytime we need to work with a database connection.
+NOTE: `io.vertx.reactivex.ext.sql.SQLClientHelper` can also generate `Flowable`, `Observable`, `Maybe` and `Completable` flows.
 
 == Bridging the gap between callbacks and RxJava
 
