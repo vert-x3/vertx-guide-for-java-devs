@@ -113,7 +113,7 @@ When direct queries do not fit (e.g. when creating then querying a temporary tab
 include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.java[tags=using-connection-helper]
 ----
 <1> borrows a connection from the pool and provides it in a callback.
-<2> returns a `Single` generated from execution of queries and transforming results.
+<2> returns a `Single` generated from execution of queries and transformation of results.
 
 You may execute any number of queries and transform results with RxJava operators.
 
