@@ -48,10 +48,9 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     this.dbClient = new JDBCClient(dbClient);
     this.sqlQueries = sqlQueries;
 
-    SQLClientHelper.usingConnectionSingle(this.dbClient, conn -> {
-      return conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE))
-        .andThen(Single.just(this));
-    }).subscribe(SingleHelper.toObserver(readyHandler));
+    SQLClientHelper.usingConnectionSingle(this.dbClient, conn -> conn
+      .rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE))
+      .andThen(Single.just(this)));
   }
 
   @Override

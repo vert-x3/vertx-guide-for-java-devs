@@ -49,10 +49,9 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
     this.sqlQueries = sqlQueries;
 
     // tag::using-connection-helper[]
-    SQLClientHelper.usingConnectionSingle(this.dbClient, conn -> { // <1>
-      return conn.rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE)) // <2>
-        .andThen(Single.just(this));
-    })
+    SQLClientHelper.usingConnectionSingle(this.dbClient, conn -> conn // <1>
+      .rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE)) // <2>
+      .andThen(Single.just(this)))
       // end::using-connection-helper[]
       .subscribe(SingleHelper.toObserver(readyHandler));
   }

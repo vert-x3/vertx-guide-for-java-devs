@@ -115,7 +115,7 @@ include::src/main/java/io/vertx/guides/wiki/database/WikiDatabaseServiceImpl.jav
 <1> borrows a connection from the pool and provides it in a callback.
 <2> returns a `Single` generated from execution of queries and transforming results.
 
-You may execute any number of queries and transform results with RxJava operators to generate the flow.
+You may execute any number of queries and transform results with RxJava operators.
 
 NOTE: `io.vertx.reactivex.ext.sql.SQLClientHelper` can also generate `Flowable`, `Observable`, `Maybe` and `Completable` flows.
 
