@@ -11,3 +11,4 @@ db/
 *.iml
 .vertx
 guide.html
+guide.pdf
