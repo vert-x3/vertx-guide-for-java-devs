@@ -1,9 +1,3 @@
-addons:
-  apt:
-    packages:
-      - openjdk8
-      - openjdk11
-
 language: java
 
 jdk:
