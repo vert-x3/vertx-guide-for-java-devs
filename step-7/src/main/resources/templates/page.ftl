@@ -3,7 +3,7 @@
 <div class="row">
 
   <div class="col-md-12 mt-1">
-      <span class="float-xs-right">
+      <span class="float-right">
         <a class="btn btn-outline-primary" href="/" role="button" aria-pressed="true">Home</a>
         <#if canSavePage>
           <button class="btn btn-outline-warning" type="button" data-toggle="collapse"
@@ -33,7 +33,7 @@
       </div>
       <button type="submit" class="btn btn-primary">Save</button>
     <#if id != -1 && canDeletePage>
-      <button type="submit" formaction="/action/delete" class="btn btn-danger float-xs-right">Delete</button>
+      <button type="submit" formaction="/action/delete" class="btn btn-danger float-right">Delete</button>
     </#if>
     </form>
   </div>

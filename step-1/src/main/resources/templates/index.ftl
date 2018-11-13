@@ -3,7 +3,7 @@
 <div class="row">
 
   <div class="col-md-12 mt-1">
-    <div class="float-xs-right">
+    <div class="float-right">
       <form class="form-inline" action="/create" method="post">
         <div class="form-group">
           <input type="text" class="form-control" id="name" name="name" placeholder="New page name">

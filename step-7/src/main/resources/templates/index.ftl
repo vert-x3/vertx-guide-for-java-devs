@@ -4,7 +4,7 @@
 
   <div class="col-md-12 mt-1">
   <#if canCreatePage>
-    <div class="float-xs-right">
+    <div class="float-right">
       <form class="form-inline" action="/action/create" method="post">
         <div class="form-group">
           <input type="text" class="form-control" id="name" name="name" placeholder="New page name">
@@ -14,7 +14,7 @@
     </div>
   </#if>
     <h1 class="display-4">${title}</h1>
-    <div class="float-xs-right">
+    <div class="float-right">
       <a class="btn btn-outline-danger" href="/logout" role="button" aria-pressed="true">Logout (${username})</a>
     </div>
   </div>
