@@ -195,7 +195,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);
     server
-      .requestHandler(router::accept)
+      .requestHandler(router)
       .listen(portNumber, ar -> {
         if (ar.succeeded()) {
           LOGGER.info("HTTP server running on port " + portNumber);

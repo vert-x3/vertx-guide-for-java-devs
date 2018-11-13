@@ -105,7 +105,7 @@ public class MainVerticle extends AbstractVerticle {
     templateEngine = FreeMarkerTemplateEngine.create(vertx);
 
     server
-      .requestHandler(router::accept)   // <5>
+      .requestHandler(router)   // <5>
       .listen(8080, ar -> {   // <6>
         if (ar.succeeded()) {
           LOGGER.info("HTTP server running on port 8080");
