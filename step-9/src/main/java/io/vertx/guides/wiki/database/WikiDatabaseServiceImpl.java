@@ -50,7 +50,8 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
 
     SQLClientHelper.usingConnectionSingle(this.dbClient, conn -> conn
       .rxExecute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE))
-      .andThen(Single.just(this)));
+      .andThen(Single.just(this)))
+      .subscribe(SingleHelper.toObserver(readyHandler));
   }
 
   @Override

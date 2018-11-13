@@ -64,7 +64,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
 
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
+  private FreeMarkerTemplateEngine templateEngine;
 
   private WikiDatabaseService dbService;
 
@@ -190,6 +190,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     apiRouter.put("/pages/:id").handler(this::apiUpdatePage);
     apiRouter.delete("/pages/:id").handler(this::apiDeletePage);
     router.mountSubRouter("/api", apiRouter);
+
+    templateEngine = FreeMarkerTemplateEngine.create(vertx);
 
     int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);
     server
@@ -354,7 +356,7 @@ public class HttpServerVerticle extends AbstractVerticle {
           context.put("pages", reply.result().getList());
           context.put("canCreatePage", canCreatePage);  // <3>
           context.put("username", context.user().principal().getString("username"));  // <4>
-          templateEngine.render(context, "templates", "/index.ftl", ar -> {
+          templateEngine.render(context.data(), "templates/index.ftl", ar -> {
             if (ar.succeeded()) {
               context.response().putHeader("Content-Type", "text/html");
               context.response().end(ar.result());
@@ -393,7 +395,7 @@ public class HttpServerVerticle extends AbstractVerticle {
             context.put("canSavePage", canSavePage);
             context.put("canDeletePage", canDeletePage);
 
-            templateEngine.render(context, "templates", "/page.ftl", ar -> {
+            templateEngine.render(context.data(), "templates/page.ftl", ar -> {
               if (ar.succeeded()) {
                 context.response().putHeader("Content-Type", "text/html");
                 context.response().end(ar.result());
@@ -414,7 +416,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   // tag::loginHandler[]
   private void loginHandler(RoutingContext context) {
     context.put("title", "Login");
-    templateEngine.render(context, "templates", "/login.ftl", ar -> {
+    templateEngine.render(context.data(), "templates/login.ftl", ar -> {
       if (ar.succeeded()) {
         context.response().putHeader("Content-Type", "text/html");
         context.response().end(ar.result());

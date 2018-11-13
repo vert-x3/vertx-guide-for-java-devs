@@ -11,11 +11,11 @@
         <button type="submit" class="btn btn-primary">Create</button>
       </form>
     </div>
-    <h1 class="display-4">${context.title}</h1>
+    <h1 class="display-4">${title}</h1>
   </div>
 
   <div class="col-md-12 mt-1">
-  <#list context.pages>
+  <#list pages>
     <h2>Pages:</h2>
     <ul>
       <#items as page>

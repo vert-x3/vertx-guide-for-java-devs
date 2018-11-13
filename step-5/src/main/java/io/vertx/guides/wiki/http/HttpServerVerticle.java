@@ -49,7 +49,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
 
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
+  private FreeMarkerTemplateEngine templateEngine;
 
   private WikiDatabaseService dbService;
 
@@ -83,6 +83,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/create").handler(this::pageCreateHandler);
     router.post("/delete").handler(this::pageDeletionHandler);
 
+    templateEngine = FreeMarkerTemplateEngine.create(vertx);
+
     int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);
     server
       .requestHandler(router::accept)
@@ -102,7 +104,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       if (reply.succeeded()) {
         context.put("title", "Wiki home");
         context.put("pages", reply.result().getList());
-        templateEngine.render(context, "templates", "/index.ftl", ar -> {
+        templateEngine.render(context.data(), "templates/index.ftl", ar -> {
           if (ar.succeeded()) {
             context.response().putHeader("Content-Type", "text/html");
             context.response().end(ar.result());
@@ -131,7 +133,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("content", Processor.process(rawContent));
         context.put("timestamp", new Date().toString());
 
-        templateEngine.render(context, "templates", "/page.ftl", ar -> {
+        templateEngine.render(context.data(), "templates/page.ftl", ar -> {
           if (ar.succeeded()) {
             context.response().putHeader("Content-Type", "text/html");
             context.response().end(ar.result());

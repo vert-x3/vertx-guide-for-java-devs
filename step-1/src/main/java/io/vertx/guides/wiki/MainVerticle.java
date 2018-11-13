@@ -88,6 +88,8 @@ public class MainVerticle extends AbstractVerticle {
   // end::prepareDatabase[]
 
   // tag::startHttpServer[]
+  private FreeMarkerTemplateEngine templateEngine;
+
   private Future<Void> startHttpServer() {
     Future<Void> future = Future.future();
     HttpServer server = vertx.createHttpServer();   // <1>
@@ -99,6 +101,8 @@ public class MainVerticle extends AbstractVerticle {
     router.post("/save").handler(this::pageUpdateHandler);
     router.post("/create").handler(this::pageCreateHandler);
     router.post("/delete").handler(this::pageDeletionHandler);
+
+    templateEngine = FreeMarkerTemplateEngine.create(vertx);
 
     server
       .requestHandler(router::accept)   // <5>
@@ -153,8 +157,6 @@ public class MainVerticle extends AbstractVerticle {
   // end::pageCreateHandler[]
 
   // tag::indexHandler[]
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
-
   private void indexHandler(RoutingContext context) {
     dbClient.getConnection(car -> {
       if (car.succeeded()) {
@@ -172,7 +174,7 @@ public class MainVerticle extends AbstractVerticle {
 
             context.put("title", "Wiki home");  // <2>
             context.put("pages", pages);
-            templateEngine.render(context, "templates", "/index.ftl", ar -> {   // <3>
+            templateEngine.render(context.data(), "templates/index.ftl", ar -> {   // <3>
               if (ar.succeeded()) {
                 context.response().putHeader("Content-Type", "text/html");
                 context.response().end(ar.result());  // <4>
@@ -257,7 +259,7 @@ public class MainVerticle extends AbstractVerticle {
             context.put("content", Processor.process(rawContent));  // <3>
             context.put("timestamp", new Date().toString());
 
-            templateEngine.render(context, "templates", "/page.ftl", ar -> {
+            templateEngine.render(context.data(), "templates/page.ftl", ar -> {
               if (ar.succeeded()) {
                 context.response().putHeader("Content-Type", "text/html");
                 context.response().end(ar.result());

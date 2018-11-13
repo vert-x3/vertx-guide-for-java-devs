@@ -64,7 +64,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
 
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
+  private FreeMarkerTemplateEngine templateEngine;
 
   private WikiDatabaseService dbService;
 
@@ -137,6 +137,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         .setPassword("secret")));
 
     Router apiRouter = Router.router(vertx);
+    templateEngine = FreeMarkerTemplateEngine.create(vertx);
 
     apiRouter.route().handler(JWTAuthHandler.create(jwtAuth, "/api/token"));
 
@@ -306,7 +307,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("title", "Wiki home");
         context.put("pages", result.getList());
         context.put("username", context.user().principal().getString("username"));
-        return templateEngine.rxRender(context, "templates", "/index.ftl");
+        // FIXME
+        return templateEngine.rxRender(new JsonObject(context.getDelegate().data()), "templates/index.ftl");
       })
       .subscribe(markup -> {
         context.response().putHeader("Content-Type", "text/html");
@@ -336,7 +338,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("content", Processor.process(rawContent));
         context.put("timestamp", new Date().toString());
         context.put("username", user.principal().getString("username"));
-        return templateEngine.rxRender(context, "templates", "/page.ftl");
+        // FIXME
+        return templateEngine.rxRender(new JsonObject(context.getDelegate().data()), "templates/page.ftl");
       })
       .subscribe(
         markup -> {
@@ -348,7 +351,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void loginHandler(RoutingContext context) {
     context.put("title", "Login");
-    templateEngine.render(context, "templates/login.ftl", ar -> {
+    // FIXME
+    templateEngine.render(new JsonObject(context.getDelegate().data()), "templates/login.ftl", ar -> {
       if (ar.succeeded()) {
         context.response().putHeader("Content-Type", "text/html");
         context.response().end(ar.result());

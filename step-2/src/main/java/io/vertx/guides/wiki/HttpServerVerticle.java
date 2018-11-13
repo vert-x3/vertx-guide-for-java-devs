@@ -45,6 +45,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private String wikiDbQueue = "wikidb.queue";
 
+  private FreeMarkerTemplateEngine templateEngine;
+
   @Override
   public void start(Future<Void> startFuture) throws Exception {
 
@@ -59,6 +61,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/save").handler(this::pageUpdateHandler);
     router.post("/create").handler(this::pageCreateHandler);
     router.post("/delete").handler(this::pageDeletionHandler);
+
+    templateEngine = FreeMarkerTemplateEngine.create(vertx);
 
     int portNumber = config().getInteger(CONFIG_HTTP_SERVER_PORT, 8080);  // <3>
     server
@@ -78,8 +82,6 @@ public class HttpServerVerticle extends AbstractVerticle {
   // end::start[]
 
   // tag::indexHandler[]
-  private final FreeMarkerTemplateEngine templateEngine = FreeMarkerTemplateEngine.create();
-
   private void indexHandler(RoutingContext context) {
 
     DeliveryOptions options = new DeliveryOptions().addHeader("action", "all-pages"); // <2>
@@ -89,7 +91,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         JsonObject body = (JsonObject) reply.result().body();   // <3>
         context.put("title", "Wiki home");
         context.put("pages", body.getJsonArray("pages").getList());
-        templateEngine.render(context, "templates", "/index.ftl", ar -> {
+        templateEngine.render(context.data(), "templates/index.ftl", ar -> {
           if (ar.succeeded()) {
             context.response().putHeader("Content-Type", "text/html");
             context.response().end(ar.result());
@@ -106,9 +108,9 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   // tag::rest[]
   private static final String EMPTY_PAGE_MARKDOWN =
-  "# A new page\n" +
-    "\n" +
-    "Feel-free to write in Markdown!\n";
+    "# A new page\n" +
+      "\n" +
+      "Feel-free to write in Markdown!\n";
 
   private void pageRenderingHandler(RoutingContext context) {
 
@@ -130,7 +132,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("content", Processor.process(rawContent));
         context.put("timestamp", new Date().toString());
 
-        templateEngine.render(context, "templates","/page.ftl", ar -> {
+        templateEngine.render(context.data(), "templates/page.ftl", ar -> {
           if (ar.succeeded()) {
             context.response().putHeader("Content-Type", "text/html");
             context.response().end(ar.result());

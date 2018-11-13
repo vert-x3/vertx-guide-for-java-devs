@@ -11,11 +11,11 @@
         <button type="submit" class="btn btn-primary">Create</button>
       </form>
     </div>
-    <h1 class="display-4">${context.title}</h1>
+    <h1 class="display-4">${title}</h1>
   </div>
 
   <div class="col-md-12 mt-1">
-  <#list context.pages>
+  <#list pages>
     <h2>Pages:</h2>
     <ul>
       <#items as page>
@@ -25,10 +25,10 @@
   <#else>
     <p>The wiki is currently empty!</p>
   </#list>
-  <#if context.backup_gist_url?has_content>
+  <#if backup_gist_url?has_content>
     <div class="alert alert-success" role="alert">
       Successfully created a backup:
-      <a href="${context.backup_gist_url}" class="alert-link">${context.backup_gist_url}</a>
+      <a href="${backup_gist_url}" class="alert-link">${backup_gist_url}</a>
     </div>
   <#else>
     <p>
