@@ -1,14 +1,11 @@
-sudo: false
 addons:
   apt:
     packages:
-      - oracle-java8-installer
-      - oracle-java9-installer
-      # - oracle-java10-installer
+      - openjdk8
+      - openjdk11
 
 language: java
 
 jdk:
-  - oraclejdk8
-  - oraclejdk9
-  # - oraclejdk10
+  - openjdk8
+  - openjdk11
