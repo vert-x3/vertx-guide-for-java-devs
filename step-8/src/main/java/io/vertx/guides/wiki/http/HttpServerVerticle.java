@@ -307,8 +307,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("title", "Wiki home");
         context.put("pages", result.getList());
         context.put("username", context.user().principal().getString("username"));
-        // FIXME
-        return templateEngine.rxRender(new JsonObject(context.getDelegate().data()), "templates/index.ftl");
+        return templateEngine.rxRender(context.data(), "templates/index.ftl");
       })
       .subscribe(markup -> {
         context.response().putHeader("Content-Type", "text/html");
@@ -338,8 +337,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         context.put("content", Processor.process(rawContent));
         context.put("timestamp", new Date().toString());
         context.put("username", user.principal().getString("username"));
-        // FIXME
-        return templateEngine.rxRender(new JsonObject(context.getDelegate().data()), "templates/page.ftl");
+        return templateEngine.rxRender(context.data(), "templates/page.ftl");
       })
       .subscribe(
         markup -> {
@@ -351,15 +349,11 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void loginHandler(RoutingContext context) {
     context.put("title", "Login");
-    // FIXME
-    templateEngine.render(new JsonObject(context.getDelegate().data()), "templates/login.ftl", ar -> {
-      if (ar.succeeded()) {
+    templateEngine.rxRender(context.data(), "templates/login.ftl")
+      .subscribe(markup -> {
         context.response().putHeader("Content-Type", "text/html");
-        context.response().end(ar.result());
-      } else {
-        context.fail(ar.cause());
-      }
-    });
+        context.response().end(markup);
+      }, context::fail);
   }
 
   private void pageUpdateHandler(RoutingContext context) {
