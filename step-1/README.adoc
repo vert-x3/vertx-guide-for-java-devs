@@ -332,7 +332,7 @@ The `index.ftl` template code is as follows:
 include::src/main/resources/templates/index.ftl[]
 ----
 
-Key / value data stored in the `RoutingContext` object is made available through the `context` FreeMarker variable.
+Key / value data stored in the `RoutingContext` object is made available as FreeMarker variable.
 
 Since lots of templates have common header and footers, we extracted the following code in `header.ftl` and `footer.ftl`:
 

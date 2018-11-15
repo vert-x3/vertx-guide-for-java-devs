@@ -1,5 +1,5 @@
 = A gentle guide to asynchronous programming with Eclipse Vert.x for Java developers
-Julien Ponge <julien.ponge@insa-lyon.fr> ; Thomas Segismont <tsegismo@redhat.com> ; Julien Viet <jviet@redhat.com>
+Julien Ponge <julien@ponge.org> ; Thomas Segismont <tsegismo@redhat.com> ; Julien Viet <jviet@redhat.com>
 v1.4.0-SNAPSHOT, TBA
 :doctype: book
 
