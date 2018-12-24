@@ -55,6 +55,11 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-rx-java2</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java2-gen</artifactId>
+      <version>${vertx.version}</version>
+    </dependency>
     <!-- end::vertx-rx-java2[] -->
     <dependency>
       <groupId>io.vertx</groupId>
