@@ -27,7 +27,7 @@
   <version>1.5.0-SNAPSHOT</version>
 
   <properties>
-    <vertx.version>3.6.0</vertx.version>
+    <vertx.version>3.6.2</vertx.version>
     <main.verticle>io.vertx.guides.wiki.MainVerticle</main.verticle>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -54,6 +54,11 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-rx-java2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java2-gen</artifactId>
+      <version>${vertx.version}</version>
     </dependency>
     <!-- end::vertx-rx-java2[] -->
     <dependency>
