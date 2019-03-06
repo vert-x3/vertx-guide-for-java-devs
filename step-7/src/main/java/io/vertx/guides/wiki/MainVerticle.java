@@ -44,7 +44,7 @@ public class MainVerticle extends AbstractVerticle {
       vertx.deployVerticle(
         "io.vertx.guides.wiki.http.HttpServerVerticle",
         new DeploymentOptions().setInstances(2),
-        httpVerticleDeployment.completer());
+        httpVerticleDeployment);
       return httpVerticleDeployment;
     }).setHandler(ar -> {
       if (ar.succeeded()) {

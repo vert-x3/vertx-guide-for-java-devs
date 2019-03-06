@@ -31,7 +31,7 @@ public class MainVerticle extends AbstractVerticle {
   public void start(Future<Void> startFuture) throws Exception {
 
     Future<String> dbVerticleDeployment = Future.future();  // <1>
-    vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment.completer());  // <2>
+    vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment);  // <2>
 
     dbVerticleDeployment.compose(id -> {  // <3>
 
@@ -39,7 +39,7 @@ public class MainVerticle extends AbstractVerticle {
       vertx.deployVerticle(
         "io.vertx.guides.wiki.HttpServerVerticle",  // <4>
         new DeploymentOptions().setInstances(2),    // <5>
-        httpVerticleDeployment.completer());
+        httpVerticleDeployment);
 
       return httpVerticleDeployment;  // <6>
 

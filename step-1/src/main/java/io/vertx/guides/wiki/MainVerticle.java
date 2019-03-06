@@ -283,7 +283,7 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Future<Void> startFuture) throws Exception {
     Future<Void> steps = prepareDatabase().compose(v -> startHttpServer());
-    steps.setHandler(startFuture.completer());
+    steps.setHandler(startFuture);
   }
   // end::start[]
 
