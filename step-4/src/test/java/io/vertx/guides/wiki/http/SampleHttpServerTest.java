@@ -18,6 +18,7 @@
 package io.vertx.guides.wiki.http;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
@@ -67,7 +68,7 @@ public class SampleHttpServerTest {
             context.assertEquals("Ok", response.body().toString());
             async.complete();
           } else {
-            async.resolve(Future.failedFuture(ar.cause()));
+            async.resolve(Promise.failedPromise(ar.cause()));
           }
         });
       }));

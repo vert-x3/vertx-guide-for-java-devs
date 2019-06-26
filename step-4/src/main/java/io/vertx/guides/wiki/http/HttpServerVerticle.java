@@ -18,10 +18,7 @@
 package io.vertx.guides.wiki.http;
 
 import com.github.rjeschke.txtmark.Processor;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -54,7 +51,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       "Feel-free to write in Markdown!\n";
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
 
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
@@ -77,10 +74,10 @@ public class HttpServerVerticle extends AbstractVerticle {
       .listen(portNumber, ar -> {
         if (ar.succeeded()) {
           LOGGER.info("HTTP server running on port " + portNumber);
-          startFuture.complete();
+          promise.complete();
         } else {
           LOGGER.error("Could not start a HTTP server", ar.cause());
-          startFuture.fail(ar.cause());
+          promise.fail(ar.cause());
         }
       });
   }

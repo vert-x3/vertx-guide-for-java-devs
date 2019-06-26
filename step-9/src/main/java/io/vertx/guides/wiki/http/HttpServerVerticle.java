@@ -20,6 +20,7 @@ package io.vertx.guides.wiki.http;
 import com.github.rjeschke.txtmark.Processor;
 import io.reactivex.Flowable;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
@@ -50,7 +51,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   private WikiDatabaseService dbService;
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
 
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
     dbService = io.vertx.guides.wiki.database.WikiDatabaseService.createProxy(vertx.getDelegate(), wikiDbQueue);
@@ -94,10 +95,10 @@ public class HttpServerVerticle extends AbstractVerticle {
       .rxListen(portNumber)
       .subscribe(s -> {
         LOGGER.info("HTTP server running on port " + portNumber);
-        startFuture.complete();
+        promise.complete();
       }, t -> {
         LOGGER.error("Could not start a HTTP server", t);
-        startFuture.fail(t);
+        promise.fail(t);
       });
   }
 

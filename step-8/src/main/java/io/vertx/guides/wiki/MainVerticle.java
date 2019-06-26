@@ -20,6 +20,7 @@ package io.vertx.guides.wiki;
 import io.reactivex.Single;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.reactivex.core.AbstractVerticle;
 
 /**
@@ -28,7 +29,7 @@ import io.vertx.reactivex.core.AbstractVerticle;
 public class MainVerticle extends AbstractVerticle {
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
 
     // tag::rx-deploy-verticle[]
     Single<String> dbVerticleDeployment = vertx.rxDeployVerticle(
@@ -46,7 +47,7 @@ public class MainVerticle extends AbstractVerticle {
         return httpVerticleDeployment;
       })
       .flatMap(id -> vertx.rxDeployVerticle("io.vertx.guides.wiki.http.AuthInitializerVerticle")) // <2>
-      .subscribe(id -> startFuture.complete(), startFuture::fail); // <3>
+      .subscribe(id -> promise.complete(), promise::fail); // <3>
     // end::rx-sequential-composition[]
   }
 }

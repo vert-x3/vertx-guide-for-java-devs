@@ -19,6 +19,7 @@ package io.vertx.guides.wiki.http;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -81,70 +82,52 @@ public class ApiTest {
       .put("name", "Sample")
       .put("markdown", "# A page");
 
-    Future<JsonObject> postRequest = Future.future();
+    Promise<HttpResponse<JsonObject>> postPagePromise = Promise.promise();
     webClient.post("/api/pages")
       .as(BodyCodec.jsonObject())
-      .sendJsonObject(page, ar -> {
-        if (ar.succeeded()) {
-          HttpResponse<JsonObject> postResponse = ar.result();
-          postRequest.complete(postResponse.body());
-        } else {
-          context.fail(ar.cause());
-        }
-      });
+      .sendJsonObject(page, postPagePromise);
 
-    Future<JsonObject> getRequest = Future.future();
-    postRequest.compose(h -> {
+    Future<HttpResponse<JsonObject>> getPageFuture = postPagePromise.future().compose(resp -> {
+      Promise<HttpResponse<JsonObject>> promise = Promise.promise();
       webClient.get("/api/pages")
         .as(BodyCodec.jsonObject())
-        .send(ar -> {
-          if (ar.succeeded()) {
-            HttpResponse<JsonObject> getResponse = ar.result();
-            getRequest.complete(getResponse.body());
-          } else {
-            context.fail(ar.cause());
-          }
-        });
-    }, getRequest);
+        .send(promise);
+      return promise.future();
+    });
 
-    Future<JsonObject> putRequest = Future.future();
-    getRequest.compose(response -> {
-      JsonArray array = response.getJsonArray("pages");
+    Future<HttpResponse<JsonObject>> updatePageFuture = getPageFuture.compose(resp -> {
+      JsonArray array = resp.body().getJsonArray("pages");
       context.assertEquals(1, array.size());
       context.assertEquals(0, array.getJsonObject(0).getInteger("id"));
+      Promise<HttpResponse<JsonObject>> promise = Promise.promise();
+      JsonObject data = new JsonObject()
+        .put("id", 0)
+        .put("markdown", "Oh Yeah!");
       webClient.put("/api/pages/0")
         .as(BodyCodec.jsonObject())
-        .sendJsonObject(new JsonObject()
-          .put("id", 0)
-          .put("markdown", "Oh Yeah!"), ar -> {
-          if (ar.succeeded()) {
-            HttpResponse<JsonObject> putResponse = ar.result();
-            putRequest.complete(putResponse.body());
-          } else {
-            context.fail(ar.cause());
-          }
-        });
-    }, putRequest);
+        .sendJsonObject(data, promise);
+      return promise.future();
+    });
 
-    Future<JsonObject> deleteRequest = Future.future();
-    putRequest.compose(response -> {
-      context.assertTrue(response.getBoolean("success"));
+    Future<HttpResponse<JsonObject>> deletePageFuture = updatePageFuture.compose(resp -> {
+      context.assertTrue(resp.body().getBoolean("success"));
+      Promise<HttpResponse<JsonObject>> promise = Promise.promise();
       webClient.delete("/api/pages/0")
         .as(BodyCodec.jsonObject())
-        .send(ar -> {
-          if (ar.succeeded()) {
-            HttpResponse<JsonObject> delResponse = ar.result();
-            deleteRequest.complete(delResponse.body());
-          } else {
-            context.fail(ar.cause());
-          }
-        });
-    }, deleteRequest);
+        .send(promise);
+      return promise.future();
+    });
 
-    deleteRequest.compose(response -> {
-      context.assertTrue(response.getBoolean("success"));
-      async.complete();
-    }, Future.failedFuture("Oh?"));
+    deletePageFuture.setHandler(ar -> {
+      if (ar.succeeded()) {
+        context.assertTrue(ar.result().body().getBoolean("success"));
+        async.complete();
+      } else {
+        context.fail(ar.cause());
+      }
+    });
+
+    async.awaitSuccess(5000);
   }
   // end::play-with-api[]
 }

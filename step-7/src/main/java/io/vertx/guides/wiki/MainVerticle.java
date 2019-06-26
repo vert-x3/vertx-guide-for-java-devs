@@ -17,9 +17,7 @@
 
 package io.vertx.guides.wiki;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
+import io.vertx.core.*;
 import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
 import io.vertx.guides.wiki.http.AuthInitializerVerticle;
 
@@ -30,27 +28,28 @@ import io.vertx.guides.wiki.http.AuthInitializerVerticle;
 public class MainVerticle extends AbstractVerticle {
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) {
 
-    Future<String> dbVerticleDeployment = Future.future();
-    vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment);
+    Promise<String> dbDeploymentPromise = Promise.promise();
+    vertx.deployVerticle(new WikiDatabaseVerticle(), dbDeploymentPromise);
 
-    dbVerticleDeployment.compose(id -> {
-      Future<String> authInitDeployment = Future.future();
-      vertx.deployVerticle(new AuthInitializerVerticle(), authInitDeployment);
-      return authInitDeployment;
-    }).compose(id -> {
-      Future<String> httpVerticleDeployment = Future.future();
-      vertx.deployVerticle(
-        "io.vertx.guides.wiki.http.HttpServerVerticle",
-        new DeploymentOptions().setInstances(2),
-        httpVerticleDeployment);
-      return httpVerticleDeployment;
-    }).setHandler(ar -> {
+    Future<String> authDeploymentFuture = dbDeploymentPromise.future().compose(id -> {
+      Promise<String> deployPromise = Promise.promise();
+      vertx.deployVerticle(new AuthInitializerVerticle(), deployPromise);
+      return deployPromise.future();
+    });
+
+    authDeploymentFuture.compose(id -> {
+      Promise<String> deployPromise = Promise.promise();
+      vertx.deployVerticle("io.vertx.guides.wiki.http.HttpServerVerticle", new DeploymentOptions().setInstances(2), deployPromise);
+      return deployPromise.future();
+    });
+
+    authDeploymentFuture.setHandler(ar -> {
       if (ar.succeeded()) {
-        startFuture.complete();
+        promise.complete();
       } else {
-        startFuture.fail(ar.cause());
+        promise.fail(ar.cause());
       }
     });
   }

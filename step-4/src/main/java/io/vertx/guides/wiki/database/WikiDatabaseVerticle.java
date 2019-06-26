@@ -19,6 +19,7 @@ package io.vertx.guides.wiki.database;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.serviceproxy.ServiceBinder;
@@ -41,7 +42,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   public static final String CONFIG_WIKIDB_QUEUE = "wikidb.queue";
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
 
     HashMap<SqlQuery, String> sqlQueries = loadSqlQueries();
 
@@ -54,9 +55,9 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
       if (ready.succeeded()) {
         ServiceBinder binder = new ServiceBinder(vertx);
         binder.setAddress(CONFIG_WIKIDB_QUEUE).register(WikiDatabaseService.class, ready.result());
-        startFuture.complete();
+        promise.complete();
       } else {
-        startFuture.fail(ready.cause());
+        promise.fail(ready.cause());
       }
     });
   }

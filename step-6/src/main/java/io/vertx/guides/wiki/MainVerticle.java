@@ -20,6 +20,7 @@ package io.vertx.guides.wiki;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
 
 /**
@@ -28,26 +29,26 @@ import io.vertx.guides.wiki.database.WikiDatabaseVerticle;
 public class MainVerticle extends AbstractVerticle {
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
 
-    Future<String> dbVerticleDeployment = Future.future();
-    vertx.deployVerticle(new WikiDatabaseVerticle(), dbVerticleDeployment);
+    Promise<String> dbDeployPromise = Promise.promise();
+    vertx.deployVerticle(new WikiDatabaseVerticle(), dbDeployPromise);
+    Future<String> dbDeployFuture = dbDeployPromise.future();
 
-    dbVerticleDeployment.compose(id -> {
-
-      Future<String> httpVerticleDeployment = Future.future();
+    Future<String> deployHttpFuture = dbDeployFuture.compose(id -> {
+      Promise<String> deployHttpPromise = Promise.promise();
       vertx.deployVerticle(
         "io.vertx.guides.wiki.http.HttpServerVerticle",
         new DeploymentOptions().setInstances(2),
-        httpVerticleDeployment);
+        deployHttpPromise);
+      return deployHttpPromise.future();
+    });
 
-      return httpVerticleDeployment;
-
-    }).setHandler(ar -> {
+    deployHttpFuture.setHandler(ar -> {
       if (ar.succeeded()) {
-        startFuture.complete();
+        promise.complete();
       } else {
-        startFuture.fail(ar.cause());
+        promise.fail(ar.cause());
       }
     });
   }

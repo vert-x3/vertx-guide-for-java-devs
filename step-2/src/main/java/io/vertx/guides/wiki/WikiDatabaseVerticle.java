@@ -19,6 +19,7 @@ package io.vertx.guides.wiki;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -93,7 +94,7 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
   private JDBCClient dbClient;
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
 
     /*
      * Note: this uses blocking APIs, but data is small...
@@ -108,17 +109,17 @@ public class WikiDatabaseVerticle extends AbstractVerticle {
     dbClient.getConnection(ar -> {
       if (ar.failed()) {
         LOGGER.error("Could not open a database connection", ar.cause());
-        startFuture.fail(ar.cause());
+        promise.fail(ar.cause());
       } else {
         SQLConnection connection = ar.result();
         connection.execute(sqlQueries.get(SqlQuery.CREATE_PAGES_TABLE), create -> {   // <2>
           connection.close();
           if (create.failed()) {
             LOGGER.error("Database preparation error", create.cause());
-            startFuture.fail(create.cause());
+            promise.fail(create.cause());
           } else {
             vertx.eventBus().consumer(config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue"), this::onMessage);  // <3>
-            startFuture.complete();
+            promise.complete();
           }
         });
       }

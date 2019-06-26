@@ -20,6 +20,7 @@ package io.vertx.guides.wiki;
 import com.github.rjeschke.txtmark.Processor;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -58,7 +59,7 @@ public class MainVerticle extends AbstractVerticle {
 
   // tag::prepareDatabase[]
   private Future<Void> prepareDatabase() {
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
 
     dbClient = JDBCClient.createShared(vertx, new JsonObject()  // <1>
       .put("url", "jdbc:hsqldb:file:db/wiki")   // <2>
@@ -68,22 +69,22 @@ public class MainVerticle extends AbstractVerticle {
     dbClient.getConnection(ar -> {    // <5>
       if (ar.failed()) {
         LOGGER.error("Could not open a database connection", ar.cause());
-        future.fail(ar.cause());    // <6>
+        promise.fail(ar.cause());    // <6>
       } else {
         SQLConnection connection = ar.result();   // <7>
         connection.execute(SQL_CREATE_PAGES_TABLE, create -> {
           connection.close();   // <8>
           if (create.failed()) {
             LOGGER.error("Database preparation error", create.cause());
-            future.fail(create.cause());
+            promise.fail(create.cause());
           } else {
-            future.complete();  // <9>
+            promise.complete();  // <9>
           }
         });
       }
     });
 
-    return future;
+    return promise.future();
   }
   // end::prepareDatabase[]
 
@@ -91,7 +92,7 @@ public class MainVerticle extends AbstractVerticle {
   private FreeMarkerTemplateEngine templateEngine;
 
   private Future<Void> startHttpServer() {
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpServer server = vertx.createHttpServer();   // <1>
 
     Router router = Router.router(vertx);   // <2>
@@ -109,14 +110,14 @@ public class MainVerticle extends AbstractVerticle {
       .listen(8080, ar -> {   // <6>
         if (ar.succeeded()) {
           LOGGER.info("HTTP server running on port 8080");
-          future.complete();
+          promise.complete();
         } else {
           LOGGER.error("Could not start a HTTP server", ar.cause());
-          future.fail(ar.cause());
+          promise.fail(ar.cause());
         }
       });
 
-    return future;
+    return promise.future();
   }
   // end::startHttpServer[]
 
@@ -281,20 +282,20 @@ public class MainVerticle extends AbstractVerticle {
 
   // tag::start[]
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
     Future<Void> steps = prepareDatabase().compose(v -> startHttpServer());
-    steps.setHandler(startFuture);
+    steps.setHandler(promise);
   }
   // end::start[]
 
-  public void anotherStart(Future<Void> startFuture) throws Exception {
+  public void anotherStart(Promise<Void> promise) throws Exception {
     // tag::another-start[]
     Future<Void> steps = prepareDatabase().compose(v -> startHttpServer());
     steps.setHandler(ar -> {  // <1>
       if (ar.succeeded()) {
-        startFuture.complete();
+        promise.complete();
       } else {
-        startFuture.fail(ar.cause());
+        promise.fail(ar.cause());
       }
     });
     // end::another-start[]

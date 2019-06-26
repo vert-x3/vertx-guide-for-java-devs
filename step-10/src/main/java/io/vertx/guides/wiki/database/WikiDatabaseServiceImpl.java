@@ -110,7 +110,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   @Override
   public WikiDatabaseService createPage(String title, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), new JsonArray().add(title).add(markdown))
-      .toCompletable()
+      .ignoreElement()
       .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }
@@ -118,7 +118,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   @Override
   public WikiDatabaseService savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), new JsonArray().add(markdown).add(id))
-      .toCompletable()
+      .ignoreElement()
       .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }
@@ -127,7 +127,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   public WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler) {
     JsonArray data = new JsonArray().add(id);
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data)
-      .toCompletable()
+      .ignoreElement()
       .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }

@@ -20,6 +20,7 @@ package io.vertx.guides.wiki;
 import com.github.rjeschke.txtmark.Processor;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
@@ -48,7 +49,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   private FreeMarkerTemplateEngine templateEngine;
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
 
     wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");  // <2>
 
@@ -70,10 +71,10 @@ public class HttpServerVerticle extends AbstractVerticle {
       .listen(portNumber, ar -> {
         if (ar.succeeded()) {
           LOGGER.info("HTTP server running on port " + portNumber);
-          startFuture.complete();
+          promise.complete();
         } else {
           LOGGER.error("Could not start a HTTP server", ar.cause());
-          startFuture.fail(ar.cause());
+          promise.fail(ar.cause());
         }
       });
   }
@@ -86,7 +87,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     DeliveryOptions options = new DeliveryOptions().addHeader("action", "all-pages"); // <2>
 
-    vertx.eventBus().send(wikiDbQueue, new JsonObject(), options, reply -> {  // <1>
+    vertx.eventBus().request(wikiDbQueue, new JsonObject(), options, reply -> {  // <1>
       if (reply.succeeded()) {
         JsonObject body = (JsonObject) reply.result().body();   // <3>
         context.put("title", "Wiki home");
@@ -118,7 +119,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     JsonObject request = new JsonObject().put("page", requestedPage);
 
     DeliveryOptions options = new DeliveryOptions().addHeader("action", "get-page");
-    vertx.eventBus().send(wikiDbQueue, request, options, reply -> {
+    vertx.eventBus().request(wikiDbQueue, request, options, reply -> {
 
       if (reply.succeeded()) {
         JsonObject body = (JsonObject) reply.result().body();
@@ -162,7 +163,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       options.addHeader("action", "save-page");
     }
 
-    vertx.eventBus().send(wikiDbQueue, request, options, reply -> {
+    vertx.eventBus().request(wikiDbQueue, request, options, reply -> {
       if (reply.succeeded()) {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/wiki/" + title);
@@ -188,7 +189,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     String id = context.request().getParam("id");
     JsonObject request = new JsonObject().put("id", id);
     DeliveryOptions options = new DeliveryOptions().addHeader("action", "delete-page");
-    vertx.eventBus().send(wikiDbQueue, request, options, reply -> {
+    vertx.eventBus().request(wikiDbQueue, request, options, reply -> {
       if (reply.succeeded()) {
         context.response().setStatusCode(303);
         context.response().putHeader("Location", "/");

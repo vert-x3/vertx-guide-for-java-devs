@@ -20,6 +20,7 @@ package io.vertx.guides.wiki;
 import io.reactivex.Single;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.reactivex.core.AbstractVerticle;
 
 /**
@@ -28,13 +29,13 @@ import io.vertx.reactivex.core.AbstractVerticle;
 public class MainVerticle extends AbstractVerticle {
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
 
     Single<String> dbVerticleDeployment = vertx.rxDeployVerticle("io.vertx.guides.wiki.database.WikiDatabaseVerticle");
 
     DeploymentOptions opts = new DeploymentOptions().setInstances(2);
     dbVerticleDeployment
       .flatMap(id -> vertx.rxDeployVerticle("io.vertx.guides.wiki.http.HttpServerVerticle", opts))
-      .subscribe(id -> startFuture.complete(), startFuture::fail);
+      .subscribe(id -> promise.complete(), promise::fail);
   }
 }
