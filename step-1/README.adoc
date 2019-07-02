@@ -48,7 +48,7 @@ To generate a similar project as by cloning the Git starter repository:
 
     mkdir vertx-wiki
     cd vertx-wiki
-    mvn io.fabric8:vertx-maven-plugin:1.0.13:setup -DvertxVersion=3.6.0
+    mvn io.fabric8:vertx-maven-plugin:1.0.13:setup -DvertxVersion=3.8.0
     git init
 
 ====
@@ -106,18 +106,20 @@ To get started our verticle can just override the `start` method as follows:
 public class MainVerticle extends AbstractVerticle {
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
-    startFuture.complete();
+  public void start(Promise<Void> promise) {
+    promise.complete();
   }
 }
 ----
 
-There are 2 forms of `start` (and `stop`) methods: 1 with no argument and 1 with a _future_ object reference.
+There are 2 forms of `start` (and `stop`) methods: 1 with no argument and 1 with a _promise_ object reference.
 The no-argument variants imply that the verticle initialization or house-keeping phases always succeed unless an exception is being thrown.
-The variants with a _future_ object provide a more fine-grained approach to _eventually_ signal that operations succeeded or not.
-Indeed, some initialization or cleanup code may require asynchronous operations, so reporting via a _future_ object naturally fits with asynchronous idioms.
+The variants with a _promise_ object provide a more fine-grained approach to _eventually_ signal that operations succeeded or not.
+Indeed, some initialization or cleanup code may require asynchronous operations, so reporting via a _promise_ object naturally fits with asynchronous idioms.
 
-== A word on Vert.x future objects and callbacks
+NOTE: A promise has a `future()` method which eventually holds the result of an asynchronous operation.
+
+== A word on Vert.x promise / future objects and callbacks
 
 Vert.x futures are not JDK futures: they can be composed and queried in a non-blocking fashion.
 They shall be used for simple coordination of asynchronous tasks, and especially those of deploying verticles and checking if they were successfully deployed or not.
@@ -142,7 +144,7 @@ foo.a(1, res1 -> {
 });
 ----
 
-While the core APIs could have been designed to favor promises and futures, the choice of callbacks is actually interesting since it allows different programming abstractions to be used.
+While the core APIs could have been designed to favor promises and futures, the choice of callbacks as the cardinal model is actually interesting since it allows different programming abstractions to be used.
 Vert.x is a largely un-opinionated project, and callbacks allow the implementation of different models that better cope with asynchronous programming: reactive extensions (via RxJava), promises and futures, fibers (using bytecode instrumentation), etc.
 
 Since all Vert.x APIs are callback-oriented before other abstractions like RxJava can be leveraged, this guide only uses callbacks in the first sections to ensure that the reader gets familiar with the core concepts in Vert.x.
@@ -158,20 +160,20 @@ To get our wiki running, we need to perform a 2-phases initialization:
 
 Each phase can fail (e.g., the HTTP server TCP port is already being used), and they should not run in parallel as the web application code first needs the database access to work.
 
-To make our code _cleaner_ we will define 1 method per phase, and adopt a pattern of returning a _future / promise_ object to notify when each of the phases completes, and whether it did so successfully or not:
+To make our code _cleaner_ we will define 1 method per phase, and adopt a pattern of returning a _future_ object to notify when each of the phases completes, and whether it did so successfully or not:
 
 [source,java]
 ----
 private Future<Void> prepareDatabase() {
-  Future<Void> future = Future.future();
+  Promise<void> promise = Promise.promise();
   // (...)
-  return future;
+  return promise.future();
 }
 
 private Future<Void> startHttpServer() {
-  Future<Void> future = Future.future();
+  Promise<void> promise = Promise.promise();
   // (...)
-  return future;
+  return promise.future();
 }
 ----
 

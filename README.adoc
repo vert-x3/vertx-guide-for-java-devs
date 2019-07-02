@@ -1,6 +1,6 @@
 = A gentle guide to asynchronous programming with Eclipse Vert.x for Java developers
 Julien Ponge <julien@ponge.org> ; Thomas Segismont <tsegismo@redhat.com> ; Julien Viet <jviet@redhat.com>
-v1.4.0, 2018/11/29
+v1.5.0-SNAPSHOT TBD
 :doctype: book
 
 ifdef::env-github[]
@@ -13,7 +13,7 @@ endif::[]
 
 :leveloffset: +1
 
-NOTE: You can read the latest published version of the guide at http://vertx.io/docs/guide-for-java-devs/
+NOTE: You can read the latest published version of the guide at https://vertx.io/docs/guide-for-java-devs/
 
 ifdef::rendered-pdf-link[]
 NOTE: This document is also link:{rendered-pdf-link}[available as a PDF].

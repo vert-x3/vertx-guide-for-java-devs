@@ -89,11 +89,11 @@ public class ApiTest {
 
     Promise<HttpResponse<String>> tokenPromise = Promise.promise();
     webClient.get("/api/token")
-      .putHeader("login", "foo")
+      .putHeader("login", "foo")  // <1>
       .putHeader("password", "bar")
-      .as(BodyCodec.string())
+      .as(BodyCodec.string())   // <2>
       .send(tokenPromise);
-    Future<HttpResponse<String>> tokenFuture = tokenPromise.future();
+    Future<HttpResponse<String>> tokenFuture = tokenPromise.future(); // <3>
 
     JsonObject page = new JsonObject()
       .put("name", "Sample")
@@ -104,9 +104,9 @@ public class ApiTest {
     // tag::use-token[]
     Future<HttpResponse<JsonObject>> postPageFuture = tokenFuture.compose(tokenResponse -> {
       Promise<HttpResponse<JsonObject>> promise = Promise.promise();
-      jwtTokenHeaderValue = "Bearer " + tokenResponse.body();
+      jwtTokenHeaderValue = "Bearer " + tokenResponse.body();   // <1>
       webClient.post("/api/pages")
-        .putHeader("Authorization", jwtTokenHeaderValue)
+        .putHeader("Authorization", jwtTokenHeaderValue)  // <2>
         .as(BodyCodec.jsonObject())
         .sendJsonObject(page, promise);
       return promise.future();
