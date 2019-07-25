@@ -1,6 +1,6 @@
 = A gentle guide to asynchronous programming with Eclipse Vert.x for Java developers
 Julien Ponge <julien@ponge.org> ; Thomas Segismont <tsegismo@redhat.com> ; Julien Viet <jviet@redhat.com>
-v1.5.0-SNAPSHOT TBD
+v1.5.0 2019/07/25
 :doctype: book
 
 ifdef::env-github[]
