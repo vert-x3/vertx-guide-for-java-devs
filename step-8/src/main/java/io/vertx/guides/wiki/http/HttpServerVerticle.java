@@ -21,7 +21,6 @@ import com.github.rjeschke.txtmark.Processor;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
@@ -103,7 +102,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     Router router = Router.router(vertx);
 
-    router.route().handler(CookieHandler.create());
     router.route().handler(BodyHandler.create());
     router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
     router.route().handler(UserSessionHandler.create(auth));
