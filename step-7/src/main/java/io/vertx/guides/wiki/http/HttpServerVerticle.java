@@ -102,7 +102,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     // tag::auth-routes[]
     Router router = Router.router(vertx);
 
-    router.route().handler(CookieHandler.create());
     router.route().handler(BodyHandler.create());
     router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
     router.route().handler(UserSessionHandler.create(auth));  // <1>
