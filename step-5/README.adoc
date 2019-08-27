@@ -104,3 +104,11 @@ include::src/main/java/io/vertx/guides/wiki/http/HttpServerVerticle.java[tags=ba
 <4> The `BodyCodec` class provides a helper to specify that the response will be directly converted to a Vert.x `JsonObject` instance. It is also possible to use `BodyCodec#json(Class<T>)` and the JSON data will be mapped to a Java object of type `T` (this uses Jackson data mapping under the hood).
 <5> `sendJsonObject` is a helper for triggering the HTTP request with a JSON payload.
 <6> Upon success we can get the snippet identifier, and construct a URL to the user-friendly web representation.
+
+Finally, we update the `index.ftl` template to include a button to trigger the backup and display the URL we constructed.
+
+[source,html]
+----
+include::src/main/resources/templates/index.ftl[]
+----
+ 
