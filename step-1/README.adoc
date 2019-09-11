@@ -165,13 +165,13 @@ To make our code _cleaner_ we will define 1 method per phase, and adopt a patter
 [source,java]
 ----
 private Future<Void> prepareDatabase() {
-  Promise<void> promise = Promise.promise();
+  Promise<Void> promise = Promise.promise();
   // (...)
   return promise.future();
 }
 
 private Future<Void> startHttpServer() {
-  Promise<void> promise = Promise.promise();
+  Promise<Void> promise = Promise.promise();
   // (...)
   return promise.future();
 }
