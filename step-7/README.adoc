@@ -371,7 +371,7 @@ We add a new field for retrieving the token value to be used in test cases:
 include::src/test/java/io/vertx/guides/wiki/http/ApiTest.java[tags=tokenField]
 ----
 
-We add first step to retrieve a JTW token authenticated as user `foo`:
+We add first step to retrieve a JWT token authenticated as user `foo`:
 
 [source,java,indent=0]
 ----
