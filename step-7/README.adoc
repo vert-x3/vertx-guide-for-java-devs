@@ -241,14 +241,6 @@ We start by adding the `vertx-auth-jwt` module to the Maven dependencies:
 include::pom.xml[tags=jwt]
 ----
 
-We will have a JCEKS keystore to hold the keys for our tests.
-Here is how to generate a `keystore.jceks` with the suitable keys of various lengths:
-
-[source,text,indent=0]
-----
-include::gen-keystore.sh[tags=jwt-keygen]
-----
-
 We need to install a JWT token handler on API routes:
 
 [source,java,indent=0]

@@ -24,7 +24,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
-import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jdbc.JDBCAuth;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -102,10 +102,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     // tag::auth-routes[]
     Router router = Router.router(vertx);
 
-    router.route().handler(CookieHandler.create());
     router.route().handler(BodyHandler.create());
-    router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-    router.route().handler(UserSessionHandler.create(auth));  // <1>
+    router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)).setAuthProvider(auth)); // <1>
 
     AuthHandler authHandler = RedirectAuthHandler.create(auth, "/login"); // <2>
     router.route("/").handler(authHandler);  // <3>
@@ -137,10 +135,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     Router apiRouter = Router.router(vertx);
 
     JWTAuth jwtAuth = JWTAuth.create(vertx, new JWTAuthOptions()
-      .setKeyStore(new KeyStoreOptions()
-        .setPath("keystore.jceks")
-        .setType("jceks")
-        .setPassword("secret")));
+      .addPubSecKey(new PubSecKeyOptions()
+        .setAlgorithm("HS256")
+        .setPublicKey("secret")
+        .setSymmetric(true)));
 
     apiRouter.route().handler(JWTAuthHandler.create(jwtAuth, "/api/token"));
     // end::jwtAuth[]

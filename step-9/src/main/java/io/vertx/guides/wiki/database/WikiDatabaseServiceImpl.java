@@ -28,8 +28,6 @@ import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.sql.SQLClientHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,8 +36,6 @@ import java.util.List;
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
 class WikiDatabaseServiceImpl implements WikiDatabaseService {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(WikiDatabaseServiceImpl.class);
 
   private final HashMap<SqlQuery, String> sqlQueries;
   private final JDBCClient dbClient;
@@ -110,7 +106,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   @Override
   public WikiDatabaseService createPage(String title, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.CREATE_PAGE), new JsonArray().add(title).add(markdown))
-      .toCompletable()
+      .ignoreElement()
       .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }
@@ -118,7 +114,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   @Override
   public WikiDatabaseService savePage(int id, String markdown, Handler<AsyncResult<Void>> resultHandler) {
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.SAVE_PAGE), new JsonArray().add(markdown).add(id))
-      .toCompletable()
+      .ignoreElement()
       .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }
@@ -127,7 +123,7 @@ class WikiDatabaseServiceImpl implements WikiDatabaseService {
   public WikiDatabaseService deletePage(int id, Handler<AsyncResult<Void>> resultHandler) {
     JsonArray data = new JsonArray().add(id);
     dbClient.rxUpdateWithParams(sqlQueries.get(SqlQuery.DELETE_PAGE), data)
-      .toCompletable()
+      .ignoreElement()
       .subscribe(CompletableHelper.toObserver(resultHandler));
     return this;
   }
