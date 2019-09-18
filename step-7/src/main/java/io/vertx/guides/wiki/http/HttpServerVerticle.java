@@ -140,8 +140,6 @@ public class HttpServerVerticle extends AbstractVerticle {
         .setPath("keystore.jceks")
         .setType("jceks")
         .setPassword("secret")));
-
-    apiRouter.route().handler(JWTAuthHandler.create(jwtAuth, "/api/token"));
     // end::jwtAuth[]
 
     // tag::issue-jwt[]
@@ -176,6 +174,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         }
       });
     });
+
+    apiRouter.route("/*").handler(JWTAuthHandler.create(jwtAuth));
     // end::issue-jwt[]
 
     apiRouter.get("/pages").handler(this::apiRoot);

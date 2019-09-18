@@ -136,9 +136,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         .setPassword("secret")));
 
     Router apiRouter = Router.router(vertx);
-    templateEngine = FreeMarkerTemplateEngine.create(vertx);
-
-    apiRouter.route().handler(JWTAuthHandler.create(jwtAuth, "/api/token"));
+    templateEngine = FreeMarkerTemplateEngine.create(vertx);;
 
     apiRouter.get("/token").handler(context -> {
 
@@ -171,6 +169,8 @@ public class HttpServerVerticle extends AbstractVerticle {
       // end::rx-concurrent-composition[]
 
     });
+
+    apiRouter.route("/*").handler(JWTAuthHandler.create(jwtAuth));
 
     apiRouter.get("/pages").handler(this::apiRoot);
     apiRouter.get("/pages/:id").handler(this::apiGetPage);
