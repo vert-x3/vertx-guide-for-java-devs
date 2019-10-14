@@ -41,7 +41,7 @@ Note that doing so requires ensuring that the `VERTICLE` variable in these scrip
 
 [NOTE]
 ====
-Alternatively, the Fabric8 project hosts https://vmp.fabric8.io/[a Vert.x Maven plugin].
+Alternatively, the https://reactiverse.io/[eactiverse] community hosts a https://reactiverse.io/vertx-maven-plugin[Vert.x Maven plugin].
 It has goals to initialize, build, package and run a Vert.x project.
 
 To generate a similar project as by cloning the Git starter repository:
