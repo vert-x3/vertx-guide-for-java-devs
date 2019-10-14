@@ -68,7 +68,7 @@ public class SampleHttpServerTest {
             context.assertEquals("Ok", response.body().toString());
             async.complete();
           } else {
-            async.resolve(Promise.failedPromise(ar.cause()));
+            context.fail(ar.cause());
           }
         });
       }));

@@ -69,7 +69,7 @@ public class SampleHttpServerTest {
             webClient.close();
             async.complete();
           } else {
-            async.resolve(Promise.failedPromise(ar.cause()));
+            context.fail(ar.cause());
           }
         });
       }));

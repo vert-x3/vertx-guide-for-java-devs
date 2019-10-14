@@ -53,8 +53,7 @@ public class SampleHttpServerTest {
   public void start_http_server(TestContext context) {
     Async async = context.async();
 
-    vertx
-      .createHttpServer().requestHandler(req ->
+    vertx.createHttpServer().requestHandler(req ->
       req.response().putHeader("Content-Type", "text/plain").end("Ok"))
       .listen(8080, context.asyncAssertSuccess(server -> {
 
@@ -69,7 +68,7 @@ public class SampleHttpServerTest {
             webClient.close();
             async.complete();
           } else {
-            async.resolve(Promise.failedPromise(ar.cause()));
+            context.fail(ar.cause());
           }
         });
       }));
