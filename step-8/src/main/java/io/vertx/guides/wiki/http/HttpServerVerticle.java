@@ -21,13 +21,12 @@ import com.github.rjeschke.txtmark.Processor;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
-import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.jwt.JWTOptions;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -103,10 +102,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     Router router = Router.router(vertx);
 
-    router.route().handler(CookieHandler.create());
     router.route().handler(BodyHandler.create());
-    router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-    router.route().handler(UserSessionHandler.create(auth));
+    router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)).setAuthProvider(auth));
 
     AuthHandler authHandler = RedirectAuthHandler.create(auth, "/login");
     router.route("/").handler(authHandler);
@@ -132,10 +129,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     });
 
     JWTAuth jwtAuth = JWTAuth.create(vertx, new JWTAuthOptions()
-      .setKeyStore(new KeyStoreOptions()
-        .setPath("keystore.jceks")
-        .setType("jceks")
-        .setPassword("secret")));
+      .addPubSecKey(new PubSecKeyOptions()
+        .setAlgorithm("HS256")
+        .setPublicKey("secret")
+        .setSymmetric(true)));
 
     Router apiRouter = Router.router(vertx);
     templateEngine = FreeMarkerTemplateEngine.create(vertx);

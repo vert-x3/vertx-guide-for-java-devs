@@ -28,8 +28,6 @@ import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.sql.SQLClientHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,8 +36,6 @@ import java.util.List;
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
  */
 class WikiDatabaseServiceImpl implements WikiDatabaseService {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(WikiDatabaseServiceImpl.class);
 
   private final HashMap<SqlQuery, String> sqlQueries;
   private final JDBCClient dbClient;

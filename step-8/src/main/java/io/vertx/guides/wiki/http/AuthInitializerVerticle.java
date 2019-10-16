@@ -81,7 +81,7 @@ public class AuthInitializerVerticle extends AbstractVerticle {
             logger.info("Need to insert data");
             return connection
               .rxBatch(dataInit)
-              .toCompletable();
+              .ignoreElement();
           } else {
             logger.info("No need to insert data");
             return Completable.complete();

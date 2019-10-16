@@ -20,7 +20,8 @@ NOTE: This document is also link:{rendered-pdf-link}[available as a PDF].
 endif::[]
 
 .Acknowledgements
-This document has received contributions from Arnaud Esteve, Marc Paquette, Ashley Bye, Ger-Jan te Dorsthorst, Htet Aung Shine and others.
+This document has received contributions from Arnaud Esteve, Marc Paquette, Ashley Bye, Ger-Jan te Dorsthorst, Htet Aung Shine, Bruno Guimarães
+ and others.
 
 :imagesdir: intro
 include::intro/README.adoc[]

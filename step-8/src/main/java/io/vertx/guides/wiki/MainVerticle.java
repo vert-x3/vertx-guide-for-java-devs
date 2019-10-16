@@ -19,7 +19,6 @@ package io.vertx.guides.wiki;
 
 import io.reactivex.Single;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.reactivex.core.AbstractVerticle;
 
