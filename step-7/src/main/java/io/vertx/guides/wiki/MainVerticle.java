@@ -39,13 +39,13 @@ public class MainVerticle extends AbstractVerticle {
       return deployPromise.future();
     });
 
-    authDeploymentFuture.compose(id -> {
+    Future<String> deployHttpFuture = authDeploymentFuture.compose(id -> {
       Promise<String> deployPromise = Promise.promise();
       vertx.deployVerticle("io.vertx.guides.wiki.http.HttpServerVerticle", new DeploymentOptions().setInstances(2), deployPromise);
       return deployPromise.future();
     });
 
-    authDeploymentFuture.setHandler(ar -> {
+    deployHttpFuture.setHandler(ar -> {
       if (ar.succeeded()) {
         promise.complete();
       } else {
