@@ -37,7 +37,7 @@ public class MainVerticle extends AbstractVerticle {
 
       Promise<String> httpVerticleDeployment = Promise.promise();
       vertx.deployVerticle(
-        "io.vertx.guides.wiki.HttpServerVerticle",
+        "io.vertx.guides.wiki.http.HttpServerVerticle",
         new DeploymentOptions().setInstances(2),
         httpVerticleDeployment);
 
