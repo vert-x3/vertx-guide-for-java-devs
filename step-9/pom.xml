@@ -148,6 +148,7 @@
             <filesets>
               <fileset>
                 <directory>${project.basedir}/src/main/generated</directory>
+                <directory>${project.basedir}/target</directory>
               </fileset>
             </filesets>
           </configuration>
