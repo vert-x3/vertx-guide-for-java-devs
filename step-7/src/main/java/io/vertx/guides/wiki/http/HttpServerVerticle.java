@@ -106,7 +106,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
     router.route().handler(UserSessionHandler.create(auth));  // <1>
 
-    AuthHandler authHandler = RedirectAuthHandler.create(auth, "/login"); // <2>
+    AuthenticationHandler authHandler = RedirectAuthHandler.create(auth, "/login"); // <2>
     router.route("/").handler(authHandler);  // <3>
     router.route("/wiki/*").handler(authHandler);
     router.route("/action/*").handler(authHandler);

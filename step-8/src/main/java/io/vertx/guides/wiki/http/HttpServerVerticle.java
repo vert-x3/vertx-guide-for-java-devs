@@ -30,7 +30,6 @@ import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.jwt.JWTOptions;
 import io.vertx.ext.web.client.WebClientOptions;
-// tag::rx-imports[]
 import io.vertx.guides.wiki.database.reactivex.WikiDatabaseService;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.http.HttpServer;
@@ -45,7 +44,6 @@ import io.vertx.reactivex.ext.web.codec.BodyCodec;
 import io.vertx.reactivex.ext.web.handler.*;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import io.vertx.reactivex.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
-// end::rx-imports[]
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +51,9 @@ import java.util.Arrays;
 import java.util.Date;
 
 import static io.vertx.guides.wiki.DatabaseConstants.*;
+
+// tag::rx-imports[]
+// end::rx-imports[]
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
@@ -106,7 +107,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
     router.route().handler(UserSessionHandler.create(auth));
 
-    AuthHandler authHandler = RedirectAuthHandler.create(auth, "/login");
+    AuthenticationHandler authHandler = RedirectAuthHandler.create(auth, "/login");
     router.route("/").handler(authHandler);
     router.route("/wiki/*").handler(authHandler);
     router.route("/action/*").handler(authHandler);
