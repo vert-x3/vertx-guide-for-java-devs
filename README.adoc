@@ -4,11 +4,7 @@ v1.5.0 2019/07/25
 :doctype: book
 
 ifdef::env-github[]
-//
-image:https://travis-ci.org/vert-x3/vertx-guide-for-java-devs.svg?branch=master["Build Status (Linux)", link="https://travis-ci.org/vert-x3/vertx-guide-for-java-devs"]
-//
-image:https://ci.appveyor.com/api/projects/status/sps4csqk3e5v4gfe/branch/master?svg=true["Build Status (Windows)", link="https://ci.appveyor.com/project/jponge/vertx-guide-for-java-devs/branch/master"]
-//
+image:https://github.com/vert-x3/vertx-guide-for-java-devs/workflows/Java%20CI/badge.svg?branch=3.8["Build status"]
 endif::[]
 
 :leveloffset: +1
