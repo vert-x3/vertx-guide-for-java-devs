@@ -43,9 +43,8 @@ public interface WikiDatabaseService {
     return new WikiDatabaseServiceImpl(dbClient, sqlQueries, readyHandler);
   }
 
-  @GenIgnore
-  static io.vertx.guides.wiki.database.reactivex.WikiDatabaseService createProxy(Vertx vertx, String address) {
-    return new io.vertx.guides.wiki.database.reactivex.WikiDatabaseService(new WikiDatabaseServiceVertxEBProxy(vertx, address));
+  static io.vertx.guides.wiki.database.WikiDatabaseService createProxy(Vertx vertx, String address) {
+    return new WikiDatabaseServiceVertxEBProxy(vertx, address);
   }
 
   @Fluent

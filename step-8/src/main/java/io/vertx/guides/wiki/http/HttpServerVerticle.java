@@ -81,7 +81,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   public void start(Promise<Void> promise) throws Exception {
 
     String wikiDbQueue = config().getString(CONFIG_WIKIDB_QUEUE, "wikidb.queue");
-    dbService = io.vertx.guides.wiki.database.WikiDatabaseService.createProxy(vertx.getDelegate(), wikiDbQueue);
+    dbService = WikiDatabaseService.createProxy(vertx, wikiDbQueue);
     // end::rx-vertx-delegate[]
 
     webClient = WebClient.create(vertx, new WebClientOptions()
