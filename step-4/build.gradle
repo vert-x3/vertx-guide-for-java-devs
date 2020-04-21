@@ -1,0 +1,58 @@
+plugins {
+  id 'io.vertx.vertx-plugin' version '0.0.8'
+}
+
+description = "Service proxy generation example"
+
+repositories {
+  jcenter()
+}
+
+
+dependencies {
+  compile "io.vertx:vertx-jdbc-client"
+  compile "io.vertx:vertx-service-proxy"
+  compile "io.vertx:vertx-codegen"
+  compile "io.vertx:vertx-web"
+  compile "io.vertx:vertx-web-client"
+  compile "io.vertx:vertx-web-templ-freemarker"
+  compile "com.github.rjeschke:txtmark:0.13"
+  compile "ch.qos.logback:logback-classic:1.2.3"
+  compile "org.hsqldb:hsqldb:2.3.4"
+  testCompile 'junit:junit:4.12'
+  testCompile "io.vertx:vertx-unit"
+}
+
+vertx {
+  mainVerticle = 'io.vertx.guides.wiki.MainVerticle'
+}
+
+
+sourceSets {
+  generated {
+    java.srcDir "${projectDir}/src/generated/java"
+  }
+}
+
+task generateProxies(type: JavaCompile) {
+  group = "build"
+  description = "Generate Vert.x service proxies"
+
+  source = sourceSets.main.java
+  classpath = configurations.compile
+  options.compilerArgs = [
+    "-proc:only",
+    "-processor", "io.vertx.codegen.CodeGenProcessor",
+    "-Acodegen.output=${projectDir}/src/main"
+  ]
+  destinationDir = file("${projectDir}/src/generated/java")
+}
+
+compileJava {
+  dependsOn generateProxies
+  source += sourceSets.generated.java
+}
+
+clean {
+  delete += sourceSets.generated.java.srcDirs
+}
