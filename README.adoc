@@ -9,7 +9,7 @@ endif::[]
 
 :leveloffset: +1
 
-NOTE: You can read the latest published version of the guide at https://vertx.io/docs/guide-for-java-devs/
+NOTE: You can read the latest published version of the guide at https://vertx.io/docs/guide-for-java-devs/. This guide has been refreshed to work with v4.2 Vertx release
 
 ifdef::rendered-pdf-link[]
 NOTE: This document is also link:{rendered-pdf-link}[available as a PDF].
