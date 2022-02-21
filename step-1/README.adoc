@@ -122,7 +122,7 @@ NOTE: A promise has a `future()` method which eventually holds the result of an 
 == A word on Vert.x promise / future objects and callbacks
 
 Vert.x futures are not JDK futures: they can be composed and queried in a non-blocking fashion.
-They shall be used for simple coordination of asynchronous tasks, and especially those of deploying verticles and checking if they were successfully deployed or not.
+They shall be used for simple coordination of asynchronous tasks, and especially those of deploying verticles and checking if they were successfully deployed or not. 
 
 The Vert.x core APIs are based on callbacks to notify of asynchronous events.
 The seasoned developer will naturally think that this opens the door to the so-called _"callback hell"_ where multiple levels of nested callbacks render the code difficult to comprehend as illustrated by this fictional code:
@@ -144,12 +144,7 @@ foo.a(1, res1 -> {
 });
 ----
 
-While the core APIs could have been designed to favor promises and futures, the choice of callbacks as the cardinal model is actually interesting since it allows different programming abstractions to be used.
-Vert.x is a largely un-opinionated project, and callbacks allow the implementation of different models that better cope with asynchronous programming: reactive extensions (via RxJava), promises and futures, fibers (using bytecode instrumentation), etc.
-
-Since all Vert.x APIs are callback-oriented before other abstractions like RxJava can be leveraged, this guide only uses callbacks in the first sections to ensure that the reader gets familiar with the core concepts in Vert.x.
-It is also arguably easier to start with callbacks to draw a line between the many sections of asynchronous code.
-Once it becomes evident in the sample code that callbacks do not always lead to easily readable code, we will introduce the RxJava support to show how the same asynchronous code can be better expressed by thinking in streams of processed events.
+The previous versions of this guide used callbacks. However we will be using Future composure in these examples.
 
 == Wiki verticle initialization phases
 
@@ -187,7 +182,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=start]
 When the _future_ of `prepareDatabase` completes successfully, then `startHttpServer` is called and the `steps` future completes depending of the outcome of the future returned by `startHttpServer`.
 `startHttpServer` is never called if `prepareDatabase` encounters an error, in which case the `steps` _future_ is in a _failed_ state and becomes completed with the exception describing the error.
 
-Eventually `steps` completes: `setHandler` defines a handler to be called upon completion.
+When both Eventually `steps` completes: `setHandler` defines a handler to be called upon completion.
 In our case we simply want to complete `startFuture` with `steps` and use the `completer` method to obtain a handler.
 This is equivalent to:
 
