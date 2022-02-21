@@ -144,7 +144,7 @@ foo.a(1, res1 -> {
 });
 ----
 
-The previous versions of this guide used callbacks. However we will be using Future composure in these examples.
+The previous versions of this guide used callbacks. However we will be using __Future__ compositions in these examples.
 
 == Wiki verticle initialization phases
 
