@@ -121,7 +121,6 @@ public class MainVerticle extends AbstractVerticle {
     this.dbPool.preparedQuery(SQL_DELETE_PAGE)
       .execute(Tuple.of(id))
       .onSuccess(rows -> {
-        context.redirect("/");
         context.response().putHeader("Location", "/");
         context.response().end();
       })
