@@ -24,18 +24,19 @@ import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
+import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowIterator;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author <a href="https://julien.ponge.org/">Julien Ponge</a>
@@ -52,37 +53,31 @@ public class MainVerticle extends AbstractVerticle {
   // end::sql-fields[]
 
   // tag::db-and-logger[]
-  private JDBCClient dbClient;
+  private JDBCPool dbPool;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
   // end::db-and-logger[]
+
 
   // tag::prepareDatabase[]
   private Future<Void> prepareDatabase() {
     Promise<Void> promise = Promise.promise();
 
-    dbClient = JDBCClient.createShared(vertx, new JsonObject()  // <1>
+    dbPool = JDBCPool.pool(vertx, new JsonObject()  // <1>
       .put("url", "jdbc:hsqldb:file:db/wiki")   // <2>
       .put("driver_class", "org.hsqldb.jdbcDriver")   // <3>
       .put("max_pool_size", 30));   // <4>
 
-    dbClient.getConnection(ar -> {    // <5>
-      if (ar.failed()) {
-        LOGGER.error("Could not open a database connection", ar.cause());
-        promise.fail(ar.cause());    // <6>
-      } else {
-        SQLConnection connection = ar.result();   // <7>
-        connection.execute(SQL_CREATE_PAGES_TABLE, create -> {
-          connection.close();   // <8>
-          if (create.failed()) {
-            LOGGER.error("Database preparation error", create.cause());
-            promise.fail(create.cause());
-          } else {
-            promise.complete();  // <9>
-          }
-        });
-      }
-    });
+    dbPool.query(SQL_CREATE_PAGES_TABLE)
+      .execute()
+      .onSuccess(rows -> {
+        LOGGER.info("created the database tables");
+        promise.complete();
+      })
+      .onFailure(error -> {
+        LOGGER.error("Database preparation error", error);
+        promise.fail(error);
+      });
 
     return promise.future();
   }
@@ -107,16 +102,15 @@ public class MainVerticle extends AbstractVerticle {
 
     server
       .requestHandler(router)   // <5>
-      .listen(8080, ar -> {   // <6>
-        if (ar.succeeded()) {
-          LOGGER.info("HTTP server running on port 8080");
-          promise.complete();
-        } else {
-          LOGGER.error("Could not start a HTTP server", ar.cause());
-          promise.fail(ar.cause());
-        }
+      .listen(8080)
+      .onSuccess(result -> {
+        LOGGER.info("HTTP server running on port 8080");
+        promise.complete();
+      })
+      .onFailure(error -> {
+        LOGGER.error("Could not start a HTTP server", error);
+        promise.fail(error);
       });
-
     return promise.future();
   }
   // end::startHttpServer[]
@@ -124,23 +118,16 @@ public class MainVerticle extends AbstractVerticle {
   // tag::pageDeletionHandler[]
   private void pageDeletionHandler(RoutingContext context) {
     String id = context.request().getParam("id");
-    dbClient.getConnection(car -> {
-      if (car.succeeded()) {
-        SQLConnection connection = car.result();
-        connection.updateWithParams(SQL_DELETE_PAGE, new JsonArray().add(id), res -> {
-          connection.close();
-          if (res.succeeded()) {
-            context.response().setStatusCode(303);
-            context.response().putHeader("Location", "/");
-            context.response().end();
-          } else {
-            context.fail(res.cause());
-          }
-        });
-      } else {
-        context.fail(car.cause());
-      }
-    });
+    this.dbPool.preparedQuery(SQL_DELETE_PAGE)
+      .execute(Tuple.of(id))
+      .onSuccess(rows -> {
+        context.redirect("/");
+        context.response().putHeader("Location", "/");
+        context.response().end();
+      })
+      .onFailure(error -> {
+        context.fail(error);
+      });
   }
   // end::pageDeletionHandler[]
 
@@ -159,41 +146,31 @@ public class MainVerticle extends AbstractVerticle {
 
   // tag::indexHandler[]
   private void indexHandler(RoutingContext context) {
-    dbClient.getConnection(car -> {
-      if (car.succeeded()) {
-        SQLConnection connection = car.result();
-        connection.query(SQL_ALL_PAGES, res -> {
-          connection.close();
-
-          if (res.succeeded()) {
-            List<String> pages = res.result() // <1>
-              .getResults()
-              .stream()
-              .map(json -> json.getString(0))
-              .sorted()
-              .collect(Collectors.toList());
-
-            context.put("title", "Wiki home");  // <2>
-            context.put("pages", pages);
-            templateEngine.render(context.data(), "templates/index.ftl", ar -> {   // <3>
-              if (ar.succeeded()) {
-                context.response().putHeader("Content-Type", "text/html");
-                context.response().end(ar.result());  // <4>
-              } else {
-                context.fail(ar.cause());
-              }
-            });
-
-          } else {
-            context.fail(res.cause());  // <5>
-          }
+    this.dbPool
+      .query(SQL_ALL_PAGES)
+      .execute()
+      .compose(rows -> {
+        JsonObject templateData = new JsonObject();
+        JsonArray pages = new JsonArray();
+        rows.forEach(r -> {
+          pages.add(r.getString("NAME"));
         });
-      } else {
-        context.fail(car.cause());
-      }
-    });
+        templateData.put("title", "Wiki home");  // <2>
+        templateData.put("pages", pages);
+        return Future.succeededFuture(templateData);
+      })
+      .compose(templateData -> {
+        return templateEngine.render(templateData, "templates/index.ftl");
+      })
+      .onSuccess(data -> {
+        context.response().putHeader("Content-Type", "text/html");
+        context.response().end(data.toString());
+      })
+      .onFailure(error -> {
+        context.fail(error);
+      });
   }
-  // end::indexHandler[]
+// end::indexHandler[]
 
   // tag::pageUpdateHandler[]
   private void pageUpdateHandler(RoutingContext context) {
@@ -201,33 +178,25 @@ public class MainVerticle extends AbstractVerticle {
     String title = context.request().getParam("title");
     String markdown = context.request().getParam("markdown");
     boolean newPage = "yes".equals(context.request().getParam("newPage"));  // <2>
-
-    dbClient.getConnection(car -> {
-      if (car.succeeded()) {
-        SQLConnection connection = car.result();
-        String sql = newPage ? SQL_CREATE_PAGE : SQL_SAVE_PAGE;
-        JsonArray params = new JsonArray();   // <3>
-        if (newPage) {
-          params.add(title).add(markdown);
-        } else {
-          params.add(markdown).add(id);
-        }
-        connection.updateWithParams(sql, params, res -> {   // <4>
-          connection.close();
-          if (res.succeeded()) {
-            context.response().setStatusCode(303);    // <5>
-            context.response().putHeader("Location", "/wiki/" + title);
-            context.response().end();
-          } else {
-            context.fail(res.cause());
-          }
-        });
-      } else {
-        context.fail(car.cause());
-      }
-    });
+    Future<RowSet<Row>> preparedQuery;
+    if (newPage) {
+      preparedQuery = this.dbPool.preparedQuery(SQL_CREATE_PAGE)
+        .execute(Tuple.of(title, markdown));
+    } else {
+      preparedQuery = this.dbPool.preparedQuery(SQL_SAVE_PAGE)
+        .execute(Tuple.of(markdown, id));
+    }
+    preparedQuery
+      .onSuccess(rows -> {
+        context.response().setStatusCode(303);    // <5>
+        context.response().putHeader("Location", "/wiki/" + title);
+        context.response().end();
+      })
+      .onFailure(error -> {
+        context.fail(error);
+      });
   }
-  // end::pageUpdateHandler[]
+// end::pageUpdateHandler[]
 
   // tag::pageRenderingHandler[]
   private static final String EMPTY_PAGE_MARKDOWN =
@@ -238,66 +207,51 @@ public class MainVerticle extends AbstractVerticle {
   private void pageRenderingHandler(RoutingContext context) {
     String page = context.request().getParam("page");   // <1>
 
-    dbClient.getConnection(car -> {
-      if (car.succeeded()) {
-
-        SQLConnection connection = car.result();
-        connection.queryWithParams(SQL_GET_PAGE, new JsonArray().add(page), fetch -> {  // <2>
-          connection.close();
-          if (fetch.succeeded()) {
-
-            JsonArray row = fetch.result().getResults()
-              .stream()
-              .findFirst()
-              .orElseGet(() -> new JsonArray().add(-1).add(EMPTY_PAGE_MARKDOWN));
-            Integer id = row.getInteger(0);
-            String rawContent = row.getString(1);
-
-            context.put("title", page);
-            context.put("id", id);
-            context.put("newPage", fetch.result().getResults().size() == 0 ? "yes" : "no");
-            context.put("rawContent", rawContent);
-            context.put("content", Processor.process(rawContent));  // <3>
-            context.put("timestamp", new Date().toString());
-
-            templateEngine.render(context.data(), "templates/page.ftl", ar -> {
-              if (ar.succeeded()) {
-                context.response().putHeader("Content-Type", "text/html");
-                context.response().end(ar.result());
-              } else {
-                context.fail(ar.cause());
-              }
-            });
-          } else {
-            context.fail(fetch.cause());
-          }
-        });
-
-      } else {
-        context.fail(car.cause());
-      }
-    });
+    this.dbPool.preparedQuery(SQL_GET_PAGE)
+      .execute(Tuple.of(page))
+      .compose(rows -> {
+        JsonObject templateData = new JsonObject();
+        RowIterator<Row> iterator = rows.iterator();
+        if (iterator.hasNext()) {
+          Row row = iterator.next();
+          templateData.put("id", row.getInteger(0));
+          templateData.put("rawContent", row.getString("CONTENT"));
+          templateData.put("newPage", "no");
+        } else {
+          templateData.put("id", -1);
+          templateData.put("rawContent", EMPTY_PAGE_MARKDOWN);
+          templateData.put("newPage", "yes");
+        }
+        templateData.put("title", page);
+        templateData.put("timestamp", new Date().toString());
+        templateData.put("content", Processor.process(templateData.getString("rawContent")));
+        return Future.succeededFuture(templateData);
+      })
+      .compose(templateData -> {
+        return templateEngine.render(templateData, "templates/page.ftl");
+      })
+      .onSuccess(renderedContent -> {
+        context.response().putHeader("Content-Type", "text/html");
+        context.response().end(renderedContent.toString());
+      })
+      .onFailure(error -> {
+        context.fail(500, error);
+      });
   }
-  // end::pageRenderingHandler[]
+// end::pageRenderingHandler[]
 
   // tag::start[]
   @Override
   public void start(Promise<Void> promise) throws Exception {
-    Future<Void> steps = prepareDatabase().compose(v -> startHttpServer());
-    steps.setHandler(promise);
+    Future<Void> steps = prepareDatabase()
+      .compose(v -> startHttpServer())
+      .onSuccess(result -> {
+        LOGGER.info("db and httpserver started");
+        promise.complete();
+      }).onFailure(error -> {
+        LOGGER.error("something went wrong while setting up the db or httpserver {}", error);
+        promise.fail(error);
+      });
   }
   // end::start[]
-
-  public void anotherStart(Promise<Void> promise) throws Exception {
-    // tag::another-start[]
-    Future<Void> steps = prepareDatabase().compose(v -> startHttpServer());
-    steps.setHandler(ar -> {  // <1>
-      if (ar.succeeded()) {
-        promise.complete();
-      } else {
-        promise.fail(ar.cause());
-      }
-    });
-    // end::another-start[]
-  }
 }
