@@ -19,7 +19,7 @@
     <vertx.version>4.2.5</vertx.version>
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
 
-    <main.verticle>io.vertx.vertx.guides.wiki.MainVerticle</main.verticle>
+    <main.verticle>io.vertx.guides.wiki.MainVerticle</main.verticle>
     <launcher.class>io.vertx.core.Launcher</launcher.class>
   </properties>
 
@@ -40,29 +40,38 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
     </dependency>
+
+    <!-- tag::db-deps[] -->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-jdbc-client</artifactId>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.hsqldb/hsqldb -->
+    <dependency>
+      <groupId>org.hsqldb</groupId>
+      <artifactId>hsqldb</artifactId>
+      <version>2.6.1</version>
+    </dependency>
+    <!-- end::db-deps[] -->
+
+    <!-- tag::web-deps[] -->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-shell</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
       <artifactId>vertx-web-templ-freemarker</artifactId>
     </dependency>
-
     <!-- https://mvnrepository.com/artifact/com.github.rjeschke/txtmark -->
     <dependency>
       <groupId>com.github.rjeschke</groupId>
       <artifactId>txtmark</artifactId>
       <version>0.13</version>
     </dependency>
+    <!-- end::web-deps[] -->
+
+    <!-- tag::logger[] -->
     <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -75,15 +84,12 @@
       <artifactId>logback-classic</artifactId>
       <version>1.2.10</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.hsqldb/hsqldb -->
+    <!-- end::logger[] -->
+
     <dependency>
-      <groupId>org.hsqldb</groupId>
-      <artifactId>hsqldb</artifactId>
-      <version>2.6.1</version>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-shell</artifactId>
     </dependency>
-
-
-
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
