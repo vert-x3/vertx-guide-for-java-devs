@@ -54,10 +54,8 @@ public class MainVerticle extends AbstractVerticle {
 
   // tag::db-and-logger[]
   private JDBCPool dbPool;
-
   private static final Logger LOGGER = LoggerFactory.getLogger(MainVerticle.class);
   // end::db-and-logger[]
-
 
   // tag::prepareDatabase[]
   private Future<Void> prepareDatabase() {
@@ -68,18 +66,18 @@ public class MainVerticle extends AbstractVerticle {
       .put("driver_class", "org.hsqldb.jdbcDriver")   // <3>
       .put("max_pool_size", 30));   // <4>
 
-    dbPool.query(SQL_CREATE_PAGES_TABLE)
-      .execute()
-      .onSuccess(rows -> {
+    dbPool.query(SQL_CREATE_PAGES_TABLE) // <5>
+      .execute()  // <6>
+      .onSuccess(rows -> { //<7>
         LOGGER.info("created the database tables");
         promise.complete();
       })
-      .onFailure(error -> {
+      .onFailure(error -> { //<8>
         LOGGER.error("Database preparation error", error);
         promise.fail(error);
       });
 
-    return promise.future();
+    return promise.future(); //<9>
   }
   // end::prepareDatabase[]
 
@@ -145,27 +143,27 @@ public class MainVerticle extends AbstractVerticle {
 
   // tag::indexHandler[]
   private void indexHandler(RoutingContext context) {
-    this.dbPool
+    this.dbPool // <1>
       .query(SQL_ALL_PAGES)
       .execute()
-      .compose(rows -> {
+      .compose(rows -> {   // <2>
         JsonObject templateData = new JsonObject();
         JsonArray pages = new JsonArray();
         rows.forEach(r -> {
           pages.add(r.getString("NAME"));
         });
-        templateData.put("title", "Wiki home");  // <2>
+        templateData.put("title", "Wiki home");
         templateData.put("pages", pages);
         return Future.succeededFuture(templateData);
       })
-      .compose(templateData -> {
+      .compose(templateData -> {   // <3>
         return templateEngine.render(templateData, "templates/index.ftl");
       })
-      .onSuccess(data -> {
+      .onSuccess(data -> {  // <4>
         context.response().putHeader("Content-Type", "text/html");
         context.response().end(data.toString());
       })
-      .onFailure(error -> {
+      .onFailure(error -> { // <5>
         context.fail(error);
       });
   }
@@ -178,7 +176,7 @@ public class MainVerticle extends AbstractVerticle {
     String markdown = context.request().getParam("markdown");
     boolean newPage = "yes".equals(context.request().getParam("newPage"));  // <2>
     Future<RowSet<Row>> preparedQuery;
-    if (newPage) {
+    if (newPage) {     // <3>
       preparedQuery = this.dbPool.preparedQuery(SQL_CREATE_PAGE)
         .execute(Tuple.of(title, markdown));
     } else {
@@ -207,7 +205,7 @@ public class MainVerticle extends AbstractVerticle {
     String page = context.request().getParam("page");   // <1>
 
     this.dbPool.preparedQuery(SQL_GET_PAGE)
-      .execute(Tuple.of(page))
+      .execute(Tuple.of(page))// <2>
       .compose(rows -> {
         JsonObject templateData = new JsonObject();
         RowIterator<Row> iterator = rows.iterator();
@@ -223,7 +221,7 @@ public class MainVerticle extends AbstractVerticle {
         }
         templateData.put("title", page);
         templateData.put("timestamp", new Date().toString());
-        templateData.put("content", Processor.process(templateData.getString("rawContent")));
+        templateData.put("content", Processor.process(templateData.getString("rawContent")));  // <3>
         return Future.succeededFuture(templateData);
       })
       .compose(templateData -> {

@@ -179,19 +179,8 @@ By having each method returning a _future_ object, the implementation of the `st
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=start]
 ----
 
-When the _future_ of `prepareDatabase` completes successfully, then `startHttpServer` is called and the `steps` future completes depending of the outcome of the future returned by `startHttpServer`.
-`startHttpServer` is never called if `prepareDatabase` encounters an error, in which case the `steps` _future_ is in a _failed_ state and becomes completed with the exception describing the error.
-
-When both Eventually `steps` completes: `setHandler` defines a handler to be called upon completion.
-In our case we simply want to complete `startFuture` with `steps` and use the `completer` method to obtain a handler.
-This is equivalent to:
-
-[source,java,indent=0]
-----
-include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=another-start]
-----
-<1> `ar` is of type `AsyncResult<Void>`.
-`AsyncResult<T>` is used to pass the result of an asynchronous processing and may either yield a value of type `T` on success or a failure exception if the processing failed.
+When the _future_ of `prepareDatabase` completes successfully, then `startHttpServer` is called. When both steps complete; the promise passed as parameter to `start` method is marked complete or failed depending on the outcome.
+`startHttpServer` is never called if `prepareDatabase` encounters an error and the overall initialization fails if either of the steps fails
 
 === Database initialization
 
@@ -224,7 +213,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=sql-fields]
 ----
 <1> The `?` in the queries are placeholders to pass data when executing queries, and the Vert.x JDBC client prevents from SQL injections.
 
-The application verticle needs to keep a reference to a `JDBCClient` object (from the `io.vertx.ext.jdbc` package) that serves as the connection to the database.
+The application verticle needs to keep a reference to a `JDBCPool` object (from the `io.vertx.jdbcclient` package) that serves as the connection pool to the database.
 We do so using a field in `MainVerticle`, and we also create a general-purpose logger from the `org.slf4j` package:
 
 [source,java,indent=0]
@@ -233,21 +222,21 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=db-and-logger
 ----
 
 Last but not least, here is the complete implementation of the `prepareDatabase` method.
-It attempts to obtain a JDBC client connection, then performs a SQL query to create the `Pages` table unless it already exists:
+It uses a connection from the pool to perform a SQL query to create the `Pages` table unless it already exists:
 
 [source,java,indent=0]
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=prepareDatabase]
 ----
-<1> `createShared` creates a shared connection to be shared among verticles known to the `vertx` instance, which in general is a good thing.
-<2> The JDBC client connection is made by passing a Vert.x JSON object. Here `url` is the JDBC URL.
+<1> `JDBCPool.pool` creates a connection pool by passing reference to the Vert.x instance and a configuration object
+<2> The `JDBCPool` configuration is a JSON object. Here `url` is the JDBC URL.
 <3> Just like `url`, `driver_class` is specific to the JDBC driver being used and points to the driver class.
 <4> `max_pool_size` is the number of concurrent connections. We chose 30 here, but it is just an arbitrary number.
-<5> Getting a connection is an asynchronous operation that gives us an `AsyncResult<SQLConnection>`. It must then be tested to see if the connection could be established or not (`AsyncResult` is actually a super-interface of `Future`).
-<6> If the SQL connection could not be obtained, then the method _future_ is completed to fail with the `AsyncResult`-provided exception via the `cause` method.
-<7> The `SQLConnection` is the result of the successful `AsyncResult`. We can use it to perform a SQL query.
-<8> Before checking whether the SQL query succeeded or not, we must release it by calling `close`, otherwise the JDBC client connection pool can eventually drain.
-<9> We complete the method _future_ object with a success.
+<5> `JDBCPool.query()` uses the pool to create a sql query and `.execute()` to execute as an asynchronous operation. 
+<6> `execute` returns a `Future<RowSet<Row>>` containing the results of the query. 
+<7> When successful the `onSuccess` call back handler is invoked. We set the state of the `promise` to indicate that the operation succeded
+<8> `onFailure` callback handler is called when the database initialization failed and the `promise` is set to indicate that the operation failed
+<9> We complete the method by returning the _future_ associatted with the `promise`.
 
 TIP: The SQL database modules supported by the Vert.x project do not currently offer anything beyond passing SQL queries (e.g., an object-relational mapper) as they focus on providing asynchronous access to databases.
 However, nothing forbids using https://github.com/vert-x3/vertx-awesome[more advanced modules from the community], and we especially recommend checking out projects like https://github.com/jklingsporn/vertx-jooq[this jOOq generator for Vert.x] or https://github.com/BraintagsGmbH/vertx-pojo-mapper[this POJO mapper].
@@ -292,9 +281,9 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=startHttpServ
 <1> The `vertx` context object provides methods to create HTTP servers, clients, TCP/UDP servers and clients, etc.
 <2> The `Router` class comes from `vertx-web`: `io.vertx.ext.web.Router`.
 <3> Routes have their own handlers, and they can be defined by URL and/or by HTTP method. For short handlers a Java lambda is an option, but for more elaborate handlers it is a good idea to reference private methods instead. Note that URLs can be parametric: `/wiki/:page` will match a request like `/wiki/Hello`, in which case a `page` parameter will be available with value `Hello`.
-<4> This makes all HTTP POST requests go through a first handler, here `io.vertx.ext.web.handler.BodyHandler`. This handler automatically decodes the body from the HTTP requests (e.g., form submissions), which can then be manipulated as Vert.x buffer objects.
+<4> __Important__ This makes all HTTP POST requests go through a first handler, here `io.vertx.ext.web.handler.BodyHandler`. This handler automatically decodes the body from the HTTP requests (e.g., form submissions), which can then be manipulated as Vert.x buffer objects.
 <5> The router object can be used as a HTTP server handler, which then dispatches to other handlers as defined above.
-<6> Starting a HTTP server is an asynchronous operation, so an `AsyncResult<HttpServer>` needs to be checked for success. By the way the `8080` parameter specifies the TCP port to be used by the server.
+<6> Starting a HTTP server is an asynchronous operation returning a `Future<HttpServer>`. Like the prepareDatabase callback handlers; the `onSuccess` and `onFailure` callback handlers set the state of the `promise` and return the _future_ associatted with it.
 
 == HTTP router handlers
 
@@ -315,11 +304,11 @@ The `indexHandler` method code is as follows:
 ----
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=indexHandler]
 ----
-<1> SQL query results are being returned as instances of `JsonArray` and `JsonObject`.
-<2> The `RoutingContext` instance can be used to put arbitrary key / value data that is then available from templates, or chained router handlers.
-<3> Rendering a template is an asynchronous operation that leads us to the usual `AsyncResult` handling pattern.
-<4> The `AsyncResult` contains the template rendering as a `String` in case of success, and we can end the HTTP response stream with the value.
-<5> In case of failure the `fail` method from `RoutingContext` provides a sensible way to return a HTTP 500 error to the HTTP client.
+<1> SQL query to fetch all the pages is executed using the `JDBCPool` 
+<2> We iterate over the fetched rows, extract and add data to a `JsonObject`. While the `RoutingContext` can be used to `put` arbitrary key / value data, we have avoided it.
+<3> After assembly the `templateData` is passed to the `TemplateEngine` to render the page
+<4> Finally the `onSuccess` callback handler is defined. We set the `Content-Type` and stream the rendered content as the HTTP response.
+<5> In case of failure the `onFailure` is invoked. `RoutingContext` provides a sensible way to return a HTTP 500 error to the HTTP client.
 
 FreeMarker templates shall be placed in the `src/main/resources/templates` folder.
 The `index.ftl` template code is as follows:
@@ -329,7 +318,7 @@ The `index.ftl` template code is as follows:
 include::src/main/resources/templates/index.ftl[]
 ----
 
-Key / value data stored in the `RoutingContext` object is made available as FreeMarker variable.
+Key / value data stored in the `templateData` JsonObject is made available as FreeMarker variable.
 
 Since lots of templates have common header and footers, we extracted the following code in `header.ftl` and `footer.ftl`:
 
@@ -363,7 +352,7 @@ The `pageRenderingHandler` method code is the following:
 include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageRenderingHandler]
 ----
 <1> URL parameters (`/wiki/:page` here) can be accessed through the context request object.
-<2> Passing argument values to SQL queries is done using a `JsonArray`, with the elements in order of the `?` symbols in the SQL query.
+<2> Passing argument values to SQL queries is done using a `Tuple.of`, with the elements in order of the `?` symbols in the SQL query.
 <3> The `Processor` class comes from the _txtmark_ Markdown rendering library that we use.
 
 The `page.ftl` FreeMarker template code is as follows:
@@ -389,7 +378,7 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageCreateHan
 === Page saving handler
 
 The `pageUpdateHandler` method deals with HTTP POST requests when saving a wiki page.
-This happens both when updating an existing page (issuing a SQL `update` query) or saving a new page (issuing a SQL `insert` query):
+This happens both when updating an existing page (issuing a SQL `SQL_SAVE_PAGE` query) or saving a new page (issuing a SQL `SQL_CREATE_PAGE` query):
 
 [source,java,indent=0]
 ----
@@ -397,8 +386,8 @@ include::src/main/java/io/vertx/guides/wiki/MainVerticle.java[tags=pageUpdateHan
 ----
 <1> Form parameters sent through a HTTP POST request are available from the `RoutingContext` object. Note that without a `BodyHandler` within the `Router` configuration chain these values would not be available, and the form submission payload would need to be manually decoded from the HTTP POST request payload.
 <2> We rely on a hidden form field rendered in the `page.ftl` FreeMarker template to know if we are updating an existing page or saving a new page.
-<3> Again, preparing the SQL query with parameters uses a `JsonArray` to pass values.
-<4> The `updateWithParams` method is used for `insert` / `update` / `delete` SQL queries.
+<3> The `JDBCPool` is used to create a SQL query based on the value of the hidden field. 
+<4> Parameters are set on the query using `Tuple.of`. This happens both when updating an existing page or saving a new page
 <5> Upon success, we simply redirect to the page that has been edited.
 
 === Page deletion handler
@@ -420,6 +409,6 @@ To run it we first need to build it with Maven:
 
 Since the build produces a Jar with all required dependencies embedded (including Vert.x and a JDBC database), running the wiki is as simple as:
 
-    $ java -jar target/wiki-step-1-1.3.0-SNAPSHOT-fat.jar
+    $ java -jar target/wiki-step-1-1.0.0-SNAPSHOT-fat.jar
 
 You can then point your favorite web browser to http://localhost:8080/ and enjoy using the wiki.
