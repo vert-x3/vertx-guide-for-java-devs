@@ -9,7 +9,13 @@ endif::[]
 
 :leveloffset: +1
 
-NOTE: You can read the latest published version of the guide at https://vertx.io/docs/guide-for-java-devs/
+[WARNING] 
+==== 
+This guide is no longer maintained.
+It targets Vert.x 3 and uses some modules that are no longer recommended (e.g. Auth Shiro).
+
+For Vert.x 4, you could get a copy of the https://www.manning.com/books/vertx-in-action[Vert.x in Action] book.
+====
 
 ifdef::rendered-pdf-link[]
 NOTE: This document is also link:{rendered-pdf-link}[available as a PDF].
